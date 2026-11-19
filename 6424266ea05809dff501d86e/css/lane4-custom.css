@@ -1,0 +1,149 @@
+/* Lane4 overrides. Loaded after the Webflow stylesheet; only adds/overrides the rules below. */
+
+/* Brand logo (transparent PNG, ratio ~2.39:1) */
+.logo-icon {
+  width: 130px;
+  height: auto;
+}
+
+/* "Made by MakeWithUs" footer credit */
+.lane4-credit {
+  color: inherit;
+  text-decoration: underline;
+}
+
+/* Show the same content on tablet / mobile as on desktop
+   (the template hid these below 992px). */
+@media screen and (max-width: 991px) {
+  .nav {
+    flex-wrap: wrap;
+  }
+
+  .nav-links {
+    display: flex;
+    order: 3;
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+    grid-column-gap: 18px;
+    grid-row-gap: 8px;
+    padding-top: 14px;
+    padding-bottom: 12px;
+  }
+
+  .paragraph-13px.grey.mb,
+  .paragraph-13px.mb {
+    display: inline;
+  }
+
+  .cta-left-images,
+  .cta-right-images {
+    display: block;
+  }
+
+  .sticky-frame-blog {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .sfb-line-wrapper {
+    display: block;
+  }
+
+  .nav-links .link-nav {
+    padding: 6px 8px;
+  }
+}
+
+@media screen and (min-width: 768px) and (max-width: 991px) {
+  /* tablet: keep the "Get inspired" text between the side photos */
+  .cta {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+
+  .cta-content {
+    max-width: 360px;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  /* announcement gets its own full-width row under "shop | Account" */
+  .info-bar-wrapper {
+    flex-wrap: wrap;
+  }
+
+  .info-bar-wrapper ._25,
+  .info-bar-wrapper .info-bar-button-wrapper {
+    width: 50%;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  /* home "Get inspired" collage: keep the photos above/below the text */
+  .cta {
+    padding-top: 320px;
+    padding-bottom: 280px;
+  }
+
+  /* home hero photo: keep the swimmer (left of centre) in the narrow frame */
+  .hero-image .image {
+    object-position: 35% 50%;
+  }
+
+  /* breadcrumbs: wrap whole items instead of squeezing each into a narrow column */
+  .breadcrumbs,
+  .product-breadcrumbs {
+    flex-wrap: wrap;
+  }
+
+  .breadcrumbs > *,
+  .product-breadcrumbs > * {
+    flex: 0 0 auto;
+    max-width: 100%;
+  }
+
+  /* footer: long email can wrap instead of running into the next column */
+  .footer-link[href^="mailto:"] {
+    overflow-wrap: anywhere;
+  }
+
+  .info-bar-wrapper .navbar-text-wrapper {
+    order: 3;
+    width: 100%;
+    height: auto;
+    min-height: 40px;
+    flex-wrap: wrap;
+    padding: 8px 0;
+    border-left: 0;
+    border-right: 0;
+    border-top: 1px solid #000;
+    text-align: center;
+  }
+}
+
+@media screen and (min-width: 480px) and (max-width: 767px) {
+  /* reuse the template's phone collage layout (photos above / below the text) */
+  .cta-img-1 { top: 0%; bottom: auto; left: auto; right: 0%; }
+  .cta-img-2 { width: 150px; height: 150px; top: 38px; bottom: auto; left: 0%; right: 0%; }
+  .cta-img-3 { top: 83px; bottom: 0%; left: 109px; right: auto; }
+  .cta-img-4 { top: 151px; bottom: auto; left: auto; right: 0%; }
+  .cta-img-5 { width: 150px; height: 150px; top: auto; bottom: 58px; left: auto; right: 0%; }
+  .cta-img-6 { top: auto; bottom: 31px; left: 0%; right: auto; }
+  .cta-img-7 { top: auto; bottom: 117px; left: auto; right: 117px; }
+}
+
+@media screen and (max-width: 479px) {
+  .logo-icon {
+    width: 110px;
+  }
+
+  .paragraph-14px.opacity-50.mb {
+    display: inline-block;
+  }
+}
+
+/* About page hero photo */
+.hero-about {
+  background-image: url("../lane4-W2oKzevjPwA-1920.jpg");
+}

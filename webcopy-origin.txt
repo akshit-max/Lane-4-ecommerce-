@@ -1,0 +1,1032 @@
+Uri: https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js
+File Name: E:\e-com-mwu\sartorialist.webflow.io\ajax\libs\webfont\1.6.26\webfont.js
+Content Type: text/javascript
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea0580900ce01d8f9_christian-gertenbach-AqCVniFulhY-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580900ce01d8f9_christian-gertenbach-AqCVniFulhY-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea0580900ce01d8f9_christian-gertenbach-AqCVniFulhY-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580900ce01d8f9_christian-gertenbach-AqCVniFulhY-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058090c6101d90f_voyage-pro-u36g8i9nCao-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058090c6101d90f_voyage-pro-u36g8i9nCao-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058090c6101d90f_voyage-pro-u36g8i9nCao-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058090c6101d90f_voyage-pro-u36g8i9nCao-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058090fae01d905_erwi-8bFOQ1cBS_k-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058090fae01d905_erwi-8bFOQ1cBS_k-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058090fae01d905_erwi-8bFOQ1cBS_k-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058090fae01d905_erwi-8bFOQ1cBS_k-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809119201d901_brittany-bendabout-SLy3Ub6VLPU-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809119201d901_brittany-bendabout-SLy3Ub6VLPU-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809119201d901_brittany-bendabout-SLy3Ub6VLPU-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809119201d901_brittany-bendabout-SLy3Ub6VLPU-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809131401d8ff_raden-prasetya-5vJ6GY0KzBs-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809131401d8ff_raden-prasetya-5vJ6GY0KzBs-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809131401d8ff_raden-prasetya-5vJ6GY0KzBs-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809131401d8ff_raden-prasetya-5vJ6GY0KzBs-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058091bfa01d8af_GeneralSans-Bold.otf
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058091bfa01d8af_GeneralSans-Bold.otf
+Content Type: application/x-font-otf
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809200901d8b5_ryan-plomp-jvoZ-Aux9aw-unsplash (1).jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809200901d8b5_ryan-plomp-jvoZ-Aux9aw-unsplash (1)-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809200901d8b5_ryan-plomp-jvoZ-Aux9aw-unsplash%2520(1)-p-1080.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809200901d8b5_ryan-plomp-jvoZ-Aux9aw-unsplash%20(1)-p-1080.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809200901d8b5_ryan-plomp-jvoZ-Aux9aw-unsplash%2520(1)-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809200901d8b5_ryan-plomp-jvoZ-Aux9aw-unsplash%20(1)-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809200901d8b5_ryan-plomp-jvoZ-Aux9aw-unsplash%2520(1)-p-800.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809200901d8b5_ryan-plomp-jvoZ-Aux9aw-unsplash%20(1)-p-800.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809203601d906_erwi-Ke1jIvnq4Xo-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809203601d906_erwi-Ke1jIvnq4Xo-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809203601d906_erwi-Ke1jIvnq4Xo-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809203601d906_erwi-Ke1jIvnq4Xo-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea0580930f001d8ae_GeneralSans-Regular.otf
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580930f001d8ae_GeneralSans-Regular.otf
+Content Type: application/x-font-otf
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea0580935cd01d8b4_ilyuza-mingazova-LUOwdouWIh0-unsplash (1).jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580935cd01d8b4_ilyuza-mingazova-LUOwdouWIh0-unsplash (1)-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea0580935cd01d8b4_ilyuza-mingazova-LUOwdouWIh0-unsplash%2520(1)-p-1080.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580935cd01d8b4_ilyuza-mingazova-LUOwdouWIh0-unsplash%20(1)-p-1080.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea0580935cd01d8b4_ilyuza-mingazova-LUOwdouWIh0-unsplash%2520(1)-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580935cd01d8b4_ilyuza-mingazova-LUOwdouWIh0-unsplash%20(1)-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea0580935cd01d8b4_ilyuza-mingazova-LUOwdouWIh0-unsplash%2520(1)-p-800.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580935cd01d8b4_ilyuza-mingazova-LUOwdouWIh0-unsplash%20(1)-p-800.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058093d9301d8ad_GeneralSans-Light.otf
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058093d9301d8ad_GeneralSans-Light.otf
+Content Type: application/x-font-otf
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058093f8c01d8b0_GeneralSans-Medium.otf
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058093f8c01d8b0_GeneralSans-Medium.otf
+Content Type: application/x-font-otf
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea0580944e801d924_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580944e801d924_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea0580946ad01d926_engin-akyurt-jaZoffxg1yc-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580946ad01d926_engin-akyurt-jaZoffxg1yc-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea0580946ad01d926_engin-akyurt-jaZoffxg1yc-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580946ad01d926_engin-akyurt-jaZoffxg1yc-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea0580946e101d8c4_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580946e101d8c4_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058094da201d8b8_1edcc4f2dfd47c6aa5d1af9f774bc12c-1-p-500.png
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058094da201d8b8_1edcc4f2dfd47c6aa5d1af9f774bc12c-1-p-500.png
+Content Type: image/png
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058094da201d8b8_1edcc4f2dfd47c6aa5d1af9f774bc12c-1.png
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058094da201d8b8_1edcc4f2dfd47c6aa5d1af9f774bc12c-1-1.png
+Content Type: image/png
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058094fa001d8f8_force-majeure-SmIlY2uAHo8-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058094fa001d8f8_force-majeure-SmIlY2uAHo8-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058094fa001d8f8_force-majeure-SmIlY2uAHo8-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058094fa001d8f8_force-majeure-SmIlY2uAHo8-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea0580953a601d8c2_gordon-cowie-B75bd6qoSqQ-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580953a601d8c2_gordon-cowie-B75bd6qoSqQ-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea0580953a601d8c2_gordon-cowie-B75bd6qoSqQ-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580953a601d8c2_gordon-cowie-B75bd6qoSqQ-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea0580954ad01d8f7_onur-senay-AN4v5yzEFOs-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580954ad01d8f7_onur-senay-AN4v5yzEFOs-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea0580954ad01d8f7_onur-senay-AN4v5yzEFOs-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580954ad01d8f7_onur-senay-AN4v5yzEFOs-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea0580954d001d8ba_malvestida-u79wy47kvVs-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580954d001d8ba_malvestida-u79wy47kvVs-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea0580954d001d8ba_malvestida-u79wy47kvVs-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580954d001d8ba_malvestida-u79wy47kvVs-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058095c4401d90d_kal-visuals-8OFRGUcJP2Y-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058095c4401d90d_kal-visuals-8OFRGUcJP2Y-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058095c4401d90d_kal-visuals-8OFRGUcJP2Y-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058095c4401d90d_kal-visuals-8OFRGUcJP2Y-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058095c4c01d8fb_lauro-rodriguez-2m2wFSFCPa4-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058095c4c01d8fb_lauro-rodriguez-2m2wFSFCPa4-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058095c4c01d8fb_lauro-rodriguez-2m2wFSFCPa4-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058095c4c01d8fb_lauro-rodriguez-2m2wFSFCPa4-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea0580967e001d8b9_ahmed-carter-GP3-QpmTgPk-unsplash (1).jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580967e001d8b9_ahmed-carter-GP3-QpmTgPk-unsplash (1)-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea0580967e001d8b9_ahmed-carter-GP3-QpmTgPk-unsplash%2520(1)-p-1080.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580967e001d8b9_ahmed-carter-GP3-QpmTgPk-unsplash%20(1)-p-1080.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea0580967e001d8b9_ahmed-carter-GP3-QpmTgPk-unsplash%2520(1)-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580967e001d8b9_ahmed-carter-GP3-QpmTgPk-unsplash%20(1)-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea0580967e001d8b9_ahmed-carter-GP3-QpmTgPk-unsplash%2520(1)-p-800.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580967e001d8b9_ahmed-carter-GP3-QpmTgPk-unsplash%20(1)-p-800.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea0580969bf01d903_artyom-kim-gzaXICn5P8o-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580969bf01d903_artyom-kim-gzaXICn5P8o-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea0580969bf01d903_artyom-kim-gzaXICn5P8o-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580969bf01d903_artyom-kim-gzaXICn5P8o-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058096a9b01d927_raphael-nast-HyaSbSRA39A-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058096a9b01d927_raphael-nast-HyaSbSRA39A-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058096a9b01d927_raphael-nast-HyaSbSRA39A-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058096a9b01d927_raphael-nast-HyaSbSRA39A-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058096e6701d925_flower.jpg-p-500.png
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058096e6701d925_flower.jpg-p-500.png
+Content Type: image/png
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058096e6701d925_flower.jpg.png
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058096e6701d925_flower.jpg-1.png
+Content Type: image/png
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809702c01d8c0_ethan-haddox-QHGcADeeT00-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809702c01d8c0_ethan-haddox-QHGcADeeT00-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809702c01d8c0_ethan-haddox-QHGcADeeT00-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809702c01d8c0_ethan-haddox-QHGcADeeT00-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809719d01d904_oladimeji-odunsi-8XYrtCESnqM-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809719d01d904_oladimeji-odunsi-8XYrtCESnqM-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809719d01d904_oladimeji-odunsi-8XYrtCESnqM-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809719d01d904_oladimeji-odunsi-8XYrtCESnqM-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058097b9201d8b6_mike-von-qsJ5itg93WY-unsplash (1).jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058097b9201d8b6_mike-von-qsJ5itg93WY-unsplash (1)-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058097b9201d8b6_mike-von-qsJ5itg93WY-unsplash%2520(1)-p-1080.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058097b9201d8b6_mike-von-qsJ5itg93WY-unsplash%20(1)-p-1080.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058097b9201d8b6_mike-von-qsJ5itg93WY-unsplash%2520(1)-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058097b9201d8b6_mike-von-qsJ5itg93WY-unsplash%20(1)-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058097b9201d8b6_mike-von-qsJ5itg93WY-unsplash%2520(1)-p-800.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058097b9201d8b6_mike-von-qsJ5itg93WY-unsplash%20(1)-p-800.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058097f8401d8fe_highlight-id-jL7oztaDbHc-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058097f8401d8fe_highlight-id-jL7oztaDbHc-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea058097f8401d8fe_highlight-id-jL7oztaDbHc-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058097f8401d8fe_highlight-id-jL7oztaDbHc-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809867c01d8b7_HP Image.png
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809867c01d8b7_HP Image-1.png
+Content Type: image/png
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809867c01d8b7_HP%2520Image-p-500.png
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809867c01d8b7_HP%20Image-p-500.png
+Content Type: image/png
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809a1d401d8fa_lucas-calloch-w5JYcbi7ew8-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809a1d401d8fa_lucas-calloch-w5JYcbi7ew8-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809a1d401d8fa_lucas-calloch-w5JYcbi7ew8-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809a1d401d8fa_lucas-calloch-w5JYcbi7ew8-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809ad3701d900_yogendra-singh-_c56tTiztfA-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809ad3701d900_yogendra-singh-_c56tTiztfA-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809ad3701d900_yogendra-singh-_c56tTiztfA-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809ad3701d900_yogendra-singh-_c56tTiztfA-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809b7df01d912_keagan-henman-Won79_9oUEk-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809b7df01d912_keagan-henman-Won79_9oUEk-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809d17201d90e_kal-visuals-yMemQcLR8T4-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809d17201d90e_kal-visuals-yMemQcLR8T4-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809d17201d90e_kal-visuals-yMemQcLR8T4-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809d17201d90e_kal-visuals-yMemQcLR8T4-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809d19201d8fd_carmen-laezza-njWFb6fQm8w-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809d19201d8fd_carmen-laezza-njWFb6fQm8w-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809d19201d8fd_carmen-laezza-njWFb6fQm8w-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809d19201d8fd_carmen-laezza-njWFb6fQm8w-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809d2c701d902_mathilde-langevin-2DkKtRzHRB8-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809d2c701d902_mathilde-langevin-2DkKtRzHRB8-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809d2c701d902_mathilde-langevin-2DkKtRzHRB8-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809d2c701d902_mathilde-langevin-2DkKtRzHRB8-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809df0f01d8fc_duane-mendes-p-gGii_xGK8-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809df0f01d8fc_duane-mendes-p-gGii_xGK8-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809df0f01d8fc_duane-mendes-p-gGii_xGK8-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809df0f01d8fc_duane-mendes-p-gGii_xGK8-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809e1c301d8c1_cleo-vermij-wSct4rrBPWc-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809e1c301d8c1_cleo-vermij-wSct4rrBPWc-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809e1c301d8c1_cleo-vermij-wSct4rrBPWc-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809e1c301d8c1_cleo-vermij-wSct4rrBPWc-unsplash-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809eb3b01d8bb_mark-adriane--uJ3N7HLiEg-unsplash (1).jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809eb3b01d8bb_mark-adriane--uJ3N7HLiEg-unsplash (1)-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809eb3b01d8bb_mark-adriane--uJ3N7HLiEg-unsplash%2520(1)-p-1080.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809eb3b01d8bb_mark-adriane--uJ3N7HLiEg-unsplash%20(1)-p-1080.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809eb3b01d8bb_mark-adriane--uJ3N7HLiEg-unsplash%2520(1)-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809eb3b01d8bb_mark-adriane--uJ3N7HLiEg-unsplash%20(1)-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/6424266ea05809eb3b01d8bb_mark-adriane--uJ3N7HLiEg-unsplash%2520(1)-p-800.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809eb3b01d8bb_mark-adriane--uJ3N7HLiEg-unsplash%20(1)-p-800.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/644a466d5b4f895cd7efc059_Hero (1)-p-1080.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\644a466d5b4f895cd7efc059_Hero (1)-p-1080.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/644a466d5b4f895cd7efc059_Hero (1)-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\644a466d5b4f895cd7efc059_Hero (1)-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/644a466d5b4f895cd7efc059_Hero (1)-p-800.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\644a466d5b4f895cd7efc059_Hero (1)-p-800.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/644a466d5b4f895cd7efc059_Hero (1).jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\644a466d5b4f895cd7efc059_Hero (1)-1.jpeg
+Content Type: image/jpeg
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/css/sartorialist.webflow.cf4dc386d.css
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\css\sartorialist.webflow.cf4dc386d.css
+Content Type: text/css
+
+Uri: https://assets.website-files.com/6424266ea05809dff501d86e/js/webflow.7314d1791.js
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\js\webflow.7314d1791.js
+Content Type: text/javascript
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809063601d880_mike-von-qsJ5itg93WY-unsplash (1).jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809063601d880_mike-von-qsJ5itg93WY-unsplash (1).jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809063601d880_mike-von-qsJ5itg93WY-unsplash%2520(1)-p-1080.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809063601d880_mike-von-qsJ5itg93WY-unsplash%20(1)-p-1080.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809063601d880_mike-von-qsJ5itg93WY-unsplash%2520(1)-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809063601d880_mike-von-qsJ5itg93WY-unsplash%20(1)-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809063601d880_mike-von-qsJ5itg93WY-unsplash%2520(1)-p-800.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809063601d880_mike-von-qsJ5itg93WY-unsplash%20(1)-p-800.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea058091b6401d87d_lidia-vi-BMPuBdpjrr8-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea058091b6401d87d_lidia-vi-BMPuBdpjrr8-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea058091b6401d87d_lidia-vi-BMPuBdpjrr8-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea058091b6401d87d_lidia-vi-BMPuBdpjrr8-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809254601d87c_hipkicks-HcqA34-uWo4-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809254601d87c_hipkicks-HcqA34-uWo4-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809254601d87c_hipkicks-HcqA34-uWo4-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809254601d87c_hipkicks-HcqA34-uWo4-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea058092a4101d923_malvestida-u79wy47kvVs-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea058092a4101d923_malvestida-u79wy47kvVs-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea058092a4101d923_malvestida-u79wy47kvVs-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea058092a4101d923_malvestida-u79wy47kvVs-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea058092add01d8aa_hero-p-1080.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea058092add01d8aa_hero-p-1080.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea058092add01d8aa_hero-p-1600.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea058092add01d8aa_hero-p-1600.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea058092add01d8aa_hero-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea058092add01d8aa_hero-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea058092add01d8aa_hero-p-800.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea058092add01d8aa_hero-p-800.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea058092add01d8aa_hero.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea058092add01d8aa_hero.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809321101d8bf_ryan-plomp-jvoZ-Aux9aw-unsplash (1).jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809321101d8bf_ryan-plomp-jvoZ-Aux9aw-unsplash (1).jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809321101d8bf_ryan-plomp-jvoZ-Aux9aw-unsplash%2520(1)-p-1080.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809321101d8bf_ryan-plomp-jvoZ-Aux9aw-unsplash%20(1)-p-1080.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809321101d8bf_ryan-plomp-jvoZ-Aux9aw-unsplash%2520(1)-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809321101d8bf_ryan-plomp-jvoZ-Aux9aw-unsplash%20(1)-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809321101d8bf_ryan-plomp-jvoZ-Aux9aw-unsplash%2520(1)-p-800.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809321101d8bf_ryan-plomp-jvoZ-Aux9aw-unsplash%20(1)-p-800.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809370a01d87a_laura-chouette-KL_SE98J4_0-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809370a01d87a_laura-chouette-KL_SE98J4_0-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809370a01d87a_laura-chouette-KL_SE98J4_0-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809370a01d87a_laura-chouette-KL_SE98J4_0-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea0580938d101d8f5_mark-adriane--uJ3N7HLiEg-unsplash (1).jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea0580938d101d8f5_mark-adriane--uJ3N7HLiEg-unsplash (1).jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea0580938d101d8f5_mark-adriane--uJ3N7HLiEg-unsplash%2520(1)-p-1080.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea0580938d101d8f5_mark-adriane--uJ3N7HLiEg-unsplash%20(1)-p-1080.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea0580938d101d8f5_mark-adriane--uJ3N7HLiEg-unsplash%2520(1)-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea0580938d101d8f5_mark-adriane--uJ3N7HLiEg-unsplash%20(1)-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea0580938d101d8f5_mark-adriane--uJ3N7HLiEg-unsplash%2520(1)-p-800.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea0580938d101d8f5_mark-adriane--uJ3N7HLiEg-unsplash%20(1)-p-800.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea058093ead01d877_anomaly-WWesmHEgXDs-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea058093ead01d877_anomaly-WWesmHEgXDs-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea058093ead01d877_anomaly-WWesmHEgXDs-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea058093ead01d877_anomaly-WWesmHEgXDs-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809408201d883_jackson-david--r9rzXP-ZFE-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809408201d883_jackson-david--r9rzXP-ZFE-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809408201d883_jackson-david--r9rzXP-ZFE-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809408201d883_jackson-david--r9rzXP-ZFE-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809482301d878_charlesdeluvio-1-nx1QR5dTE-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809482301d878_charlesdeluvio-1-nx1QR5dTE-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809482301d878_charlesdeluvio-1-nx1QR5dTE-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809482301d878_charlesdeluvio-1-nx1QR5dTE-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809505901d882_ranurte-kSdi_gqbGGs-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809505901d882_ranurte-kSdi_gqbGGs-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809505901d882_ranurte-kSdi_gqbGGs-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809505901d882_ranurte-kSdi_gqbGGs-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea0580955b801d93b_nordwood-themes-Sf2TRU7ShO8-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea0580955b801d93b_nordwood-themes-Sf2TRU7ShO8-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea0580955b801d93b_nordwood-themes-Sf2TRU7ShO8-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea0580955b801d93b_nordwood-themes-Sf2TRU7ShO8-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea058095c6a01d879_darryl-low-M85fe7-_nnA-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea058095c6a01d879_darryl-low-M85fe7-_nnA-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea058095c6a01d879_darryl-low-M85fe7-_nnA-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea058095c6a01d879_darryl-low-M85fe7-_nnA-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea0580970ce01d952_pina-messina-xFcqV_XZNNU-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea0580970ce01d952_pina-messina-xFcqV_XZNNU-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea0580970ce01d952_pina-messina-xFcqV_XZNNU-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea0580970ce01d952_pina-messina-xFcqV_XZNNU-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809799801d8da_ilyuza-mingazova-LUOwdouWIh0-unsplash (1).jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809799801d8da_ilyuza-mingazova-LUOwdouWIh0-unsplash (1).jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809799801d8da_ilyuza-mingazova-LUOwdouWIh0-unsplash%2520(1)-p-1080.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809799801d8da_ilyuza-mingazova-LUOwdouWIh0-unsplash%20(1)-p-1080.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809799801d8da_ilyuza-mingazova-LUOwdouWIh0-unsplash%2520(1)-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809799801d8da_ilyuza-mingazova-LUOwdouWIh0-unsplash%20(1)-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809799801d8da_ilyuza-mingazova-LUOwdouWIh0-unsplash%2520(1)-p-800.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809799801d8da_ilyuza-mingazova-LUOwdouWIh0-unsplash%20(1)-p-800.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809815c01d87f_osarugue-igbinoba-iEKeM1bwPlI-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809815c01d87f_osarugue-igbinoba-iEKeM1bwPlI-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809815c01d87f_osarugue-igbinoba-iEKeM1bwPlI-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809815c01d87f_osarugue-igbinoba-iEKeM1bwPlI-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809971a01d87b_masaaki-komori-9ugEeqflo70-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809971a01d87b_masaaki-komori-9ugEeqflo70-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809971a01d87b_masaaki-komori-9ugEeqflo70-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809971a01d87b_masaaki-komori-9ugEeqflo70-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809a17d01d881_brando-makes-branding-bimk08qJzIY-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809a17d01d881_brando-makes-branding-bimk08qJzIY-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809a17d01d881_brando-makes-branding-bimk08qJzIY-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809a17d01d881_brando-makes-branding-bimk08qJzIY-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809aa4101d90c_ahmed-carter-GP3-QpmTgPk-unsplash (1).jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809aa4101d90c_ahmed-carter-GP3-QpmTgPk-unsplash (1).jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809aa4101d90c_ahmed-carter-GP3-QpmTgPk-unsplash%2520(1)-p-1080.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809aa4101d90c_ahmed-carter-GP3-QpmTgPk-unsplash%20(1)-p-1080.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809aa4101d90c_ahmed-carter-GP3-QpmTgPk-unsplash%2520(1)-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809aa4101d90c_ahmed-carter-GP3-QpmTgPk-unsplash%20(1)-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809aa4101d90c_ahmed-carter-GP3-QpmTgPk-unsplash%2520(1)-p-800.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809aa4101d90c_ahmed-carter-GP3-QpmTgPk-unsplash%20(1)-p-800.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809d28701d96a_laura-chouette-I8ebVbQMapQ-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809d28701d96a_laura-chouette-I8ebVbQMapQ-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809d28701d96a_laura-chouette-I8ebVbQMapQ-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809d28701d96a_laura-chouette-I8ebVbQMapQ-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809fe3d01d87e_nimble-made-hMMXhKSZk7k-unsplash-p-500.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809fe3d01d87e_nimble-made-hMMXhKSZk7k-unsplash-p-500.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809299301d86d/6424266ea05809fe3d01d87e_nimble-made-hMMXhKSZk7k-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809299301d86d\6424266ea05809fe3d01d87e_nimble-made-hMMXhKSZk7k-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809005201d8f6_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809005201d8f6_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809009601d919_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809009601d919_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea0580900ce01d8f9_christian-gertenbach-AqCVniFulhY-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580900ce01d8f9_christian-gertenbach-AqCVniFulhY-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809018001d8ca_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809018001d8ca_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809019001d8b3_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809019001d8b3_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea0580903cb01d8de_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580903cb01d8de_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea058090c6101d90f_voyage-pro-u36g8i9nCao-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058090c6101d90f_voyage-pro-u36g8i9nCao-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea058090efc01d8e1_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058090efc01d8e1_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea058090f0f01d8cd_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058090f0f01d8cd_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea058090fae01d905_erwi-8bFOQ1cBS_k-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058090fae01d905_erwi-8bFOQ1cBS_k-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809119201d901_brittany-bendabout-SLy3Ub6VLPU-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809119201d901_brittany-bendabout-SLy3Ub6VLPU-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809131401d8ff_raden-prasetya-5vJ6GY0KzBs-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809131401d8ff_raden-prasetya-5vJ6GY0KzBs-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809154f01d8eb_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809154f01d8eb_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea0580917c901d8c6_Facebook.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580917c901d8c6_Facebook.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809200901d8b5_ryan-plomp-jvoZ-Aux9aw-unsplash (1).jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809200901d8b5_ryan-plomp-jvoZ-Aux9aw-unsplash (1).jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809203601d906_erwi-Ke1jIvnq4Xo-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809203601d906_erwi-Ke1jIvnq4Xo-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809218f01d91b_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809218f01d91b_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809221c01d8c3_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809221c01d8c3_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809294c01d92c_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809294c01d92c_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea0580929a801d92e_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580929a801d92e_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea058092bd401d8e8_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058092bd401d8e8_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea058092ec401d910_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058092ec401d910_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea0580932e801d916_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580932e801d916_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea0580935cd01d8b4_ilyuza-mingazova-LUOwdouWIh0-unsplash (1).jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580935cd01d8b4_ilyuza-mingazova-LUOwdouWIh0-unsplash (1).jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809387f01d92d_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809387f01d92d_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea058093ef501d8cc_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058093ef501d8cc_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea058093fb401d913_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058093fb401d913_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809435601d8e7_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809435601d8e7_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea0580944e801d924_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580944e801d924_Vectors-Wrapper-1.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea0580946ad01d926_engin-akyurt-jaZoffxg1yc-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580946ad01d926_engin-akyurt-jaZoffxg1yc-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea0580946e101d8c4_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580946e101d8c4_Vectors-Wrapper-1.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea0580948c201d8c7_Instagram B.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580948c201d8c7_Instagram B.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea058094d2201d918_AM Shape.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058094d2201d918_AM Shape.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea058094da201d8b8_1edcc4f2dfd47c6aa5d1af9f774bc12c-1.png
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058094da201d8b8_1edcc4f2dfd47c6aa5d1af9f774bc12c-1.png
+Content Type: image/png
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea058094fa001d8f8_force-majeure-SmIlY2uAHo8-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058094fa001d8f8_force-majeure-SmIlY2uAHo8-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea0580952ee01d8ce_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580952ee01d8ce_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea0580953a601d8c2_gordon-cowie-B75bd6qoSqQ-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580953a601d8c2_gordon-cowie-B75bd6qoSqQ-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea0580954ad01d8f7_onur-senay-AN4v5yzEFOs-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580954ad01d8f7_onur-senay-AN4v5yzEFOs-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea0580954d001d8ba_malvestida-u79wy47kvVs-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580954d001d8ba_malvestida-u79wy47kvVs-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea058095c4401d90d_kal-visuals-8OFRGUcJP2Y-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058095c4401d90d_kal-visuals-8OFRGUcJP2Y-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea058095c4c01d8fb_lauro-rodriguez-2m2wFSFCPa4-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058095c4c01d8fb_lauro-rodriguez-2m2wFSFCPa4-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea058095f0f01d915_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058095f0f01d915_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809654e01d8c9_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809654e01d8c9_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea0580967e001d8b9_ahmed-carter-GP3-QpmTgPk-unsplash (1).jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580967e001d8b9_ahmed-carter-GP3-QpmTgPk-unsplash (1).jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea0580968b201d8e0_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580968b201d8e0_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea0580969bf01d903_artyom-kim-gzaXICn5P8o-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580969bf01d903_artyom-kim-gzaXICn5P8o-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea058096a9b01d927_raphael-nast-HyaSbSRA39A-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058096a9b01d927_raphael-nast-HyaSbSRA39A-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea058096c3501d8c5_In.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058096c3501d8c5_In.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea058096e6701d925_flower.jpg.png
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058096e6701d925_flower.jpg.png
+Content Type: image/png
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809702c01d8c0_ethan-haddox-QHGcADeeT00-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809702c01d8c0_ethan-haddox-QHGcADeeT00-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809719d01d904_oladimeji-odunsi-8XYrtCESnqM-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809719d01d904_oladimeji-odunsi-8XYrtCESnqM-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea0580972b801d91a_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea0580972b801d91a_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809796e01d8e4_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809796e01d8e4_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea058097b9201d8b6_mike-von-qsJ5itg93WY-unsplash (1).jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058097b9201d8b6_mike-von-qsJ5itg93WY-unsplash (1).jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea058097dcf01d91d_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058097dcf01d91d_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea058097eec01d8cb_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058097eec01d8cb_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea058097f8401d8fe_highlight-id-jL7oztaDbHc-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea058097f8401d8fe_highlight-id-jL7oztaDbHc-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809867c01d8b7_HP Image.png
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809867c01d8b7_HP Image.png
+Content Type: image/png
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809a1d401d8fa_lucas-calloch-w5JYcbi7ew8-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809a1d401d8fa_lucas-calloch-w5JYcbi7ew8-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809a9cd01d91c_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809a9cd01d91c_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809ad3701d900_yogendra-singh-_c56tTiztfA-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809ad3701d900_yogendra-singh-_c56tTiztfA-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809b15c01d8e9_Vectors-Wrapper.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809b15c01d8e9_Vectors-Wrapper.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809d17201d90e_kal-visuals-yMemQcLR8T4-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809d17201d90e_kal-visuals-yMemQcLR8T4-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809d19201d8fd_carmen-laezza-njWFb6fQm8w-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809d19201d8fd_carmen-laezza-njWFb6fQm8w-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809d2c701d902_mathilde-langevin-2DkKtRzHRB8-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809d2c701d902_mathilde-langevin-2DkKtRzHRB8-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809df0f01d8fc_duane-mendes-p-gGii_xGK8-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809df0f01d8fc_duane-mendes-p-gGii_xGK8-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809e1c301d8c1_cleo-vermij-wSct4rrBPWc-unsplash.jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809e1c301d8c1_cleo-vermij-wSct4rrBPWc-unsplash.jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/6424266ea05809eb3b01d8bb_mark-adriane--uJ3N7HLiEg-unsplash (1).jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\6424266ea05809eb3b01d8bb_mark-adriane--uJ3N7HLiEg-unsplash (1).jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/644a3fc79f917de63e89cdf4_Group 1000002672.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\644a3fc79f917de63e89cdf4_Group 1000002672.svg
+Content Type: image/svg+xml
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/644a45e54a45a8e99de87bf9_32x32.png
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\644a45e54a45a8e99de87bf9_32x32.png
+Content Type: image/png
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/644a45ebfe18c9633c004982_256x256.png
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\644a45ebfe18c9633c004982_256x256.png
+Content Type: image/png
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/644a466d5b4f895cd7efc059_Hero (1).jpeg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\644a466d5b4f895cd7efc059_Hero (1).jpeg
+Content Type: image/jpeg
+
+Uri: https://cdn.prod.website-files.com/6424266ea05809dff501d86e/64511a3c30cf930b1bcd1846_logo.svg
+File Name: E:\e-com-mwu\sartorialist.webflow.io\6424266ea05809dff501d86e\64511a3c30cf930b1bcd1846_logo.svg
+Content Type: image/svg+xml
+
+Uri: https://d3e54v103j8qbb.cloudfront.net/js/jquery-3.5.1.min.dc5e7f18c8.js?site=6424266ea05809dff501d86e
+File Name: E:\e-com-mwu\sartorialist.webflow.io\js\jquery-3.5.1.min.dc5e7f18c8.js
+Content Type: application/javascript
+
+Uri: https://sartorialist.webflow.io/
+File Name: E:\e-com-mwu\sartorialist.webflow.io\index.htm
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/about
+File Name: E:\e-com-mwu\sartorialist.webflow.io\about.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/authors/concepcion-simonis
+File Name: E:\e-com-mwu\sartorialist.webflow.io\authors\concepcion-simonis.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/authors/ilene-metz
+File Name: E:\e-com-mwu\sartorialist.webflow.io\authors\ilene-metz.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/authors/janice-aufderhar
+File Name: E:\e-com-mwu\sartorialist.webflow.io\authors\janice-aufderhar.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/authors/lillie-hyatt
+File Name: E:\e-com-mwu\sartorialist.webflow.io\authors\lillie-hyatt.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/authors/mylene-heidenreich
+File Name: E:\e-com-mwu\sartorialist.webflow.io\authors\mylene-heidenreich.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/blog
+File Name: E:\e-com-mwu\sartorialist.webflow.io\blog.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/blog/entrepreneur-100-powerfull-women
+File Name: E:\e-com-mwu\sartorialist.webflow.io\blog\entrepreneur-100-powerfull-women.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/blog/learn-something-new-today
+File Name: E:\e-com-mwu\sartorialist.webflow.io\blog\learn-something-new-today.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/blog/lorem-ipsum-dolor-sit-amet-consectetur-at-suspendisse
+File Name: E:\e-com-mwu\sartorialist.webflow.io\blog\lorem-ipsum-dolor-sit-amet-consectetur-at-suspendisse.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/blog/maiores-perferendis
+File Name: E:\e-com-mwu\sartorialist.webflow.io\blog\maiores-perferendis.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/blog/some-trends-are-lying
+File Name: E:\e-com-mwu\sartorialist.webflow.io\blog\some-trends-are-lying.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/blog/styles-and-fashion-editorials-with-mark
+File Name: E:\e-com-mwu\sartorialist.webflow.io\blog\styles-and-fashion-editorials-with-mark.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/category-blog/editorials
+File Name: E:\e-com-mwu\sartorialist.webflow.io\category-blog\editorials.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/category-blog/marketing
+File Name: E:\e-com-mwu\sartorialist.webflow.io\category-blog\marketing.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/category-blog/press-releases
+File Name: E:\e-com-mwu\sartorialist.webflow.io\category-blog\press-releases.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/category/jackets-coats
+File Name: E:\e-com-mwu\sartorialist.webflow.io\category\jackets-coats.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/category/puma
+File Name: E:\e-com-mwu\sartorialist.webflow.io\category\puma.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/category/snickers
+File Name: E:\e-com-mwu\sartorialist.webflow.io\category\snickers.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/category/street-fashion-outifts
+File Name: E:\e-com-mwu\sartorialist.webflow.io\category\street-fashion-outifts.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/category/watches
+File Name: E:\e-com-mwu\sartorialist.webflow.io\category\watches.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/checkout
+File Name: E:\e-com-mwu\sartorialist.webflow.io\checkout.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/contact-us
+File Name: E:\e-com-mwu\sartorialist.webflow.io\contact-us.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/faq
+File Name: E:\e-com-mwu\sartorialist.webflow.io\faq.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/product/aviator-classic-sunglasses
+File Name: E:\e-com-mwu\sartorialist.webflow.io\product\aviator-classic-sunglasses.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/product/black-leather-shoulder-bag
+File Name: E:\e-com-mwu\sartorialist.webflow.io\product\black-leather-shoulder-bag.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/product/cashmere-t-shirt-without-logo
+File Name: E:\e-com-mwu\sartorialist.webflow.io\product\cashmere-t-shirt-without-logo.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/product/puma-ecological-army
+File Name: E:\e-com-mwu\sartorialist.webflow.io\product\puma-ecological-army.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/product/simple-t-shirt-with-text
+File Name: E:\e-com-mwu\sartorialist.webflow.io\product\simple-t-shirt-with-text.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/product/sleek-metal-watch
+File Name: E:\e-com-mwu\sartorialist.webflow.io\product\sleek-metal-watch.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/shop
+File Name: E:\e-com-mwu\sartorialist.webflow.io\shop.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/untitled
+File Name: E:\e-com-mwu\sartorialist.webflow.io\untitled.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/utility-pages/changelog
+File Name: E:\e-com-mwu\sartorialist.webflow.io\utility-pages\changelog.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/utility-pages/licenses
+File Name: E:\e-com-mwu\sartorialist.webflow.io\utility-pages\licenses.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/utility-pages/style-guide
+File Name: E:\e-com-mwu\sartorialist.webflow.io\utility-pages\style-guide.html
+Content Type: text/html
+
+Uri: https://sartorialist.webflow.io/utility-pages/terms-page
+File Name: E:\e-com-mwu\sartorialist.webflow.io\utility-pages\terms-page.html
+Content Type: text/html
+
