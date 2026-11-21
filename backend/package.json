@@ -1,0 +1,47 @@
+{
+  "name": "lane4-backend",
+  "version": "1.0.0",
+  "description": "Production Node.js & Express backend for The Lane4 Performance Store with Firebase Admin SDK and Cloudinary",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest --runInBand --detectOpenHandles --forceExit",
+    "test:e2e": "jest tests/e2e_journey.test.js --runInBand --detectOpenHandles --forceExit",
+    "create-admin": "node src/scripts/createInitialAdmin.js"
+  },
+  "keywords": [
+    "lane4",
+    "ecommerce",
+    "express",
+    "firebase",
+    "firestore",
+    "cloudinary",
+    "swimming"
+  ],
+  "author": "The Lane4 Engineering Team",
+  "license": "ISC",
+  "dependencies": {
+    "cloudinary": "^2.5.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "express-validator": "^7.2.1",
+    "firebase-admin": "^13.1.0",
+    "helmet": "^8.0.0",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.10.0",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.9",
+    "supertest": "^7.0.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testTimeout": 10000
+  }
+}

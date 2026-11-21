@@ -1,0 +1,522 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        ('admin' in request.auth.token && request.auth.token.admin == true) ||
+        ('role' in request.auth.token && request.auth.token.role in ['super_admin', 'admin', 'order_manager', 'product_manager', 'inventory_manager']) ||
+        (request.auth.token.email == 'admin@lane4swim.in' && request.auth.token.email_verified == true) ||
+        (exists(/databases/$(database)/documents/adminUsers/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.isActive == true)
+      );
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() && (
+        ('role' in request.auth.token && request.auth.token.role == 'super_admin') ||
+        (request.auth.token.email == 'admin@lane4swim.in' && request.auth.token.email_verified == true) ||
+        (exists(/databases/$(database)/documents/adminUsers/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.role == 'super_admin' &&
+         get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.isActive == true)
+      );
+    }
+
+    function isValidEmail(email) {
+      return email is string &&
+        email.size() <= 150 &&
+        email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
+    }
+
+    function isOrderOwner(orderId) {
+      return isAuthenticated() &&
+        orderId is string &&
+        orderId.size() > 0 &&
+        exists(/databases/$(database)/documents/orders/$(orderId)) &&
+        get(/databases/$(database)/documents/orders/$(orderId)).data.customerId == request.auth.uid;
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidProduct(data) {
+      return data.id is string && data.id.size() > 0 && data.id.size() <= 100 &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+        data.slug is string && data.slug.size() > 0 && data.slug.size() <= 200 &&
+        data.sku is string && data.sku.size() > 0 && data.sku.size() <= 100 &&
+        data.description is string && data.description.size() > 0 && data.description.size() <= 10000 &&
+        (!('shortDescription' in data) || (data.shortDescription is string && data.shortDescription.size() <= 500)) &&
+        data.categoryId is string && data.categoryId.size() > 0 && data.categoryId.size() <= 100 &&
+        data.categorySlug is string && data.categorySlug.size() > 0 && data.categorySlug.size() <= 100 &&
+        (!('subcategory' in data) || (data.subcategory is string && data.subcategory.size() <= 100)) &&
+        data.regularPricePaise is int && data.regularPricePaise > 0 &&
+        (!('salePricePaise' in data) || (data.salePricePaise is int && data.salePricePaise >= 0)) &&
+        data.hasVariants is bool &&
+        data.variants is list && data.variants.size() <= 50 &&
+        (!('specifications' in data) || data.specifications is map) &&
+        data.images is list && data.images.size() <= 20 &&
+        data.isFeatured is bool &&
+        data.isBestseller is bool &&
+        data.isNewArrival is bool &&
+        data.isPublished is bool &&
+        data.isDeleted is bool &&
+        (!('seo' in data) || data.seo is map) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp &&
+        (!('deletedAt' in data) || data.deletedAt is timestamp);
+    }
+
+    function isValidCategory(data) {
+      return data.id is string && data.id.size() > 0 && data.id.size() <= 100 &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+        data.slug is string && data.slug.size() > 0 && data.slug.size() <= 100 &&
+        (!('description' in data) || (data.description is string && data.description.size() <= 1000)) &&
+        data.displayOrder is int &&
+        (!('image' in data) || data.image is map) &&
+        (!('parentCategoryId' in data) || (data.parentCategoryId is string && data.parentCategoryId.size() <= 100)) &&
+        data.isPublished is bool &&
+        data.isDeleted is bool &&
+        data.productCount is int && data.productCount >= 0 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidReview(data) {
+      return data.reviewId is string && data.reviewId.size() > 0 && data.reviewId.size() <= 100 &&
+        data.productId is string && data.productId.size() > 0 && data.productId.size() <= 100 &&
+        data.customerId is string && data.customerId.size() > 0 && data.customerId.size() <= 128 &&
+        data.authorName is string && data.authorName.size() > 0 && data.authorName.size() <= 100 &&
+        data.rating is int && data.rating >= 1 && data.rating <= 5 &&
+        data.title is string && data.title.size() > 0 && data.title.size() <= 150 &&
+        data.comment is string && data.comment.size() > 0 && data.comment.size() <= 2000 &&
+        data.isVerifiedPurchase is bool &&
+        data.status in ['pending', 'approved', 'rejected'] &&
+        data.createdAt is timestamp &&
+        (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    function isValidStoreSettings(data) {
+      return data.storeName is string && data.storeName.size() > 0 && data.storeName.size() <= 100 &&
+        data.supportEmail is string && isValidEmail(data.supportEmail) &&
+        data.supportPhone is string && data.supportPhone.size() > 0 && data.supportPhone.size() <= 30 &&
+        data.storeAddress is string && data.storeAddress.size() > 0 && data.storeAddress.size() <= 300 &&
+        (!('instagramUrl' in data) || (data.instagramUrl is string && data.instagramUrl.size() <= 500)) &&
+        (!('googleMapsUrl' in data) || (data.googleMapsUrl is string && data.googleMapsUrl.size() <= 1000)) &&
+        (!('announcementBanner' in data) || data.announcementBanner is map) &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidPaymentSettings(data) {
+      return data.enabled is bool &&
+        data.upiId is string && data.upiId.size() > 0 && data.upiId.size() <= 100 &&
+        data.upiAccountName is string && data.upiAccountName.size() > 0 && data.upiAccountName.size() <= 150 &&
+        data.paymentInstructions is string && data.paymentInstructions.size() > 0 && data.paymentInstructions.size() <= 2000 &&
+        (!('qrCodeImage' in data) || data.qrCodeImage is map) &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidShippingSettings(data) {
+      return data.baseShippingChargePaise is int && data.baseShippingChargePaise >= 0 &&
+        data.freeShippingThresholdPaise is int && data.freeShippingThresholdPaise >= 0 &&
+        data.estimatedDeliveryDays is string && data.estimatedDeliveryDays.size() > 0 && data.estimatedDeliveryDays.size() <= 100 &&
+        (!('restrictedPinCodes' in data) || (data.restrictedPinCodes is list && data.restrictedPinCodes.size() <= 500)) &&
+        data.serviceableAllIndia is bool &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidUser(data) {
+      return data.uid is string && data.uid.size() > 0 && data.uid.size() <= 128 &&
+        data.email is string && isValidEmail(data.email) &&
+        data.displayName is string && data.displayName.size() > 0 && data.displayName.size() <= 100 &&
+        (!('phoneNumber' in data) || (data.phoneNumber is string && data.phoneNumber.size() <= 30)) &&
+        data.emailVerified is bool &&
+        data.role == 'customer' &&
+        data.status in ['active', 'disabled'] &&
+        data.totalOrdersCount is int && data.totalOrdersCount >= 0 &&
+        data.totalSpendPaise is int && data.totalSpendPaise >= 0 &&
+        (!('defaultShippingAddressId' in data) || (data.defaultShippingAddressId is string && data.defaultShippingAddressId.size() <= 100)) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidAddress(data) {
+      return data.addressId is string && data.addressId.size() > 0 && data.addressId.size() <= 100 &&
+        data.addressee is string && data.addressee.size() > 0 && data.addressee.size() <= 100 &&
+        data.phone is string && data.phone.size() > 0 && data.phone.size() <= 30 &&
+        data.addressLine1 is string && data.addressLine1.size() > 0 && data.addressLine1.size() <= 200 &&
+        (!('addressLine2' in data) || (data.addressLine2 is string && data.addressLine2.size() <= 200)) &&
+        data.city is string && data.city.size() > 0 && data.city.size() <= 100 &&
+        data.state is string && data.state.size() > 0 && data.state.size() <= 100 &&
+        data.postalCode is string && data.postalCode.size() > 0 && data.postalCode.size() <= 20 &&
+        data.country is string && data.country.size() > 0 && data.country.size() <= 50 &&
+        data.isDefault is bool &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidAdminUser(data) {
+      return data.uid is string && data.uid.size() > 0 && data.uid.size() <= 128 &&
+        data.email is string && isValidEmail(data.email) &&
+        data.displayName is string && data.displayName.size() > 0 && data.displayName.size() <= 100 &&
+        data.role in ['super_admin', 'admin', 'order_manager', 'product_manager', 'inventory_manager'] &&
+        data.permissions is list && data.permissions.size() <= 100 &&
+        data.isActive is bool &&
+        (!('createdBy' in data) || (data.createdBy is string && data.createdBy.size() <= 128)) &&
+        (!('lastLoginAt' in data) || data.lastLoginAt is timestamp) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidCart(data) {
+      return data.cartId is string && data.cartId.size() > 0 && data.cartId.size() <= 128 &&
+        (!('customerId' in data) || data.customerId == null || (data.customerId is string && data.customerId.size() <= 128)) &&
+        (!('guestId' in data) || data.guestId == null || (data.guestId is string && data.guestId.size() <= 128)) &&
+        data.items is list && data.items.size() <= 50 &&
+        data.subtotalPaise is int && data.subtotalPaise >= 0 &&
+        data.totalItemsCount is int && data.totalItemsCount >= 0 &&
+        (!('couponCode' in data) || (data.couponCode is string && data.couponCode.size() <= 50)) &&
+        (!('discountPaise' in data) || (data.discountPaise is int && data.discountPaise >= 0)) &&
+        data.expiresAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidCoupon(data) {
+      return data.code is string && data.code.size() > 0 && data.code.size() <= 50 &&
+        data.description is string && data.description.size() <= 500 &&
+        data.discountType in ['percentage', 'fixed_amount'] &&
+        data.discountValue is int && data.discountValue > 0 &&
+        data.minOrderValuePaise is int && data.minOrderValuePaise >= 0 &&
+        (!('maxDiscountPaise' in data) || (data.maxDiscountPaise is int && data.maxDiscountPaise >= 0)) &&
+        data.startDate is timestamp &&
+        data.expiryDate is timestamp &&
+        (!('totalUsageLimit' in data) || (data.totalUsageLimit is int && data.totalUsageLimit >= 0)) &&
+        data.usedCount is int && data.usedCount >= 0 &&
+        data.perCustomerLimit is int && data.perCustomerLimit >= 1 &&
+        (!('applicableCategories' in data) || (data.applicableCategories is list && data.applicableCategories.size() <= 50)) &&
+        (!('applicableProducts' in data) || (data.applicableProducts is list && data.applicableProducts.size() <= 50)) &&
+        data.isActive is bool &&
+        (!('isDeleted' in data) || data.isDeleted is bool) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidEnquiry(data) {
+      return data.enquiryId is string && data.enquiryId.size() > 0 && data.enquiryId.size() <= 100 &&
+        data.type in ['press', 'complaint', 'feedback', 'ideas', 'general'] &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+        data.email is string && isValidEmail(data.email) &&
+        data.phone is string && data.phone.size() > 0 && data.phone.size() <= 30 &&
+        data.message is string && data.message.size() > 0 && data.message.size() <= 3000 &&
+        data.status in ['new', 'in_review', 'resolved', 'archived'] &&
+        (!('adminNotes' in data) || (data.adminNotes is string && data.adminNotes.size() <= 2000)) &&
+        (!('resolvedAt' in data) || data.resolvedAt is timestamp) &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidNewsletterSubscriber(data) {
+      return data.email is string && isValidEmail(data.email) &&
+        (!('sourcePage' in data) || (data.sourcePage is string && data.sourcePage.size() <= 100)) &&
+        data.status in ['subscribed', 'unsubscribed'] &&
+        (!('ipAddress' in data) || (data.ipAddress is string && data.ipAddress.size() <= 100)) &&
+        data.subscribedAt is timestamp;
+    }
+
+    function isValidReturn(data) {
+      return data.returnId is string && data.returnId.size() > 0 && data.returnId.size() <= 100 &&
+        data.orderId is string && data.orderId.size() > 0 && data.orderId.size() <= 100 &&
+        data.orderNumber is string && data.orderNumber.size() > 0 && data.orderNumber.size() <= 100 &&
+        data.customerId is string && data.customerId.size() > 0 && data.customerId.size() <= 128 &&
+        data.customerEmail is string && isValidEmail(data.customerEmail) &&
+        data.items is list && data.items.size() > 0 && data.items.size() <= 20 &&
+        data.status in ['requested', 'approved', 'rejected', 'item_received', 'refunded'] &&
+        data.customerUpiId is string && data.customerUpiId.size() > 0 && data.customerUpiId.size() <= 100 &&
+        (!('adminNotes' in data) || (data.adminNotes is string && data.adminNotes.size() <= 2000)) &&
+        data.createdAt is timestamp &&
+        (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    // ===============================================================
+    // Collections
+    // ===============================================================
+
+    // 1. PRODUCTS
+    match /products/{productId} {
+      allow read: if (resource.data.isPublished == true && resource.data.isDeleted == false) || isAdmin();
+      allow create: if isAdmin() && isValidProduct(request.resource.data);
+      allow update: if isAdmin() && isValidProduct(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // 2. CATEGORIES
+    match /categories/{categoryId} {
+      allow read: if (resource.data.isPublished == true &&
+                     (!('isDeleted' in resource.data) || resource.data.isDeleted == false)) || isAdmin();
+      allow create: if isAdmin() && isValidCategory(request.resource.data);
+      allow update: if isAdmin() && isValidCategory(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // 3. REVIEWS
+    match /reviews/{reviewId} {
+      allow read: if (resource.data.status == 'approved') ||
+                     (isAuthenticated() && resource.data.customerId == request.auth.uid) ||
+                     isAdmin();
+      allow create: if isAuthenticated() &&
+                       isValidReview(request.resource.data) &&
+                       request.resource.data.reviewId == reviewId &&
+                       request.resource.data.customerId == request.auth.uid &&
+                       request.resource.data.status == 'pending' &&
+                       request.resource.data.isVerifiedPurchase == false &&
+                       request.resource.data.createdAt <= request.time;
+      allow update: if isAdmin() && isValidReview(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // 4. STORE SETTINGS
+    match /storeSettings/{settingId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidStoreSettings(request.resource.data);
+      allow update: if isAdmin() && isValidStoreSettings(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // 5. PAYMENT SETTINGS
+    match /paymentSettings/{settingId} {
+      allow read: if settingId == 'upi_qr' || isAdmin();
+      allow create: if isAdmin() && isValidPaymentSettings(request.resource.data);
+      allow update: if isAdmin() && isValidPaymentSettings(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // 6. SHIPPING SETTINGS
+    match /shippingSettings/{settingId} {
+      allow read: if settingId == 'global' || isAdmin();
+      allow create: if isAdmin() && isValidShippingSettings(request.resource.data);
+      allow update: if isAdmin() && isValidShippingSettings(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // 7. USERS (CUSTOMERS) & ADDRESSES
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() &&
+                       isOwner(userId) &&
+                       isValidUser(request.resource.data) &&
+                       request.resource.data.uid == userId &&
+                       request.resource.data.role == 'customer' &&
+                       request.resource.data.totalOrdersCount == 0 &&
+                       request.resource.data.totalSpendPaise == 0 &&
+                       request.resource.data.createdAt <= request.time;
+      allow update: if (
+        isOwner(userId) &&
+        isValidUser(request.resource.data) &&
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.email == resource.data.email &&
+        request.resource.data.role == resource.data.role &&
+        request.resource.data.totalOrdersCount == resource.data.totalOrdersCount &&
+        request.resource.data.totalSpendPaise == resource.data.totalSpendPaise &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.emailVerified == resource.data.emailVerified
+      ) || isAdmin();
+      allow delete: if isAdmin();
+
+      // Subcollection: Addresses
+      match /addresses/{addressId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if (
+          isOwner(userId) &&
+          isValidAddress(request.resource.data) &&
+          request.resource.data.addressId == addressId &&
+          request.resource.data.createdAt <= request.time
+        ) || isAdmin();
+        allow update: if (
+          isOwner(userId) &&
+          isValidAddress(request.resource.data) &&
+          request.resource.data.addressId == resource.data.addressId &&
+          request.resource.data.createdAt == resource.data.createdAt
+        ) || isAdmin();
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    // 8. ADMIN USERS
+    match /adminUsers/{adminId} {
+      allow read: if isAdmin();
+      allow create: if isSuperAdmin() &&
+                       isValidAdminUser(request.resource.data) &&
+                       request.resource.data.uid == adminId;
+      allow update: if isSuperAdmin() &&
+                       isValidAdminUser(request.resource.data) &&
+                       request.resource.data.uid == resource.data.uid &&
+                       request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isSuperAdmin();
+    }
+
+    // 9. CARTS
+    match /carts/{cartId} {
+      allow read: if (isAuthenticated() && (
+                       ('customerId' in resource.data && resource.data.customerId == request.auth.uid) ||
+                       cartId == request.auth.uid
+                     )) ||
+                     (!isAuthenticated() &&
+                      (!('customerId' in resource.data) || resource.data.customerId == null) &&
+                      ('guestId' in resource.data && resource.data.guestId == cartId)
+                     ) ||
+                     isAdmin();
+      allow create: if isValidCart(request.resource.data) &&
+                       request.resource.data.cartId == cartId &&
+                       (
+                         (isAuthenticated() && (
+                           ('customerId' in request.resource.data && request.resource.data.customerId == request.auth.uid) ||
+                           cartId == request.auth.uid
+                         )) ||
+                         (!isAuthenticated() &&
+                          (!('customerId' in request.resource.data) || request.resource.data.customerId == null) &&
+                          ('guestId' in request.resource.data && request.resource.data.guestId == cartId)
+                         )
+                       );
+      allow update: if isValidCart(request.resource.data) &&
+                       request.resource.data.cartId == resource.data.cartId &&
+                       (
+                         (isAuthenticated() && (
+                            ('customerId' in resource.data && resource.data.customerId == request.auth.uid) ||
+                            cartId == request.auth.uid
+                          ) &&
+                          ('customerId' in request.resource.data && request.resource.data.customerId == request.auth.uid)
+                         ) ||
+                         (!isAuthenticated() &&
+                          (!('customerId' in resource.data) || resource.data.customerId == null) &&
+                          ('guestId' in resource.data && resource.data.guestId == cartId) &&
+                          (!('customerId' in request.resource.data) || request.resource.data.customerId == null) &&
+                          ('guestId' in request.resource.data && request.resource.data.guestId == cartId)
+                         ) ||
+                         isAdmin()
+                       );
+      allow delete: if (isAuthenticated() && (
+                       ('customerId' in resource.data && resource.data.customerId == request.auth.uid) ||
+                       cartId == request.auth.uid
+                     )) ||
+                     (!isAuthenticated() &&
+                      (!('customerId' in resource.data) || resource.data.customerId == null) &&
+                      ('guestId' in resource.data && resource.data.guestId == cartId)
+                     ) ||
+                     isAdmin();
+    }
+
+    // 10. ORDERS
+    match /orders/{orderId} {
+      allow read: if (isAuthenticated() && resource.data.customerId == request.auth.uid) || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // 11. PAYMENTS
+    match /payments/{paymentId} {
+      allow read: if (isAuthenticated() && (
+                     ('customerId' in resource.data && resource.data.customerId == request.auth.uid) ||
+                     (resource.data.orderId != null && isOrderOwner(resource.data.orderId))
+                   )) || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // 12. COUPONS
+    match /coupons/{couponCode} {
+      allow read: if (resource.data.isActive == true &&
+                     (!('isDeleted' in resource.data) || resource.data.isDeleted == false)) || isAdmin();
+      allow create: if isAdmin() && isValidCoupon(request.resource.data);
+      allow update: if isAdmin() && isValidCoupon(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // 13. INVENTORY & LEDGER
+    match /inventory/{sku} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+
+      // Subcollection: Stock transaction ledger
+      match /ledger/{transactionId} {
+        allow read: if isAdmin();
+        allow write: if false;
+      }
+    }
+
+    // 14. ENQUIRIES
+    match /enquiries/{enquiryId} {
+      allow read: if isAdmin();
+      allow create: if isValidEnquiry(request.resource.data) &&
+                       request.resource.data.enquiryId == enquiryId &&
+                       request.resource.data.status == 'new' &&
+                       !('adminNotes' in request.resource.data) &&
+                       !('resolvedAt' in request.resource.data) &&
+                       request.resource.data.createdAt <= request.time;
+      allow update: if isAdmin() && isValidEnquiry(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // 15. NEWSLETTER SUBSCRIBERS
+    match /newsletterSubscribers/{subscriberId} {
+      allow read: if isAdmin();
+      allow create: if isValidNewsletterSubscriber(request.resource.data) &&
+                       request.resource.data.status == 'subscribed' &&
+                       request.resource.data.subscribedAt <= request.time;
+      allow update: if isAdmin() && isValidNewsletterSubscriber(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // 16. RETURNS
+    match /returns/{returnId} {
+      allow read: if (isAuthenticated() && resource.data.customerId == request.auth.uid) || isAdmin();
+      allow create: if isAuthenticated() &&
+                       isValidReturn(request.resource.data) &&
+                       request.resource.data.returnId == returnId &&
+                       request.resource.data.customerId == request.auth.uid &&
+                       request.resource.data.status == 'requested' &&
+                       !('adminNotes' in request.resource.data) &&
+                       request.resource.data.createdAt <= request.time;
+      allow update: if isAdmin() && isValidReturn(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // 17. REFUNDS
+    match /refunds/{refundId} {
+      allow read: if (isAuthenticated() && (
+                     ('customerId' in resource.data && resource.data.customerId == request.auth.uid) ||
+                     (resource.data.orderId != null && isOrderOwner(resource.data.orderId))
+                   )) || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // 18. NOTIFICATIONS
+    match /notifications/{notificationId} {
+      allow read, write: if isAdmin();
+    }
+
+    // 19. ADMIN ACTIVITY LOGS
+    match /adminActivityLogs/{logId} {
+      allow read: if isSuperAdmin();
+      allow write: if false;
+    }
+
+    // 20. EMAIL LOGS
+    match /emailLogs/{logId} {
+      allow read, write: if false;
+    }
+
+    // Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
