@@ -240,10 +240,17 @@
       </div>
 
       <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;margin-bottom:20px;">
-        <!-- QR Code -->
-        <div style="text-align:center;flex:0 0 160px;margin:0 auto;">
-          <img src="${qrUrl}" alt="LANE4 Store UPI QR Code" style="width:160px;height:160px;object-fit:contain;border:1px solid #ddd;border-radius:6px;padding:4px;background:#fff;" />
-          <div style="font-size:11px;color:#888;margin-top:4px;">Official Lane4 UPI QR</div>
+        <!-- QR Code Card with Tap to Enlarge -->
+        <div id="lane4-checkout-qr-card" style="text-align:center;flex:0 0 180px;margin:0 auto;cursor:pointer;position:relative;background:#ffffff;border:1.5px solid #cbd5e1;border-radius:10px;padding:12px 10px 10px;box-shadow:0 4px 12px rgba(15,23,42,0.06);transition:all 0.2s cubic-bezier(0.16, 1, 0.3, 1);" title="Click to enlarge QR code for easy scanning">
+          <div style="position:relative;width:150px;height:150px;margin:0 auto;background:#ffffff;display:flex;align-items:center;justify-content:center;">
+            <img id="lane4-qr-img-display" src="${qrUrl}" alt="LANE4 Store UPI QR Code" style="width:150px;height:150px;object-fit:contain;border-radius:6px;display:block;" />
+            <div style="position:absolute;bottom:4px;background:rgba(15,23,42,0.92);color:#ffffff;font-size:9.5px;font-weight:800;letter-spacing:0.5px;padding:3px 8px;border-radius:20px;display:flex;align-items:center;gap:4px;box-shadow:0 2px 6px rgba(0,0,0,0.25);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+              <span>TAP TO ENLARGE</span>
+            </div>
+          </div>
+          <div style="font-size:11.5px;font-weight:800;color:#0f172a;margin-top:8px;line-height:1.2;">Official Store UPI QR</div>
+          <div style="font-size:10px;color:#64748b;margin-top:2px;">Click to scan in full size</div>
         </div>
 
         <!-- Instructions & UPI VPA -->
@@ -285,6 +292,135 @@
     `;
 
     paymentContainer.appendChild(qrWrapper);
+
+    // Click & Hover interactions for enlarged QR Modal
+    const qrCard = document.getElementById('lane4-checkout-qr-card');
+    if (qrCard) {
+      qrCard.onmouseenter = () => {
+        qrCard.style.transform = 'translateY(-2px) scale(1.02)';
+        qrCard.style.boxShadow = '0 10px 24px -4px rgba(15,23,42,0.15)';
+        qrCard.style.borderColor = '#0f172a';
+      };
+      qrCard.onmouseleave = () => {
+        qrCard.style.transform = 'translateY(0) scale(1)';
+        qrCard.style.boxShadow = '0 4px 12px rgba(15,23,42,0.06)';
+        qrCard.style.borderColor = '#cbd5e1';
+      };
+      qrCard.onclick = () => openEnlargedQrModal();
+    }
+
+    function openEnlargedQrModal() {
+      const existing = document.getElementById('lane4-enlarged-qr-modal');
+      if (existing) existing.remove();
+
+      const currentAmount = (document.getElementById('lane4-qr-amount-display')?.textContent || (checkoutQuote && checkoutQuote.pricing && checkoutQuote.pricing.finalPayableFormatted) || '').trim();
+      const currentQrSrc = document.getElementById('lane4-qr-img-display')?.src || qrUrl;
+
+      const modal = document.createElement('div');
+      modal.id = 'lane4-enlarged-qr-modal';
+      modal.style.cssText = `
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.78);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999999;
+        padding: 16px;
+        box-sizing: border-box;
+      `;
+
+      modal.innerHTML = `
+        <div style="background:#ffffff;border-radius:14px;max-width:440px;width:100%;box-shadow:0 25px 50px -12px rgba(15,23,42,0.35);overflow:hidden;position:relative;box-sizing:border-box;">
+          
+          <!-- Modal Header -->
+          <div style="padding:16px 20px 12px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;background:#ffffff;">
+            <div>
+              <div style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#64748b;line-height:1;">LANE4 INSTANT SETTLEMENT</div>
+              <div style="font-size:17px;font-weight:900;color:#0f172a;margin-top:3px;">Scan &amp; Pay via UPI</div>
+            </div>
+            <button type="button" id="lane4-close-qr-modal" style="background:#f1f5f9;border:none;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#475569;font-size:20px;line-height:1;cursor:pointer;transition:all 0.15s;" title="Close">&times;</button>
+          </div>
+
+          <!-- Modal Body -->
+          <div style="padding:20px;text-align:center;">
+            <!-- Amount Banner -->
+            ${currentAmount ? `
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 16px;display:inline-block;margin-bottom:14px;">
+                <span style="font-size:10.5px;font-weight:700;color:#64748b;text-transform:uppercase;margin-right:6px;">PAYABLE:</span>
+                <span style="font-size:20px;font-weight:900;color:#0f172a;letter-spacing:0.5px;">${currentAmount}</span>
+              </div>
+            ` : ''}
+
+            <!-- High-Contrast Enlarged QR Code -->
+            <div style="background:#ffffff;border:2px solid #0f172a;border-radius:12px;padding:16px;display:inline-block;box-shadow:0 8px 24px -4px rgba(15,23,42,0.12);margin-bottom:14px;">
+              <img src="${currentQrSrc}" alt="Enlarged UPI QR Code" style="width:280px;height:280px;max-width:68vw;max-height:68vw;object-fit:contain;display:block;margin:0 auto;" />
+            </div>
+
+            <!-- Supported Apps -->
+            <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;font-size:10.5px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">
+              <span>Google Pay</span> • <span>PhonePe</span> • <span>Paytm</span> • <span>BHIM</span> • <span>Cred</span>
+            </div>
+
+            <!-- UPI ID Copy Bar in Modal -->
+            <div style="background:#f1f5f9;border-radius:8px;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;">
+              <div style="min-width:0;">
+                <div style="font-size:9.5px;font-weight:800;color:#64748b;text-transform:uppercase;">Store UPI ID (VPA)</div>
+                <div style="font-size:13px;font-weight:800;color:#0f172a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${upiId}</div>
+              </div>
+              <button type="button" id="lane4-modal-copy-btn" style="background:#0f172a;color:#ffffff;border:none;padding:6px 12px;border-radius:5px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0;">
+                COPY
+              </button>
+            </div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div style="padding:12px 20px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:11px;color:#64748b;">Hold camera close to scan code</span>
+            <button type="button" id="lane4-done-qr-modal" style="background:#0f172a;color:#ffffff;border:none;padding:7px 18px;border-radius:6px;font-size:12px;font-weight:800;cursor:pointer;">
+              Done
+            </button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+
+      const closeModal = () => {
+        modal.remove();
+        document.removeEventListener('keydown', onKeyDown);
+      };
+
+      const onKeyDown = (e) => {
+        if (e.key === 'Escape') closeModal();
+      };
+      document.addEventListener('keydown', onKeyDown);
+
+      modal.onclick = (e) => {
+        if (e.target === modal) closeModal();
+      };
+
+      const closeBtn = document.getElementById('lane4-close-qr-modal');
+      if (closeBtn) closeBtn.onclick = closeModal;
+
+      const doneBtn = document.getElementById('lane4-done-qr-modal');
+      if (doneBtn) doneBtn.onclick = closeModal;
+
+      const modalCopyBtn = document.getElementById('lane4-modal-copy-btn');
+      if (modalCopyBtn) {
+        modalCopyBtn.onclick = () => {
+          navigator.clipboard.writeText(upiId);
+          modalCopyBtn.textContent = 'COPIED!';
+          modalCopyBtn.style.background = '#16a34a';
+          setTimeout(() => {
+            modalCopyBtn.textContent = 'COPY';
+            modalCopyBtn.style.background = '#0f172a';
+          }, 1500);
+        };
+      }
+    }
 
     // Copy UPI ID button
     document.getElementById('lane4-copy-upi-btn').onclick = () => {

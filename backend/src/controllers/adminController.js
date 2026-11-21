@@ -314,6 +314,38 @@ class AdminController {
     }
   }
 
+  async uploadPaymentQrImage(req, res, next) {
+    try {
+      const file = req.file || (req.files && (req.files.qrImage?.[0] || req.files.image?.[0] || req.files.file?.[0]));
+      if (!file) {
+        return sendError(res, 'FILE_REQUIRED', 'Please select a QR code image to upload.', null, 400);
+      }
+
+      const uploadResult = await uploadImageBuffer(file.buffer, {
+        folder: 'store_qr',
+        mimeType: file.mimetype,
+        isPrivate: false
+      });
+
+      const updatedSettings = await paymentService.updatePaymentSettings({
+        qrCodeImage: {
+          publicId: uploadResult.publicId,
+          url: uploadResult.secureUrl,
+          uploadedAt: new Date()
+        },
+        qrCodeUrl: uploadResult.secureUrl
+      }, req.user);
+
+      return sendSuccess(res, {
+        qrCodeUrl: uploadResult.secureUrl,
+        publicId: uploadResult.publicId,
+        settings: updatedSettings
+      }, 'UPI QR code image uploaded and active in checkout');
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async updateShippingSettings(req, res, next) {
     try {
       const settings = await shippingService.updateShippingSettings(req.body);

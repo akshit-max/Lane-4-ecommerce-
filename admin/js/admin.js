@@ -774,8 +774,20 @@
       modalBody.innerHTML = `
         <div style="display:flex;flex-direction:column;gap:18px;">
           <div style="background:${isDanger ? '#fef2f2' : '#f8fafc'};border:1px solid ${isDanger ? '#fee2e2' : '#e2e8f0'};border-radius:10px;padding:16px;display:flex;align-items:flex-start;gap:14px;">
-            <div style="width:36px;height:36px;border-radius:50%;background:${isDanger ? '#fee2e2' : '#e2e8f0'};display:flex;align-items:center;justify-content:center;color:${isDanger ? '#dc2626' : '#0f172a'};font-size:18px;font-weight:900;flex-shrink:0;">
-              ${isDanger ? '⚠️' : 'ℹ️'}
+            <div style="width:38px;height:38px;border-radius:50%;background:${isDanger ? '#fee2e2' : '#e0f2fe'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              ${isDanger ? `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+              ` : `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="16" x2="12" y2="12"/>
+                  <line x1="12" y1="8" x2="12.01" y2="8"/>
+                </svg>
+              `}
             </div>
             <div>
               <div style="font-size:16px;font-weight:800;color:${isDanger ? '#991b1b' : '#0f172a'};margin-bottom:4px;">${title}</div>
@@ -785,8 +797,18 @@
 
           <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:12px;border-top:1px solid #e2e8f0;">
             <button type="button" class="btn btn-outline" id="themed-confirm-cancel">${cancelText}</button>
-            <button type="button" class="btn ${isDanger ? 'btn-danger' : 'btn-primary'}" id="themed-confirm-ok" style="padding:9px 20px;font-size:13px;font-weight:700;">
-              ${confirmText}
+            <button type="button" class="btn ${isDanger ? 'btn-danger' : 'btn-primary'}" id="themed-confirm-ok" style="padding:9px 20px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px;">
+              ${isDanger ? `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+              ` : `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              `}
+              <span>${confirmText}</span>
             </button>
           </div>
         </div>
@@ -906,7 +928,9 @@
           ${escapeHtml(message)}
         </div>
       </div>
-      <button type="button" onclick="hideToast()" style="background:none;border:none;color:#94a3b8;font-size:18px;line-height:1;cursor:pointer;padding:0 2px;margin-left:4px;border-radius:4px;transition:color 0.15s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#94a3b8'" title="Close">&times;</button>
+      <button type="button" onclick="hideToast()" style="background:none;border:none;color:#94a3b8;cursor:pointer;padding:4px;margin-left:4px;border-radius:4px;display:flex;align-items:center;justify-content:center;transition:color 0.15s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#94a3b8'" aria-label="Close notification" title="Close">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
     `;
 
     // Pause on hover
@@ -926,6 +950,49 @@
   window.showToast = showToast;
   window.hideToast = hideToast;
   window.showThemedConfirm = showThemedConfirm;
+
+  function previewQrModal(imgSrc) {
+    let existing = document.getElementById('lane4-admin-qr-modal');
+    if (existing) existing.remove();
+
+    const currentImg = imgSrc || (document.getElementById('admin-qr-preview-img') ? document.getElementById('admin-qr-preview-img').src : '6424266ea05809dff501d86e/lane4-share.png');
+
+    const modal = document.createElement('div');
+    modal.id = 'lane4-admin-qr-modal';
+    modal.style.cssText = `
+      position:fixed;inset:0;background:rgba(15,23,42,0.78);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+      display:flex;align-items:center;justify-content:center;z-index:9999999;padding:16px;box-sizing:border-box;
+    `;
+    modal.innerHTML = `
+      <div style="background:#ffffff;border-radius:12px;max-width:420px;width:100%;box-shadow:0 20px 30px -10px rgba(15,23,42,0.3);overflow:hidden;position:relative;">
+        <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;background:#ffffff;">
+          <div>
+            <div style="font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;">Storefront Payment QR</div>
+            <div style="font-size:16px;font-weight:900;color:#0f172a;margin-top:2px;">UPI Payment QR Preview</div>
+          </div>
+          <button type="button" onclick="document.getElementById('lane4-admin-qr-modal').remove()" style="background:#f1f5f9;border:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#475569;font-size:18px;cursor:pointer;" title="Close">&times;</button>
+        </div>
+        <div style="padding:24px;text-align:center;background:#ffffff;">
+          <div style="background:#ffffff;border:2px solid #0f172a;border-radius:12px;padding:16px;display:inline-block;box-shadow:0 8px 24px -4px rgba(15,23,42,0.12);">
+            <img src="${currentImg}" alt="Enlarged Store UPI QR" style="width:260px;height:260px;max-width:65vw;max-height:65vw;object-fit:contain;display:block;margin:0 auto;" />
+          </div>
+          <div style="margin-top:14px;font-size:12px;color:#475569;font-weight:600;line-height:1.4;">
+            This high-resolution QR is rendered directly inside Step 3 of checkout for customers.
+          </div>
+        </div>
+        <div style="padding:12px 20px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:11px;color:#64748b;">Scan with any UPI app camera</span>
+          <button type="button" onclick="document.getElementById('lane4-admin-qr-modal').remove()" class="btn" style="background:#0f172a;color:#ffffff;padding:8px 18px;font-size:12px;font-weight:800;border-radius:6px;cursor:pointer;">Close</button>
+        </div>
+      </div>
+    `;
+
+    modal.onclick = (e) => {
+      if (e.target === modal) modal.remove();
+    };
+    document.body.appendChild(modal);
+  }
+  window.previewQrModal = previewQrModal;
 
   // --- DASHBOARD ---
   async function loadDashboard() {
@@ -1085,7 +1152,10 @@
               <div class="card-title">UPI Payment Submissions (${payments.length})</div>
               <p style="font-size:12px;color:#64748b;margin:4px 0 0 0;">Inspect actual user smartphone payment screenshots, match 12-digit UTR against bank records, and verify or reject orders.</p>
             </div>
-            <button class="btn btn-outline" style="font-size:12px;padding:6px 12px;" onclick="loadPayments()">&#x21bb; Refresh Submissions</button>
+            <button class="btn btn-outline" style="font-size:12px;padding:6px 12px;display:inline-flex;align-items:center;gap:6px;" onclick="loadPayments()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              <span>Refresh Submissions</span>
+            </button>
           </div>
           <div class="card-body" style="padding:0;">
             <div class="table-responsive">
@@ -1118,15 +1188,19 @@
                                        alt="Payment Screenshot" 
                                        style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #cbd5e1;background:#0f172a;box-shadow:0 1px 3px rgba(0,0,0,0.1);display:block;"
                                        onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'48\\' height=\\'48\\' fill=\\'%2394a3b8\\' viewBox=\\'0 0 24 24\\'><path d=\\'M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z\\'/></svg>';" />
-                                  <span style="position:absolute;bottom:-4px;right:-4px;background:#0f172a;color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.4);border:1px solid #fff;">&#128269;</span>
+                                  <span style="position:absolute;bottom:-4px;right:-4px;background:#0f172a;color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.4);border:1px solid #fff;">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                  </span>
                                 </div>
                                 <div>
-                                  <button type="button" class="btn btn-outline" style="padding:4px 9px;font-size:11.5px;font-weight:700;display:inline-flex;align-items:center;gap:4px;" onclick="viewPaymentDetail('${p.paymentId}')">
+                                  <button type="button" class="btn btn-outline" style="padding:4px 9px;font-size:11.5px;font-weight:700;display:inline-flex;align-items:center;gap:5px;" onclick="viewPaymentDetail('${p.paymentId}')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                                     <span>Inspect Proof</span>
                                   </button>
                                   <div style="margin-top:2px;">
-                                    <a href="${proofUrl}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:#0284c7;text-decoration:none;font-weight:600;" onclick="event.stopPropagation();">
-                                      Open Original ↗
+                                    <a href="${proofUrl}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:#0284c7;text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:3px;" onclick="event.stopPropagation();">
+                                      <span>Open Original</span>
+                                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                                     </a>
                                   </div>
                                 </div>
@@ -1137,8 +1211,9 @@
                                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                                   Awaiting Upload
                                 </span>
-                                <button type="button" class="btn btn-outline" style="padding:3px 8px;font-size:11px;font-weight:700;" onclick="viewPaymentDetail('${p.paymentId}')">
-                                  + Upload
+                                <button type="button" class="btn btn-outline" style="padding:3px 8px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:4px;" onclick="viewPaymentDetail('${p.paymentId}')">
+                                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                  <span>Upload</span>
                                 </button>
                               </div>
                             `}
@@ -1148,8 +1223,14 @@
                           <td>
                             ${p.status === 'verification_pending' ? `
                               <div style="display:flex;gap:6px;">
-                                <button class="btn btn-success" style="padding:6px 10px;font-size:12px;" onclick="approvePayment('${p.paymentId}')">&check; Approve</button>
-                                <button class="btn btn-danger" style="padding:6px 10px;font-size:12px;" onclick="rejectPayment('${p.paymentId}')">&times; Reject</button>
+                                <button class="btn btn-success" style="padding:6px 10px;font-size:12px;display:inline-flex;align-items:center;gap:5px;" onclick="approvePayment('${p.paymentId}')">
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                  <span>Approve</span>
+                                </button>
+                                <button class="btn btn-danger" style="padding:6px 10px;font-size:12px;display:inline-flex;align-items:center;gap:5px;" onclick="rejectPayment('${p.paymentId}')">
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                  <span>Reject</span>
+                                </button>
                               </div>
                             ` : `<span style="font-size:12px;color:#666;">Verified by ${p.verification ? (p.verification.verifiedByName || 'Staff') : 'Staff'}</span>`}
                           </td>
@@ -1202,7 +1283,8 @@
             <span>Customer-Uploaded Payment Screenshot:</span>
             ${proofUrl ? `
               <a href="${proofUrl}" target="_blank" rel="noopener noreferrer" style="color:#0284c7;font-weight:700;text-decoration:none;font-size:12px;display:inline-flex;align-items:center;gap:4px;">
-                <span>Open Full Size in New Tab</span> <span>↗</span>
+                <span>Open Full Size in New Tab</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
               </a>
             ` : ''}
           </div>
@@ -1250,11 +1332,13 @@
 
         ${p.status === 'verification_pending' ? `
           <div style="display:flex;gap:12px;justify-content:flex-end;padding-top:10px;border-top:1px solid #e2e8f0;flex-wrap:wrap;">
-            <button type="button" class="btn btn-danger" style="padding:9px 18px;font-size:13px;font-weight:700;" onclick="rejectPayment('${p.paymentId}')">
-              &times; Reject Proof
+            <button type="button" class="btn btn-danger" style="padding:9px 18px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px;" onclick="rejectPayment('${p.paymentId}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <span>Reject Proof</span>
             </button>
-            <button type="button" class="btn btn-success" style="padding:9px 20px;font-size:13px;font-weight:700;" onclick="approvePayment('${p.paymentId}')">
-              &check; Approve Payment & Confirm Order
+            <button type="button" class="btn btn-success" style="padding:9px 20px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px;" onclick="approvePayment('${p.paymentId}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Approve Payment & Confirm Order</span>
             </button>
           </div>
         ` : `
@@ -1319,7 +1403,9 @@
     showModal('Verify & Approve Payment', `
       <div style="display:flex;flex-direction:column;gap:18px;">
         <div style="background:#f0fdf4;border:1px solid #dcfce7;border-radius:10px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px;">
-          <div style="width:32px;height:32px;border-radius:50%;background:#dcfce7;display:flex;align-items:center;justify-content:center;color:#16a34a;font-size:16px;font-weight:900;flex-shrink:0;">✓</div>
+          <div style="width:34px;height:34px;border-radius:50%;background:#dcfce7;display:flex;align-items:center;justify-content:center;color:#16a34a;flex-shrink:0;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
           <div>
             <div style="font-size:14px;font-weight:800;color:#166534;margin-bottom:2px;">Approve Payment for Order #${orderNum} ${amountStr ? `(${amountStr})` : ''}</div>
             <div style="font-size:12.5px;color:#15803d;line-height:1.4;">Approving will mark this payment as VERIFIED, confirm the order, transition status to PROCESSING, and send an email confirmation to the customer.</div>
@@ -1341,7 +1427,8 @@
         <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:14px;border-top:1px solid #e2e8f0;">
           <button type="button" class="btn btn-outline" onclick="hideModal()">Cancel</button>
           <button type="button" id="submit-approve-btn" class="btn btn-success" style="padding:9px 20px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px;">
-            <span>✓ Verify & Approve Payment</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Verify & Approve Payment</span>
           </button>
         </div>
       </div>
@@ -1369,7 +1456,7 @@
           loadPayments();
         } catch (err) {
           submitBtn.disabled = false;
-          submitBtn.innerHTML = '<span>✓ Verify & Approve Payment</span>';
+          submitBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Verify & Approve Payment</span>';
           showToast(err.message || 'Failed to approve payment', 'error');
         }
       };
@@ -1385,7 +1472,9 @@
     showModal('Reject Payment Submission', `
       <div style="display:flex;flex-direction:column;gap:18px;">
         <div style="background:#fef2f2;border:1px solid #fee2e2;border-radius:10px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px;">
-          <div style="width:32px;height:32px;border-radius:50%;background:#fee2e2;display:flex;align-items:center;justify-content:center;color:#dc2626;font-size:16px;font-weight:900;flex-shrink:0;">✕</div>
+          <div style="width:34px;height:34px;border-radius:50%;background:#fee2e2;display:flex;align-items:center;justify-content:center;color:#dc2626;flex-shrink:0;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </div>
           <div>
             <div style="font-size:14px;font-weight:800;color:#991b1b;margin-bottom:2px;">Reject Proof for Order #${orderNum} ${amountStr ? `(${amountStr})` : ''}</div>
             <div style="font-size:12.5px;color:#7f1d1d;line-height:1.4;">Customer will receive an automated notification with this rejection reason and instructions to resubmit their valid payment proof.</div>
@@ -1415,7 +1504,8 @@
         <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:14px;border-top:1px solid #e2e8f0;">
           <button type="button" class="btn btn-outline" onclick="hideModal()">Cancel</button>
           <button type="button" id="submit-reject-btn" class="btn btn-danger" style="padding:9px 20px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px;">
-            <span>✕ Confirm Rejection</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <span>Confirm Rejection</span>
           </button>
         </div>
       </div>
@@ -1450,7 +1540,7 @@
           loadPayments();
         } catch (err) {
           submitBtn.disabled = false;
-          submitBtn.innerHTML = '<span>✕ Confirm Rejection</span>';
+          submitBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg><span>Confirm Rejection</span>';
           showToast(err.message || 'Failed to reject payment', 'error');
         }
       };
@@ -1879,8 +1969,14 @@
                           </td>
                           <td>
                             <div style="display:flex;gap:6px;">
-                              <a href="../product/${p.slug}.html" target="_blank" class="btn btn-outline" style="padding:5px 9px;font-size:11px;text-decoration:none;">View ↗</a>
-                              <button class="btn btn-danger btn-del-prod" data-id="${p.id}" data-name="${p.name.replace(/"/g, '&quot;')}" style="padding:5px 9px;font-size:11px;">Delete</button>
+                              <a href="../product/${p.slug}.html" target="_blank" class="btn btn-outline" style="padding:5px 9px;font-size:11px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
+                                <span>View</span>
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                              </a>
+                              <button class="btn btn-danger btn-del-prod" data-id="${p.id}" data-name="${p.name.replace(/"/g, '&quot;')}" style="padding:5px 9px;font-size:11px;display:inline-flex;align-items:center;gap:4px;">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                <span>Delete</span>
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -2191,8 +2287,14 @@
                         <td><span class="badge ${c.isPublished ? 'badge-active' : 'badge-pending'}">${c.isPublished ? 'Published' : 'Draft'}</span></td>
                         <td>
                           <div style="display:flex;gap:6px;">
-                            <a href="../category/${c.slug}.html" target="_blank" class="btn btn-outline" style="padding:5px 9px;font-size:11px;text-decoration:none;">View ↗</a>
-                            <button class="btn btn-danger btn-del-cat" data-id="${c.id}" data-name="${c.name.replace(/"/g, '&quot;')}" style="padding:5px 9px;font-size:11px;">Delete</button>
+                            <a href="../category/${c.slug}.html" target="_blank" class="btn btn-outline" style="padding:5px 9px;font-size:11px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
+                              <span>View</span>
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                            </a>
+                            <button class="btn btn-danger btn-del-cat" data-id="${c.id}" data-name="${c.name.replace(/"/g, '&quot;')}" style="padding:5px 9px;font-size:11px;display:inline-flex;align-items:center;gap:4px;">
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                              <span>Delete</span>
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -2387,7 +2489,10 @@
                           <td style="font-size:12px;color:#64748b;">${expiryStr}</td>
                           <td><span class="badge ${cp.isActive ? 'badge-active' : 'badge-rejected'}">${cp.isActive ? 'Active' : 'Inactive'}</span></td>
                           <td>
-                            <button class="btn btn-danger btn-del-coupon" data-code="${cp.code}" style="padding:5px 9px;font-size:11px;">Delete</button>
+                            <button class="btn btn-danger btn-del-coupon" data-code="${cp.code}" style="padding:5px 9px;font-size:11px;display:inline-flex;align-items:center;gap:4px;">
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                              <span>Delete</span>
+                            </button>
                           </td>
                         </tr>
                       `;
@@ -2797,10 +2902,20 @@
                       <td style="padding:10px 14px;font-weight:600;color:#0f172a;border-right:1px solid #f1f5f9;" id="tbl-merchant-name">${p.merchantName || 'The LANE4 Performance Store'}</td>
                       <td style="padding:10px 14px;"><span class="badge badge-verified" style="font-size:10px;">Verified Display</span></td>
                     </tr>
-                    <tr>
+                    <tr style="border-bottom:1px solid #f1f5f9;">
                       <td style="padding:10px 14px;font-weight:700;color:#334155;border-right:1px solid #f1f5f9;">Expiry Window</td>
                       <td style="padding:10px 14px;font-weight:600;color:#0f172a;border-right:1px solid #f1f5f9;"><span id="tbl-window-mins">${p.verificationWindowMinutes || 30}</span> Minutes</td>
                       <td style="padding:10px 14px;"><span class="badge badge-processing" style="font-size:10px;">Timer Enforced</span></td>
+                    </tr>
+                    <tr>
+                      <td style="padding:10px 14px;font-weight:700;color:#334155;border-right:1px solid #f1f5f9;">Store UPI QR</td>
+                      <td style="padding:10px 14px;border-right:1px solid #f1f5f9;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                          <img id="tbl-qr-thumb" src="${p.qrCodeUrl || '6424266ea05809dff501d86e/lane4-share.png'}" alt="QR" style="width:32px;height:32px;object-fit:contain;border:1px solid #cbd5e1;border-radius:4px;padding:2px;background:#ffffff;cursor:pointer;" onclick="window.previewQrModal(this.src)" title="Click to view full size" />
+                          <button type="button" class="btn btn-outline" style="padding:3px 8px;font-size:11px;" onclick="window.previewQrModal(document.getElementById('tbl-qr-thumb').src)">View Full QR</button>
+                        </div>
+                      </td>
+                      <td style="padding:10px 14px;"><span class="badge badge-verified" style="font-size:10px;">Live in Checkout</span></td>
                     </tr>
                   </tbody>
                 </table>
@@ -2808,6 +2923,55 @@
 
               <!-- Form -->
               <form id="lane4-settings-payment-form">
+                <!-- QR Code Upload & Preview Section -->
+                <div style="margin-bottom:18px;border:1.5px solid #e2e8f0;border-radius:10px;padding:16px;background:#f8fafc;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                    <div>
+                      <label style="display:block;font-size:11.5px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:0.5px;">Store UPI QR Code Image</label>
+                      <span style="font-size:11px;color:#64748b;">Customers scan this QR code during checkout Step 3.</span>
+                    </div>
+                    <span id="admin-qr-badge" class="badge badge-verified" style="font-size:10px;font-weight:800;">LIVE IN CHECKOUT</span>
+                  </div>
+
+                  <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+                    <!-- QR Preview Box -->
+                    <div id="btn-admin-preview-qr" style="position:relative;width:110px;height:110px;border:1.5px solid #cbd5e1;border-radius:8px;background:#ffffff;padding:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(15,23,42,0.06);transition:all 0.15s ease;" title="Click to view full size">
+                      <img id="admin-qr-preview-img" src="${p.qrCodeUrl || '6424266ea05809dff501d86e/lane4-share.png'}" alt="UPI QR Preview" style="width:100%;height:100%;object-fit:contain;border-radius:4px;" />
+                      <div style="position:absolute;bottom:4px;right:4px;background:rgba(15,23,42,0.85);color:#fff;border-radius:4px;padding:2px 5px;font-size:9px;font-weight:700;display:flex;align-items:center;gap:3px;">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                        <span>ZOOM</span>
+                      </div>
+                    </div>
+
+                    <!-- Upload Controls -->
+                    <div style="flex:1;min-width:200px;">
+                      <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:4px;">Upload / Replace Official QR</div>
+                      <div style="font-size:11px;color:#64748b;line-height:1.45;margin-bottom:10px;">
+                        Recommended: Clear square QR image (PNG, JPEG, WEBP) from GPay Business, PhonePe, Paytm, or BHIM.
+                      </div>
+
+                      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                        <label for="admin-qr-file-input" class="btn btn-outline" style="cursor:pointer;padding:7px 12px;font-size:11.5px;font-weight:700;border:1.5px solid #0f172a;border-radius:6px;background:#ffffff;color:#0f172a;display:inline-flex;align-items:center;gap:6px;margin:0;">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                          <span>Select QR Image</span>
+                        </label>
+                        <input type="file" id="admin-qr-file-input" accept="image/png,image/jpeg,image/webp" style="display:none;" />
+
+                        <button type="button" id="btn-upload-qr-now" class="btn" style="display:none;background:#16a34a;color:#ffffff;padding:7px 14px;font-size:11.5px;font-weight:700;border:none;border-radius:6px;cursor:pointer;align-items:center;gap:6px;">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                          <span>Upload Now</span>
+                        </button>
+
+                        <span id="admin-qr-file-name" style="font-size:11px;color:#475569;font-weight:600;"></span>
+                      </div>
+
+                      <div id="admin-qr-upload-progress" style="display:none;margin-top:8px;font-size:11px;color:#0284c7;font-weight:700;">
+                        Uploading to secure storage &amp; syncing checkout...
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <div style="margin-bottom:16px;">
                   <label style="display:block;font-size:11.5px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Store UPI ID (VPA)</label>
                   <input type="text" id="set-upi-id" value="${p.upiId || 'lane4swim@upi'}" style="width:100%;padding:11px 14px;border:1.5px solid #cbd5e1;border-radius:8px;background:#f8fafc;font-family:inherit;font-size:14px;color:#0f172a;box-sizing:border-box;" required />
@@ -2910,6 +3074,89 @@
         </div>
       `;
 
+      // --- QR Preview and Upload Handlers ---
+      const btnPreviewQr = document.getElementById('btn-admin-preview-qr');
+      if (btnPreviewQr) {
+        btnPreviewQr.onclick = () => {
+          const previewImg = document.getElementById('admin-qr-preview-img');
+          window.previewQrModal(previewImg ? previewImg.src : (p.qrCodeUrl || ''));
+        };
+      }
+
+      const qrFileInput = document.getElementById('admin-qr-file-input');
+      const qrFileName = document.getElementById('admin-qr-file-name');
+      const btnUploadQrNow = document.getElementById('btn-upload-qr-now');
+      const qrUploadProgress = document.getElementById('admin-qr-upload-progress');
+
+      let selectedQrFile = null;
+
+      if (qrFileInput) {
+        qrFileInput.onchange = (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+          selectedQrFile = file;
+          if (qrFileName) qrFileName.textContent = file.name;
+          if (btnUploadQrNow) {
+            btnUploadQrNow.style.display = 'inline-flex';
+          }
+
+          // Show immediate local preview
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            const previewImg = document.getElementById('admin-qr-preview-img');
+            if (previewImg) previewImg.src = evt.target.result;
+          };
+          reader.readAsDataURL(file);
+        };
+      }
+
+      const executeQrUpload = async () => {
+        if (!selectedQrFile) return null;
+        if (qrUploadProgress) qrUploadProgress.style.display = 'block';
+        if (btnUploadQrNow) {
+          btnUploadQrNow.disabled = true;
+          btnUploadQrNow.textContent = 'Uploading...';
+        }
+
+        try {
+          const formData = new FormData();
+          formData.append('qrImage', selectedQrFile);
+
+          const res = await window.lane4ApiRequest('/admin/store/payment-settings/qr-image', {
+            method: 'POST',
+            body: formData
+          });
+
+          const newUrl = res && res.data && res.data.qrCodeUrl;
+          if (newUrl) {
+            const previewImg = document.getElementById('admin-qr-preview-img');
+            if (previewImg) previewImg.src = newUrl;
+            const tblThumb = document.getElementById('tbl-qr-thumb');
+            if (tblThumb) tblThumb.src = newUrl;
+          }
+
+          showToast('UPI QR code uploaded and active in checkout!', 'success', 'QR UPDATED');
+          selectedQrFile = null;
+          if (qrFileInput) qrFileInput.value = '';
+          if (qrFileName) qrFileName.textContent = '';
+          if (btnUploadQrNow) btnUploadQrNow.style.display = 'none';
+          return newUrl;
+        } catch (err) {
+          showToast(err.message || 'Failed to upload QR image', 'error');
+          throw err;
+        } finally {
+          if (qrUploadProgress) qrUploadProgress.style.display = 'none';
+          if (btnUploadQrNow) {
+            btnUploadQrNow.disabled = false;
+            btnUploadQrNow.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><span>Upload Now</span>`;
+          }
+        }
+      };
+
+      if (btnUploadQrNow) {
+        btnUploadQrNow.onclick = () => executeQrUpload();
+      }
+
       // Payment settings submit
       document.getElementById('lane4-settings-payment-form').onsubmit = async (e) => {
         e.preventDefault();
@@ -2922,6 +3169,11 @@
         if (btn) { btn.disabled = true; btn.innerText = 'Saving...'; }
 
         try {
+          // If a new QR file was selected but not uploaded yet, upload it first
+          if (selectedQrFile) {
+            await executeQrUpload();
+          }
+
           await window.lane4ApiRequest('/admin/store/payment-settings', {
             method: 'PATCH',
             body: JSON.stringify({

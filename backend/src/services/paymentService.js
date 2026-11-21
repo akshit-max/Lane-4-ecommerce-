@@ -36,19 +36,59 @@ class PaymentService {
 
   async getPublicPaymentSettings() {
     const db = getDb();
-    if (!db) return DEFAULT_PAYMENT_SETTINGS;
+    if (!db) {
+      return {
+        enabled: DEFAULT_PAYMENT_SETTINGS.enabled,
+        upiId: DEFAULT_PAYMENT_SETTINGS.upiId,
+        upiAccountName: DEFAULT_PAYMENT_SETTINGS.upiAccountName,
+        merchantName: DEFAULT_PAYMENT_SETTINGS.upiAccountName,
+        paymentInstructions: DEFAULT_PAYMENT_SETTINGS.paymentInstructions,
+        instructions: DEFAULT_PAYMENT_SETTINGS.paymentInstructions,
+        verificationWindowMinutes: 30,
+        qrCodeUrl: DEFAULT_PAYMENT_SETTINGS.qrCodeImage.url,
+        qrCodeImage: DEFAULT_PAYMENT_SETTINGS.qrCodeImage
+      };
+    }
 
     const doc = await db.collection('paymentSettings').doc('upi_qr').get();
     if (!doc.exists) {
-      return DEFAULT_PAYMENT_SETTINGS;
+      return {
+        enabled: DEFAULT_PAYMENT_SETTINGS.enabled,
+        upiId: DEFAULT_PAYMENT_SETTINGS.upiId,
+        upiAccountName: DEFAULT_PAYMENT_SETTINGS.upiAccountName,
+        merchantName: DEFAULT_PAYMENT_SETTINGS.upiAccountName,
+        paymentInstructions: DEFAULT_PAYMENT_SETTINGS.paymentInstructions,
+        instructions: DEFAULT_PAYMENT_SETTINGS.paymentInstructions,
+        verificationWindowMinutes: 30,
+        qrCodeUrl: DEFAULT_PAYMENT_SETTINGS.qrCodeImage.url,
+        qrCodeImage: DEFAULT_PAYMENT_SETTINGS.qrCodeImage
+      };
     }
-    const data = doc.data();
+
+    const data = doc.data() || {};
+    let qrUrl = '';
+    if (data.qrCodeUrl) {
+      qrUrl = data.qrCodeUrl;
+    } else if (data.qrCodeImage) {
+      qrUrl = typeof data.qrCodeImage === 'string' ? data.qrCodeImage : (data.qrCodeImage.url || '');
+    }
+    if (!qrUrl && DEFAULT_PAYMENT_SETTINGS.qrCodeImage) {
+      qrUrl = DEFAULT_PAYMENT_SETTINGS.qrCodeImage.url;
+    }
+
+    const accountName = data.upiAccountName || data.merchantName || DEFAULT_PAYMENT_SETTINGS.upiAccountName;
+    const instructions = data.paymentInstructions || data.instructions || DEFAULT_PAYMENT_SETTINGS.paymentInstructions;
+
     return {
       enabled: data.enabled !== false,
       upiId: data.upiId || DEFAULT_PAYMENT_SETTINGS.upiId,
-      upiAccountName: data.upiAccountName || DEFAULT_PAYMENT_SETTINGS.upiAccountName,
-      paymentInstructions: data.paymentInstructions || DEFAULT_PAYMENT_SETTINGS.paymentInstructions,
-      qrCodeUrl: data.qrCodeImage ? data.qrCodeImage.url : DEFAULT_PAYMENT_SETTINGS.qrCodeImage.url
+      upiAccountName: accountName,
+      merchantName: accountName,
+      paymentInstructions: instructions,
+      instructions: instructions,
+      verificationWindowMinutes: Number(data.verificationWindowMinutes) || 30,
+      qrCodeUrl: qrUrl,
+      qrCodeImage: data.qrCodeImage || { url: qrUrl }
     };
   }
 
@@ -63,21 +103,47 @@ class PaymentService {
     if (data.enabled !== undefined) updates.enabled = Boolean(data.enabled);
     if (data.upiId !== undefined) updates.upiId = data.upiId.trim();
     if (data.upiAccountName !== undefined) updates.upiAccountName = data.upiAccountName.trim();
+    if (data.merchantName !== undefined) {
+      updates.merchantName = data.merchantName.trim();
+      if (!updates.upiAccountName) updates.upiAccountName = data.merchantName.trim();
+    }
     if (data.paymentInstructions !== undefined) updates.paymentInstructions = data.paymentInstructions.trim();
-    if (data.qrCodeImage !== undefined) updates.qrCodeImage = data.qrCodeImage;
+    if (data.instructions !== undefined) {
+      updates.instructions = data.instructions.trim();
+      if (!updates.paymentInstructions) updates.paymentInstructions = data.instructions.trim();
+    }
+    if (data.verificationWindowMinutes !== undefined) {
+      updates.verificationWindowMinutes = Number(data.verificationWindowMinutes) || 30;
+    }
+    if (data.qrCodeImage !== undefined) {
+      updates.qrCodeImage = data.qrCodeImage;
+      if (typeof data.qrCodeImage === 'object' && data.qrCodeImage.url) {
+        updates.qrCodeUrl = data.qrCodeImage.url;
+      } else if (typeof data.qrCodeImage === 'string') {
+        updates.qrCodeUrl = data.qrCodeImage;
+      }
+    }
+    if (data.qrCodeUrl !== undefined) {
+      updates.qrCodeUrl = data.qrCodeUrl.trim();
+      if (!updates.qrCodeImage) {
+        updates.qrCodeImage = { url: data.qrCodeUrl.trim() };
+      }
+    }
 
     await docRef.set(updates, { merge: true });
 
     // Audit log
-    await db.collection('adminActivityLogs').add({
-      adminUid: adminUser.uid,
-      adminEmail: adminUser.email,
-      action: 'settings_updated',
-      resourceType: 'settings',
-      resourceId: 'upi_qr',
-      details: updates,
-      timestamp: new Date()
-    });
+    if (adminUser) {
+      await db.collection('adminActivityLogs').add({
+        adminUid: adminUser.uid || 'admin',
+        adminEmail: adminUser.email || 'staff@lane4.in',
+        action: 'settings_updated',
+        resourceType: 'settings',
+        resourceId: 'upi_qr',
+        details: updates,
+        timestamp: new Date()
+      });
+    }
 
     return this.getPublicPaymentSettings();
   }

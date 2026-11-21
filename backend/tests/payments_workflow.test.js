@@ -119,5 +119,38 @@ describe('Manual QR Payment & Admin Verification Workflow Test Suite', () => {
     expect(orderCheck.body.data.paymentStatus).toBe('verified');
     expect(orderCheck.body.data.status).toBe('confirmed');
   });
+
+  test('Admin can upload UPI QR image and update payment settings', async () => {
+    // 1. Upload QR image
+    const uploadRes = await request(app)
+      .post('/api/admin/store/payment-settings/qr-image')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .attach('qrImage', Buffer.from('fake-qr-code-png-data'), 'test-qr.png');
+
+    expect(uploadRes.status).toBe(200);
+    expect(uploadRes.body.success).toBe(true);
+    expect(uploadRes.body.data).toHaveProperty('qrCodeUrl');
+    const uploadedQrUrl = uploadRes.body.data.qrCodeUrl;
+
+    // 2. Verify settings update
+    const patchRes = await request(app)
+      .patch('/api/admin/store/payment-settings')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        upiId: 'customstore@upi',
+        merchantName: 'LANE4 AQUATICS STORE'
+      });
+
+    expect(patchRes.status).toBe(200);
+    expect(patchRes.body.data.upiId).toBe('customstore@upi');
+    expect(patchRes.body.data.merchantName).toBe('LANE4 AQUATICS STORE');
+
+    // 3. Verify public settings reflect the uploaded QR and updated VPA
+    const publicRes = await request(app).get('/api/payments/settings');
+    expect(publicRes.status).toBe(200);
+    expect(publicRes.body.data.upiId).toBe('customstore@upi');
+    expect(publicRes.body.data.merchantName).toBe('LANE4 AQUATICS STORE');
+    expect(publicRes.body.data.qrCodeUrl).toBe(uploadedQrUrl);
+  });
 });
 

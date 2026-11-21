@@ -52,6 +52,16 @@ router.delete('/coupons/:id', adminController.deleteCoupon);
 // Settings
 router.get('/store/payment-settings', adminController.getPaymentSettings);
 router.patch('/store/payment-settings', adminController.updatePaymentSettings);
+router.post(
+  '/store/payment-settings/qr-image',
+  upload.fields([{ name: 'qrImage', maxCount: 1 }, { name: 'image', maxCount: 1 }, { name: 'file', maxCount: 1 }]),
+  adminController.uploadPaymentQrImage
+);
+router.post(
+  '/store/payment-settings/upload-qr',
+  upload.fields([{ name: 'qrImage', maxCount: 1 }, { name: 'image', maxCount: 1 }, { name: 'file', maxCount: 1 }]),
+  adminController.uploadPaymentQrImage
+);
 router.patch('/store/shipping-settings', adminController.updateShippingSettings);
 router.patch('/store/settings', adminController.updateStoreSettings);
 
