@@ -308,6 +308,8 @@
     const loginScreen = document.getElementById('admin-login-screen');
 
     if (!adminToken) {
+      document.documentElement.classList.remove('admin-authed');
+      document.documentElement.classList.add('admin-unauthed');
       if (loginScreen) loginScreen.style.display = 'flex';
       setupLoginForm();
       return;
@@ -321,6 +323,8 @@
       console.warn('Admin token has expired or is invalid.');
       localStorage.removeItem('lane4_admin_token');
       localStorage.removeItem('lane4_admin_user');
+      document.documentElement.classList.remove('admin-authed');
+      document.documentElement.classList.add('admin-unauthed');
       if (loginScreen) {
         loginScreen.style.display = 'flex';
         const alertEl = document.getElementById('admin-login-alert');
@@ -335,7 +339,9 @@
       return;
     }
 
-    // Token is valid: immediately hide login screen and initialize console
+    // Token is valid: immediately show operations console and hide login screen
+    document.documentElement.classList.remove('admin-unauthed');
+    document.documentElement.classList.add('admin-authed');
     if (loginScreen) loginScreen.style.display = 'none';
 
     // Restore cached admin user profile
@@ -370,6 +376,8 @@
         console.warn('Session verification rejected by server:', err);
         localStorage.removeItem('lane4_admin_token');
         localStorage.removeItem('lane4_admin_user');
+        document.documentElement.classList.remove('admin-authed');
+        document.documentElement.classList.add('admin-unauthed');
         const loginScreen = document.getElementById('admin-login-screen');
         if (loginScreen) {
           loginScreen.style.display = 'flex';
@@ -450,11 +458,13 @@
         }
 
         setTimeout(() => {
+          document.documentElement.classList.remove('admin-unauthed');
+          document.documentElement.classList.add('admin-authed');
           const loginScreen = document.getElementById('admin-login-screen');
           if (loginScreen) loginScreen.style.display = 'none';
           updateAdminUserDisplay(activeAdmin);
           initAdminPanel();
-        }, 300);
+        }, 150);
       } catch (err) {
         if (alertEl) {
           alertEl.style.display = 'block';
@@ -477,6 +487,8 @@
         localStorage.removeItem('lane4_auth_token');
         localStorage.removeItem('lane4_admin_active_view');
         window.location.hash = '';
+        document.documentElement.classList.remove('admin-authed');
+        document.documentElement.classList.add('admin-unauthed');
         const loginScreen = document.getElementById('admin-login-screen');
         if (loginScreen) loginScreen.style.display = 'flex';
         setupLoginForm();
@@ -526,6 +538,8 @@
   window.addEventListener('lane4:admin-auth-expired', () => {
     localStorage.removeItem('lane4_admin_token');
     localStorage.removeItem('lane4_admin_user');
+    document.documentElement.classList.remove('admin-authed');
+    document.documentElement.classList.add('admin-unauthed');
     const loginScreen = document.getElementById('admin-login-screen');
     if (loginScreen) {
       loginScreen.style.display = 'flex';
@@ -568,7 +582,12 @@
 
     document.querySelectorAll('.admin-view').forEach(v => v.style.display = 'none');
     const target = document.getElementById(`view-${viewName}`);
-    if (target) target.style.display = 'block';
+    if (target) {
+      target.style.display = 'block';
+    }
+
+    const mainContainer = document.getElementById('admin-main');
+    if (mainContainer) mainContainer.scrollTop = 0;
 
     document.querySelectorAll('.nav-item').forEach(i => {
       if (i.getAttribute('data-view') === viewName) {
@@ -608,6 +627,86 @@
     else if (viewName === 'enquiries') loadEnquiries();
     else if (viewName === 'settings') loadSettings();
     else if (viewName === 'logs') loadLogs();
+  }
+
+  // --- SEAMLESS TRANSITIONS & SKELETON LOADERS ---
+  let topLoaderTimer = null;
+  function showTopLoader() {
+    const el = document.getElementById('admin-top-progress');
+    if (!el) return;
+    const bar = el.querySelector('.bar');
+    if (!bar) return;
+    if (topLoaderTimer) clearInterval(topLoaderTimer);
+    el.classList.add('active');
+    bar.style.transition = 'width 0.2s ease';
+    bar.style.width = '25%';
+    let p = 25;
+    topLoaderTimer = setInterval(() => {
+      if (p < 88) {
+        p += (88 - p) * 0.15;
+        bar.style.width = `${Math.round(p)}%`;
+      }
+    }, 120);
+  }
+
+  function hideTopLoader() {
+    const el = document.getElementById('admin-top-progress');
+    if (!el) return;
+    const bar = el.querySelector('.bar');
+    if (topLoaderTimer) {
+      clearInterval(topLoaderTimer);
+      topLoaderTimer = null;
+    }
+    if (bar) {
+      bar.style.transition = 'width 0.15s ease';
+      bar.style.width = '100%';
+    }
+    setTimeout(() => {
+      if (el) el.classList.remove('active');
+      if (bar) bar.style.width = '0%';
+    }, 220);
+  }
+
+  function getSkeletonHtml(type) {
+    if (type === 'dashboard') {
+      return `
+        <div style="animation:adminPulse 1.2s ease-in-out infinite;">
+          <div class="metrics-grid">
+            <div class="stat-card" style="height:115px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;"></div>
+            <div class="stat-card" style="height:115px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;"></div>
+            <div class="stat-card" style="height:115px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;"></div>
+            <div class="stat-card" style="height:115px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:24px;margin-top:24px;">
+            <div class="card" style="height:320px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;"></div>
+            <div class="card" style="height:320px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;"></div>
+          </div>
+        </div>
+      `;
+    }
+    if (type === 'settings') {
+      return `
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));gap:24px;animation:adminPulse 1.2s ease-in-out infinite;">
+          <div class="card" style="height:380px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;"></div>
+          <div class="card" style="height:380px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;"></div>
+        </div>
+      `;
+    }
+    // Table view skeleton (orders, payments, products, inventory, coupons, etc.)
+    return `
+      <div class="card" style="border:1px solid #e2e8f0;border-radius:12px;background:#ffffff;animation:adminPulse 1.2s ease-in-out infinite;">
+        <div class="card-header" style="height:60px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;padding:0 24px;">
+          <div style="height:18px;width:190px;background:#e2e8f0;border-radius:4px;"></div>
+        </div>
+        <div style="padding:24px;">
+          <div style="height:38px;background:#f1f5f9;border-radius:6px;margin-bottom:14px;"></div>
+          <div style="height:34px;background:#f8fafc;border-radius:6px;margin-bottom:10px;"></div>
+          <div style="height:34px;background:#f8fafc;border-radius:6px;margin-bottom:10px;"></div>
+          <div style="height:34px;background:#f8fafc;border-radius:6px;margin-bottom:10px;"></div>
+          <div style="height:34px;background:#f8fafc;border-radius:6px;margin-bottom:10px;"></div>
+        </div>
+      </div>
+    `;
   }
 
   // --- MODAL & TOAST HELPERS ---
@@ -832,7 +931,10 @@
   async function loadDashboard() {
     const container = document.getElementById('view-dashboard');
     if (!container) return;
-    container.innerHTML = '<p style="padding:20px;color:#64748b;">Loading metrics...</p>';
+    if (!container.children.length) {
+      container.innerHTML = getSkeletonHtml('dashboard');
+    }
+    showTopLoader();
 
     try {
       const res = await window.lane4ApiRequest('/admin/dashboard');
@@ -942,6 +1044,8 @@
       `;
     } catch (err) {
       container.innerHTML = `<p style="color:#ef4444;padding:20px;">Error loading dashboard: ${err.message}</p>`;
+    } finally {
+      hideTopLoader();
     }
   }
 
@@ -964,7 +1068,10 @@
   async function loadPayments() {
     const container = document.getElementById('view-payments');
     if (!container) return;
-    container.innerHTML = '<p style="padding:20px;color:#64748b;">Loading payment submissions...</p>';
+    if (!container.children.length) {
+      container.innerHTML = getSkeletonHtml('table');
+    }
+    showTopLoader();
 
     try {
       const res = await window.lane4ApiRequest('/admin/payments');
@@ -1057,6 +1164,8 @@
       `;
     } catch (err) {
       container.innerHTML = `<p style="color:#ef4444;padding:20px;">Error loading payments: ${err.message}</p>`;
+    } finally {
+      hideTopLoader();
     }
   }
 
@@ -1352,7 +1461,10 @@
   async function loadOrders() {
     const container = document.getElementById('view-orders');
     if (!container) return;
-    container.innerHTML = '<p style="padding:20px;color:#64748b;">Loading orders...</p>';
+    if (!container.children.length) {
+      container.innerHTML = getSkeletonHtml('table');
+    }
+    showTopLoader();
 
     try {
       const res = await window.lane4ApiRequest('/admin/orders');
@@ -1417,6 +1529,8 @@
       `;
     } catch (err) {
       container.innerHTML = `<p style="color:#ef4444;padding:20px;">Error loading orders: ${err.message}</p>`;
+    } finally {
+      hideTopLoader();
     }
   }
 
@@ -1521,7 +1635,10 @@
   async function loadInventory() {
     const container = document.getElementById('view-inventory');
     if (!container) return;
-    container.innerHTML = '<p style="padding:20px;color:#64748b;">Loading inventory balances...</p>';
+    if (!container.children.length) {
+      container.innerHTML = getSkeletonHtml('table');
+    }
+    showTopLoader();
 
     try {
       const res = await window.lane4ApiRequest('/admin/inventory');
@@ -1576,6 +1693,8 @@
       `;
     } catch (err) {
       container.innerHTML = `<p style="color:#ef4444;padding:20px;">Error loading inventory: ${err.message}</p>`;
+    } finally {
+      hideTopLoader();
     }
   }
 
@@ -1684,7 +1803,10 @@
   async function loadProducts() {
     const container = document.getElementById('view-products');
     if (!container) return;
-    container.innerHTML = '<p style="padding:20px;color:#64748b;">Loading product catalog...</p>';
+    if (!container.children.length) {
+      container.innerHTML = getSkeletonHtml('table');
+    }
+    showTopLoader();
 
     try {
       const res = await window.lane4ApiRequest('/admin/products');
@@ -1786,6 +1908,8 @@
 
     } catch (err) {
       container.innerHTML = `<p style="color:#ef4444;padding:20px;">Error loading products: ${err.message}</p>`;
+    } finally {
+      hideTopLoader();
     }
   }
 
@@ -2025,7 +2149,10 @@
   async function loadCategories() {
     const container = document.getElementById('view-categories');
     if (!container) return;
-    container.innerHTML = '<p style="padding:20px;color:#64748b;">Loading categories...</p>';
+    if (!container.children.length) {
+      container.innerHTML = getSkeletonHtml('table');
+    }
+    showTopLoader();
 
     try {
       const res = await window.lane4ApiRequest('/admin/categories');
@@ -2092,6 +2219,8 @@
 
     } catch (err) {
       container.innerHTML = `<p style="color:#ef4444;padding:20px;">Error loading categories: ${err.message}</p>`;
+    } finally {
+      hideTopLoader();
     }
   }
 
@@ -2208,7 +2337,10 @@
   async function loadCoupons() {
     const container = document.getElementById('view-coupons');
     if (!container) return;
-    container.innerHTML = '<p style="padding:20px;color:#64748b;">Loading promotional coupons...</p>';
+    if (!container.children.length) {
+      container.innerHTML = getSkeletonHtml('table');
+    }
+    showTopLoader();
 
     try {
       const res = await window.lane4ApiRequest('/admin/coupons');
@@ -2281,6 +2413,8 @@
 
     } catch (err) {
       container.innerHTML = `<p style="color:#ef4444;padding:20px;">Error loading coupons: ${err.message}</p>`;
+    } finally {
+      hideTopLoader();
     }
   }
 
@@ -2426,7 +2560,10 @@
   async function loadCustomers() {
     const c = document.getElementById('view-customers');
     if (!c) return;
-    c.innerHTML = '<p style="padding:20px;color:#64748b;">Loading registered swimmers...</p>';
+    if (!c.children.length) {
+      c.innerHTML = getSkeletonHtml('table');
+    }
+    showTopLoader();
 
     try {
       const res = await window.lane4ApiRequest('/admin/customers');
@@ -2449,6 +2586,8 @@
       `;
     } catch (err) {
       c.innerHTML = `<p style="color:#ef4444;padding:20px;">Error: ${err.message}</p>`;
+    } finally {
+      hideTopLoader();
     }
   }
 
@@ -2456,7 +2595,10 @@
   async function loadEnquiries() {
     const c = document.getElementById('view-enquiries');
     if (!c) return;
-    c.innerHTML = '<p style="padding:20px;color:#64748b;">Loading support enquiries...</p>';
+    if (!c.children.length) {
+      c.innerHTML = getSkeletonHtml('table');
+    }
+    showTopLoader();
 
     try {
       const res = await window.lane4ApiRequest('/admin/enquiries');
@@ -2479,6 +2621,8 @@
       `;
     } catch (err) {
       c.innerHTML = `<p style="color:#ef4444;padding:20px;">Error: ${err.message}</p>`;
+    } finally {
+      hideTopLoader();
     }
   }
 
@@ -2486,7 +2630,10 @@
   async function loadLogs() {
     const c = document.getElementById('view-logs');
     if (!c) return;
-    c.innerHTML = '<p style="padding:20px;color:#64748b;">Loading audit logs...</p>';
+    if (!c.children.length) {
+      c.innerHTML = getSkeletonHtml('table');
+    }
+    showTopLoader();
 
     try {
       const res = await window.lane4ApiRequest('/admin/logs');
@@ -2588,6 +2735,8 @@
       if (refreshBtn) refreshBtn.onclick = () => loadLogs();
     } catch (err) {
       c.innerHTML = `<p style="color:#ef4444;padding:20px;">Error: ${err.message}</p>`;
+    } finally {
+      hideTopLoader();
     }
   }
 
@@ -2595,7 +2744,10 @@
   async function loadSettings() {
     const container = document.getElementById('view-settings');
     if (!container) return;
-    container.innerHTML = '<p style="padding:20px;color:#64748b;">Loading store settings...</p>';
+    if (!container.children.length) {
+      container.innerHTML = getSkeletonHtml('settings');
+    }
+    showTopLoader();
 
     try {
       const payRes = await window.lane4ApiRequest('/store/payment-settings').catch(() => window.lane4ApiRequest('/admin/store/payment-settings'));
@@ -2844,6 +2996,8 @@
 
     } catch (err) {
       container.innerHTML = `<p style="color:#ef4444;padding:20px;">Error loading settings: ${err.message}</p>`;
+    } finally {
+      hideTopLoader();
     }
   }
 

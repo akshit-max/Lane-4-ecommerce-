@@ -6,6 +6,31 @@
   <title>LANE4 Admin Portal | The Lane4 Performance Store</title>
   <link rel="icon" type="image/svg+xml" href="../6424266ea05809dff501d86e/lane4-favicon.svg">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap">
+  <script>
+    (function () {
+      try {
+        var token = localStorage.getItem('lane4_admin_token');
+        var isValid = false;
+        if (token) {
+          var parts = token.split('.');
+          if (parts.length === 3) {
+            var payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+            var now = Math.floor(Date.now() / 1000);
+            if (!payload.exp || payload.exp > now) {
+              isValid = true;
+            }
+          }
+        }
+        if (isValid) {
+          document.documentElement.className = (document.documentElement.className + ' admin-authed').trim();
+        } else {
+          document.documentElement.className = (document.documentElement.className + ' admin-unauthed').trim();
+        }
+      } catch (e) {
+        document.documentElement.className = (document.documentElement.className + ' admin-unauthed').trim();
+      }
+    })();
+  </script>
   <style>
     :root {
       --bg: #f8fafc;
@@ -23,6 +48,38 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Lato', -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; }
     
+    /* Instant Zero-Glitch Authentication Gating */
+    html.admin-unauthed body {
+      background: #090d16 !important;
+    }
+    html.admin-unauthed #admin-sidebar,
+    html.admin-unauthed #admin-main,
+    html.admin-unauthed .mobile-header,
+    html.admin-unauthed .sidebar-backdrop {
+      display: none !important;
+      visibility: hidden !important;
+    }
+    html.admin-unauthed #admin-login-screen {
+      display: flex !important;
+      visibility: visible !important;
+    }
+    html.admin-authed #admin-login-screen {
+      display: none !important;
+      visibility: hidden !important;
+    }
+    html.admin-authed #admin-sidebar {
+      display: flex;
+    }
+    html.admin-authed #admin-main {
+      display: block;
+    }
+
+    /* Skeleton Loading Pulse Animation */
+    @keyframes adminPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.998); }
+    }
+
     /* Login Overlay & Premium Form Styling */
     #admin-login-screen { 
       position: fixed; 
@@ -31,7 +88,7 @@
       backdrop-filter: blur(8px); 
       -webkit-backdrop-filter: blur(8px);
       z-index: 99999; 
-      display: none; 
+      display: flex; 
       align-items: center; 
       justify-content: center; 
       padding: 24px; 
@@ -370,9 +427,35 @@
     @media (max-width: 480px) {
       .stats-grid { grid-template-columns: 1fr; }
     }
+
+    /* Top Horizontal Progress Line for Fast Seamless Tab Switching */
+    .admin-top-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      z-index: 999999;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .admin-top-progress.active {
+      opacity: 1;
+    }
+    .admin-top-progress .bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #10b981, #06b6d4, #3b82f6);
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.7);
+      transition: width 0.25s ease;
+    }
   </style>
 </head>
 <body>
+
+  <!-- TOP LOADER BAR -->
+  <div id="admin-top-progress" class="admin-top-progress"><div class="bar"></div></div>
 
   <!-- MOBILE TOP HEADER -->
   <header id="admin-mobile-header" class="mobile-header">
@@ -392,7 +475,7 @@
   <div id="admin-sidebar-backdrop" class="sidebar-backdrop"></div>
 
   <!-- ADMIN LOGIN OVERLAY -->
-  <div id="admin-login-screen" style="display:none;">
+  <div id="admin-login-screen">
     <div class="login-box">
       <div class="login-badge-wrap">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
@@ -568,7 +651,7 @@
 
   <script src="../shared/frontend-api-config.js?v=2.2"></script>
   <script src="../js/lane4-api.js?v=2.2"></script>
-  <script src="js/admin.js?v=2.6"></script>
+  <script src="js/admin.js?v=2.8"></script>
 </body>
 </html>
 

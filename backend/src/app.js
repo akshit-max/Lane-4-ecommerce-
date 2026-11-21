@@ -52,9 +52,11 @@ app.use(
   })
 );
 
-// Logging
+// Logging - only log API requests so static assets do not flood terminal
 if (config.env !== 'test') {
-  app.use(morgan('dev'));
+  app.use(morgan('dev', {
+    skip: (req) => !req.url.startsWith('/api')
+  }));
 }
 
 // Body parsing
@@ -137,9 +139,22 @@ if (config.env === 'production' && process.env.SERVE_FRONTEND !== 'true') {
     });
   });
 } else {
-  // Static file serving for local development only
+  // Static file serving for local development only with optimal caching for instant page loads
   const frontendRoot = path.resolve(__dirname, '../../');
-  const staticOpts = { extensions: ['html', 'htm'], etag: false, lastModified: false };
+  const staticOpts = {
+    extensions: ['html', 'htm'],
+    etag: true,
+    lastModified: true,
+    setHeaders: (res, filePath) => {
+      // Static assets (CSS, JS, images, fonts) get browser caching for instant zero-wait navigation
+      if (/\.(css|js|png|jpg|jpeg|gif|svg|webp|woff2?|ico|ttf|eot)$/i.test(filePath)) {
+        res.setHeader('Cache-Control', 'public, max-age=7200, stale-while-revalidate=86400');
+      } else if (/\.(html|htm)$/i.test(filePath)) {
+        // HTML pages validate quickly for instant fresh responses
+        res.setHeader('Cache-Control', 'no-cache');
+      }
+    }
+  };
   app.use('/uploads', express.static(path.join(frontendRoot, 'uploads'), staticOpts));
   app.use(express.static(frontendRoot, staticOpts));
   app.use(['/product', '/category', '/blog', '/authors', '/utility-pages', '/category-blog', '/admin'], express.static(frontendRoot, staticOpts));

@@ -67,5 +67,45 @@
     window.LANE4.setUser(null, null);
     window.location.reload();
   };
+
+  // Instant Zero-Wait Page Navigation Prefetcher
+  function initLinkPrefetcher() {
+    if (typeof window === 'undefined' || !window.fetch) return;
+    const prefetched = new Set();
+
+    function prefetchUrl(url) {
+      if (!url || prefetched.has(url)) return;
+      try {
+        const u = new URL(url, window.location.href);
+        if (u.origin !== window.location.origin) return;
+        if (u.pathname.startsWith('/api') || (u.hash.length > 1 && u.pathname === window.location.pathname)) return;
+        if (!u.pathname.endsWith('.html') && !u.pathname.endsWith('.htm') && !u.pathname.endsWith('/')) return;
+        if (u.pathname === window.location.pathname) return;
+
+        prefetched.add(url);
+        const link = document.createElement('link');
+        link.rel = 'prefetch';
+        link.href = u.href;
+        link.as = 'document';
+        document.head.appendChild(link);
+      } catch (e) {}
+    }
+
+    document.addEventListener('mouseover', function (e) {
+      const a = e.target.closest('a[href]');
+      if (a && a.href) prefetchUrl(a.href);
+    }, { passive: true });
+
+    document.addEventListener('touchstart', function (e) {
+      const a = e.target.closest('a[href]');
+      if (a && a.href) prefetchUrl(a.href);
+    }, { passive: true });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLinkPrefetcher);
+  } else {
+    initLinkPrefetcher();
+  }
 })();
 
