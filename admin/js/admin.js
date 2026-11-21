@@ -706,7 +706,7 @@
     const toast = document.getElementById('lane4-admin-toast');
     if (!toast) return;
     toast.style.opacity = '0';
-    toast.style.transform = 'translateY(-16px) scale(0.96)';
+    toast.style.transform = 'translateY(-10px)';
     if (window._lane4ToastTimeout) {
       clearTimeout(window._lane4ToastTimeout);
       window._lane4ToastTimeout = null;
@@ -728,122 +728,104 @@
     const isInfo = type === 'info';
     const isSuccess = !isError && !isWarning && !isInfo;
 
-    // Theme Configurations
-    let config = {
-      bg: 'linear-gradient(135deg, #052e16 0%, #064e3b 60%, #047857 100%)',
-      border: '1px solid rgba(52, 211, 153, 0.45)',
-      shadow: '0 16px 36px -6px rgba(5, 150, 105, 0.45), 0 6px 14px -3px rgba(0, 0, 0, 0.25)',
-      iconBg: 'rgba(16, 185, 129, 0.25)',
-      iconBorder: '1.5px solid rgba(167, 243, 208, 0.5)',
-      iconColor: '#34d399',
-      svg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>`,
-      title: customTitle || (message.toLowerCase().includes('payment') ? 'PAYMENT RECEIVED' : 'OPERATION SUCCESSFUL'),
-      titleColor: '#a7f3d0',
-      textColor: '#ffffff',
-      barColor: '#34d399'
+    // Refined White Theme with tasteful athletic status accents
+    let statusConfig = {
+      accentBorder: '#16a34a',
+      iconBg: '#f0fdf4',
+      iconBorder: '#bbf7d0',
+      iconColor: '#16a34a',
+      statusText: customTitle || 'SUCCESS',
+      statusColor: '#16a34a',
+      svg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
     };
 
     if (isError) {
-      config = {
-        bg: 'linear-gradient(135deg, #450a0a 0%, #7f1d1d 60%, #991b1b 100%)',
-        border: '1px solid rgba(252, 165, 165, 0.45)',
-        shadow: '0 16px 36px -6px rgba(185, 28, 28, 0.45), 0 6px 14px -3px rgba(0, 0, 0, 0.25)',
-        iconBg: 'rgba(239, 68, 68, 0.25)',
-        iconBorder: '1.5px solid rgba(254, 202, 202, 0.5)',
-        iconColor: '#f87171',
-        svg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
-        title: customTitle || 'SYSTEM ERROR',
-        titleColor: '#fecaca',
-        textColor: '#ffffff',
-        barColor: '#f87171'
+      statusConfig = {
+        accentBorder: '#dc2626',
+        iconBg: '#fef2f2',
+        iconBorder: '#fecaca',
+        iconColor: '#dc2626',
+        statusText: customTitle || 'ERROR',
+        statusColor: '#dc2626',
+        svg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`
       };
     } else if (isWarning) {
-      config = {
-        bg: 'linear-gradient(135deg, #451a03 0%, #78350f 60%, #92400e 100%)',
-        border: '1px solid rgba(251, 191, 36, 0.45)',
-        shadow: '0 16px 36px -6px rgba(180, 83, 9, 0.45), 0 6px 14px -3px rgba(0, 0, 0, 0.25)',
-        iconBg: 'rgba(245, 158, 11, 0.25)',
-        iconBorder: '1.5px solid rgba(253, 230, 138, 0.5)',
-        iconColor: '#fbbf24',
-        svg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
-        title: customTitle || 'ATTENTION REQUIRED',
-        titleColor: '#fef3c7',
-        textColor: '#ffffff',
-        barColor: '#fbbf24'
+      statusConfig = {
+        accentBorder: '#d97706',
+        iconBg: '#fffbeb',
+        iconBorder: '#fde68a',
+        iconColor: '#d97706',
+        statusText: customTitle || 'NOTICE',
+        statusColor: '#d97706',
+        svg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
       };
     } else if (isInfo) {
-      config = {
-        bg: 'linear-gradient(135deg, #090d16 0%, #0f172a 60%, #1e293b 100%)',
-        border: '1px solid rgba(148, 163, 184, 0.35)',
-        shadow: '0 16px 36px -6px rgba(15, 23, 42, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.3)',
-        iconBg: 'rgba(56, 189, 248, 0.18)',
-        iconBorder: '1.5px solid rgba(125, 211, 252, 0.4)',
-        iconColor: '#38bdf8',
-        svg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`,
-        title: customTitle || 'STATUS UPDATED',
-        titleColor: '#93c5fd',
-        textColor: '#f8fafc',
-        barColor: '#38bdf8'
+      statusConfig = {
+        accentBorder: '#0284c7',
+        iconBg: '#f0f9ff',
+        iconBorder: '#bae6fd',
+        iconColor: '#0284c7',
+        statusText: customTitle || 'UPDATE',
+        statusColor: '#0284c7',
+        svg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`
       };
     }
 
     toast.style.cssText = `
       position: fixed;
-      top: 20px;
-      right: 20px;
+      top: 24px;
+      right: 24px;
       z-index: 9999999;
-      width: 400px;
+      width: 380px;
       max-width: calc(100vw - 32px);
-      border-radius: 12px;
-      overflow: hidden;
-      background: ${config.bg};
-      border: ${config.border};
-      box-shadow: ${config.shadow};
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.24s ease;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid ${statusConfig.accentBorder};
+      border-radius: 8px;
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+      padding: 13px 16px;
       display: flex;
-      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
       opacity: 0;
-      transform: translateY(-20px) scale(0.96);
-      pointer-events: auto;
+      transform: translateY(-12px);
+      transition: opacity 0.2s ease, transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
       font-family: inherit;
+      pointer-events: auto;
+      box-sizing: border-box;
     `;
 
     toast.innerHTML = `
-      <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;">
-        <div style="width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${config.iconBg};border:${config.iconBorder};color:${config.iconColor};">
-          ${config.svg}
-        </div>
-        <div style="flex:1;min-width:0;padding-top:1px;">
-          <div style="font-size:10.5px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:${config.titleColor};margin-bottom:3px;">
-            ${config.title}
-          </div>
-          <div style="font-size:13px;font-weight:600;line-height:1.45;color:${config.textColor};word-break:break-word;">
-            ${message}
-          </div>
-        </div>
-        <button type="button" onclick="hideToast()" style="background:none;border:none;color:#ffffff;opacity:0.65;font-size:18px;line-height:1;cursor:pointer;padding:2px 4px;margin-left:4px;border-radius:4px;transition:opacity 0.15s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.65'" title="Dismiss">&times;</button>
+      <div style="width:28px;height:28px;border-radius:50%;background:${statusConfig.iconBg};border:1px solid ${statusConfig.iconBorder};color:${statusConfig.iconColor};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
+        ${statusConfig.svg}
       </div>
-      <div id="lane4-toast-progress" style="height:3px;background:${config.barColor};width:100%;transition:width 3.6s linear;"></div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:0.07em;text-transform:uppercase;color:${statusConfig.statusColor};line-height:1.2;">
+          ${escapeHtml(statusConfig.statusText)}
+        </div>
+        <div style="font-size:13px;font-weight:600;color:#0f172a;line-height:1.4;margin-top:2px;word-break:break-word;">
+          ${escapeHtml(message)}
+        </div>
+      </div>
+      <button type="button" onclick="hideToast()" style="background:none;border:none;color:#94a3b8;font-size:18px;line-height:1;cursor:pointer;padding:0 2px;margin-left:4px;border-radius:4px;transition:color 0.15s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#94a3b8'" title="Close">&times;</button>
     `;
+
+    // Pause on hover
+    toast.onmouseenter = () => {
+      if (window._lane4ToastTimeout) clearTimeout(window._lane4ToastTimeout);
+    };
+    toast.onmouseleave = () => {
+      window._lane4ToastTimeout = setTimeout(hideToast, 2200);
+    };
 
     void toast.offsetWidth;
     toast.style.opacity = '1';
-    toast.style.transform = 'translateY(0) scale(1)';
+    toast.style.transform = 'translateY(0)';
 
-    setTimeout(() => {
-      const progressBar = document.getElementById('lane4-toast-progress');
-      if (progressBar) progressBar.style.width = '0%';
-    }, 50);
-
-    window._lane4ToastTimeout = setTimeout(() => {
-      hideToast();
-    }, 3800);
+    window._lane4ToastTimeout = setTimeout(hideToast, 3500);
   }
   window.showToast = showToast;
   window.hideToast = hideToast;
-  window.showToast = showToast;
   window.showThemedConfirm = showThemedConfirm;
 
   // --- DASHBOARD ---
