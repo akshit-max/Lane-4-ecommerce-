@@ -124,24 +124,34 @@ const handleWfGraphql = (req, res) => {
 app.use(['/.wf_graphql', '/lane4/.wf_graphql'], handleWfGraphql);
 app.all(['/graphql', '/api/v1/sites/*/apollo'], handleWfGraphql);
 
-// Static file serving: Serve existing frontend files directly from lane4 root without 304 caching
-const frontendRoot = path.resolve(__dirname, '../../');
-const staticOpts = { extensions: ['html', 'htm'], etag: false, lastModified: false };
-app.use('/uploads', express.static(path.join(frontendRoot, 'uploads'), staticOpts));
-app.use(express.static(frontendRoot, staticOpts));
+// In production, backend strictly operates as a dedicated API server
+if (config.env === 'production' && process.env.SERVE_FRONTEND !== 'true') {
+  app.get('/', (req, res) => {
+    res.json({
+      name: 'The LANE4 Performance Store — API Backend',
+      status: 'online',
+      version: '1.0.0',
+      environment: config.env,
+      healthCheck: '/api/health',
+      frontendUrl: config.frontendUrl || 'https://lane4-phi.vercel.app'
+    });
+  });
+} else {
+  // Static file serving for local development only
+  const frontendRoot = path.resolve(__dirname, '../../');
+  const staticOpts = { extensions: ['html', 'htm'], etag: false, lastModified: false };
+  app.use('/uploads', express.static(path.join(frontendRoot, 'uploads'), staticOpts));
+  app.use(express.static(frontendRoot, staticOpts));
+  app.use(['/product', '/category', '/blog', '/authors', '/utility-pages', '/category-blog', '/admin'], express.static(frontendRoot, staticOpts));
 
-// Subfolder asset resolution fallback (e.g. /product/6424266ea05809dff501d86e/... and /admin/6424266ea05809dff501d86e/...)
-app.use(['/product', '/category', '/blog', '/authors', '/utility-pages', '/category-blog', '/admin'], express.static(frontendRoot, staticOpts));
+  app.get('/', (req, res) => {
+    res.sendFile(path.join(frontendRoot, 'index.htm'));
+  });
 
-// Root route handler: Serve index.htm
-app.get('/', (req, res) => {
-  res.sendFile(path.join(frontendRoot, 'index.htm'));
-});
-
-// Admin portal route handler
-app.get(['/admin', '/admin/'], (req, res) => {
-  res.sendFile(path.join(frontendRoot, 'admin/index.html'));
-});
+  app.get(['/admin', '/admin/'], (req, res) => {
+    res.sendFile(path.join(frontendRoot, 'admin/index.html'));
+  });
+}
 
 // 404 for API requests
 app.use('/api', notFound);
