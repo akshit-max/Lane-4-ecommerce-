@@ -24,6 +24,7 @@ class AuthController {
       }
 
       const auth = getAuth();
+      const db = getDb();
       const decoded = await auth.verifyIdToken(idToken);
       const profile = await authService.getCustomerProfile(decoded.uid);
 
@@ -31,12 +32,21 @@ class AuthController {
       const email = (decoded.email || '').toLowerCase().trim();
       const bootstrapAdmin = (config.adminBootstrap && config.adminBootstrap.email ? config.adminBootstrap.email : 'admin@lane4swim.in').toLowerCase().trim();
 
+      // Check if user is an administrator
+      let isAdminAccount = role === 'admin' || role === 'super_admin' || role === 'order_manager' || role === 'product_manager' || role === 'inventory_manager' || email.startsWith('admin_') || email === bootstrapAdmin;
+      if (!isAdminAccount && db && email) {
+        const adminSnap = await db.collection('adminUsers').where('email', '==', email).limit(1).get();
+        if (!adminSnap.empty) {
+          isAdminAccount = true;
+        }
+      }
+
       // Explicitly reject staff/admin accounts from customer storefront authentication
-      if (role === 'admin' || role === 'super_admin' || email.startsWith('admin_') || email === bootstrapAdmin) {
+      if (isAdminAccount) {
         return sendError(
           res,
           'ADMIN_ACCESS_RESTRICTED',
-          'Administrator and staff accounts cannot log in to the customer storefront. Please access the Staff Operations Portal at /admin/.',
+          'Administrator accounts cannot sign in to the customer storefront. Please access the Admin Portal at /admin/.',
           null,
           403
         );
@@ -82,6 +92,19 @@ class AuthController {
         const cleanEmail = email.toLowerCase().trim();
         const snap = await db.collection('adminUsers').where('email', '==', cleanEmail).limit(1).get();
         if (snap.empty) {
+          // Reject normal customer accounts attempting to sign in to the admin console
+          if (db) {
+            const customerSnap = await db.collection('users').where('email', '==', cleanEmail).limit(1).get();
+            if (!customerSnap.empty) {
+              return sendError(
+                res,
+                'CUSTOMER_ACCESS_DENIED',
+                'Customer accounts cannot access the Admin Portal. Please use authorized administrator credentials.',
+                null,
+                403
+              );
+            }
+          }
           return sendError(res, 'INVALID_CREDENTIALS', 'Invalid administrator email or password.', null, 401);
         }
 
@@ -133,6 +156,18 @@ class AuthController {
           return sendError(res, 'AUTH_UNAVAILABLE', 'Authentication service unavailable.', null, 503);
         }
         const decoded = await auth.verifyIdToken(idToken);
+        if (db) {
+          const customerDoc = await db.collection('users').doc(decoded.uid).get();
+          if (customerDoc.exists && customerDoc.data().role !== 'admin' && customerDoc.data().role !== 'super_admin') {
+            return sendError(
+              res,
+              'CUSTOMER_ACCESS_DENIED',
+              'Customer accounts cannot access the Admin Portal. Please use authorized administrator credentials.',
+              null,
+              403
+            );
+          }
+        }
         adminData = await authService.verifyAdminLogin(decoded.uid);
       } else {
         return sendError(res, 'CREDENTIALS_REQUIRED', 'Administrator credentials required.', null, 400);

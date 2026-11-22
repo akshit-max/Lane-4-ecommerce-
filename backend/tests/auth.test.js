@@ -76,5 +76,52 @@ describe('Authentication & Authorization Test Suite', () => {
     expect(adminRes.body.success).toBe(true);
     expect(adminRes.body.data.admin.role).toBe('super_admin');
   });
+
+  test('POST /api/auth/login rejects administrator accounts from customer storefront', async () => {
+    const res = await request(app)
+      .post('/api/auth/login')
+      .send({ idToken: 'test_token_admin_lane4swim_in' });
+
+    expect(res.status).toBe(403);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.code).toBe('ADMIN_ACCESS_RESTRICTED');
+  });
+
+  test('POST /api/auth/admin/login rejects normal customer credentials with 403', async () => {
+    // Register a customer first
+    const customerEmail = `swimmer_admin_test_${Date.now()}@example.com`;
+    await request(app)
+      .post('/api/auth/register')
+      .send({
+        email: customerEmail,
+        password: 'Password123!',
+        displayName: 'Test Swimmer'
+      });
+
+    // Attempt admin login with customer credentials
+    const res = await request(app)
+      .post('/api/auth/admin/login')
+      .send({
+        email: customerEmail,
+        password: 'Password123!'
+      });
+
+    expect(res.status).toBe(403);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.code).toBe('CUSTOMER_ACCESS_DENIED');
+  });
+
+  test('POST /api/auth/register rejects registration with administrator emails', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({
+        email: 'admin@lane4swim.in',
+        password: 'Password123!',
+        displayName: 'Impostor Admin'
+      });
+
+    expect(res.status).toBe(500); // Handled service exception
+    expect(res.body.success).toBe(false);
+  });
 });
 

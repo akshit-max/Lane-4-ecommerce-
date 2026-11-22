@@ -10,6 +10,18 @@ class AuthService {
 
     const cleanEmail = email.toLowerCase().trim();
 
+    // Prevent administrator accounts from being registered as customer storefront accounts
+    const bootstrapAdmin = 'admin@lane4swim.in';
+    if (cleanEmail === bootstrapAdmin || cleanEmail.startsWith('admin_') || cleanEmail.startsWith('admin@')) {
+      throw new Error('Administrator accounts cannot be registered as customer accounts. Please access the Admin Portal at /admin/.');
+    }
+    if (db) {
+      const adminSnap = await db.collection('adminUsers').where('email', '==', cleanEmail).limit(1).get();
+      if (!adminSnap.empty) {
+        throw new Error('Administrator accounts cannot be registered as customer accounts. Please access the Admin Portal at /admin/.');
+      }
+    }
+
     // 1. Create user in Firebase Authentication
     let userRecord;
     try {
@@ -147,7 +159,7 @@ class AuthService {
     }
 
     if (!adminDoc || !adminDoc.exists) {
-      throw new Error('Access denied. Administrator record not found.');
+      throw new Error('Customer accounts cannot access the Admin Portal. Please use authorized administrator credentials.');
     }
 
     const adminData = adminDoc.data();

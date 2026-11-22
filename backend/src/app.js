@@ -158,12 +158,13 @@ if (config.env === 'production' && process.env.SERVE_FRONTEND !== 'true') {
     etag: true,
     lastModified: true,
     setHeaders: (res, filePath) => {
-      // Static assets (CSS, JS, images, fonts) get browser caching for instant zero-wait navigation
-      if (/\.(css|js|png|jpg|jpeg|gif|svg|webp|woff2?|ico|ttf|eot)$/i.test(filePath)) {
-        res.setHeader('Cache-Control', 'public, max-age=7200, stale-while-revalidate=86400');
+      // In local development, avoid aggressive caching for JS/CSS so changes reflect instantly
+      if (/\.(css|js)$/i.test(filePath)) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      } else if (/\.(png|jpg|jpeg|gif|svg|webp|woff2?|ico|ttf|eot)$/i.test(filePath)) {
+        res.setHeader('Cache-Control', 'public, max-age=3600');
       } else if (/\.(html|htm)$/i.test(filePath)) {
-        // HTML pages validate quickly for instant fresh responses
-        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       }
     }
   };

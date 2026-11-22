@@ -393,6 +393,19 @@
         alert('Your cart is empty! Please select swimming products before checking out.');
         return;
       }
+      const user = window.LANE4.getUser();
+      if (!user || !user.uid) {
+        closeCartDrawer();
+        if (window.LANE4_AUTH && window.LANE4_AUTH.open) {
+          window.LANE4_AUTH.open('login');
+          if (window.LANE4_AUTH.showAlert) {
+            window.LANE4_AUTH.showAlert('Please sign in or create an account to proceed to checkout.', 'info');
+          }
+        } else {
+          alert('Please sign in or create an account to proceed to checkout.');
+        }
+        return;
+      }
       const isInSubfolder = /\/(product|category|blog|authors|utility-pages|category-blog)\//i.test(window.location.pathname);
       window.location.href = isInSubfolder ? '../checkout.html' : 'checkout.html';
     };
@@ -442,7 +455,7 @@
     // Free shipping progress calculation
     const subtotal = activeCart.subtotalPaise || 0;
     if (subtotal >= FREE_SHIPPING_THRESHOLD_PAISE) {
-      shippingMsg.innerHTML = '<span style="color:#16a34a;">🎉 You unlocked <strong>FREE PAN India Express Delivery!</strong></span>';
+      shippingMsg.innerHTML = '<span style="color:#16a34a;display:inline-flex;align-items:center;gap:5px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>You unlocked <strong>FREE PAN India Express Delivery!</strong></span>';
       shippingBar.style.width = '100%';
       shippingBar.style.background = '#16a34a';
     } else {
@@ -657,6 +670,20 @@
           e.preventDefault();
           e.stopPropagation();
           e.stopImmediatePropagation();
+        }
+
+        // Login required to shop and add products to cart
+        const user = window.LANE4.getUser();
+        if (!user || !user.uid) {
+          if (window.LANE4_AUTH && window.LANE4_AUTH.open) {
+            window.LANE4_AUTH.open('login');
+            if (window.LANE4_AUTH.showAlert) {
+              window.LANE4_AUTH.showAlert('Please sign in or create an account to start shopping and add items to your cart.', 'info');
+            }
+          } else {
+            alert('Please sign in or create an account to start shopping and add items to your cart.');
+          }
+          return;
         }
 
         const submitBtn = form.querySelector('input[type="submit"], button[type="submit"]');

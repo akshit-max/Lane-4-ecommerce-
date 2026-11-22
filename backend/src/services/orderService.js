@@ -408,9 +408,18 @@ class OrderService {
 
   async updateOrderStatus(orderId, newStatus, adminUser) {
     const db = getDb();
-    const orderRef = db.collection('orders').doc(orderId);
-    const orderDoc = await orderRef.get();
-    if (!orderDoc.exists) throw new Error('Order not found');
+    let orderRef = db.collection('orders').doc(orderId);
+    let orderDoc = await orderRef.get();
+    if (!orderDoc.exists) {
+      const cleanNum = orderId.toString().trim().replace(/^#/, '');
+      const snap = await db.collection('orders').where('orderNumber', '==', cleanNum).limit(1).get();
+      if (!snap.empty) {
+        orderDoc = snap.docs[0];
+        orderRef = orderDoc.ref;
+      } else {
+        throw new Error('Order not found');
+      }
+    }
 
     const orderData = orderDoc.data();
     const now = new Date();
@@ -496,9 +505,18 @@ class OrderService {
 
   async addTrackingInfo(orderId, { courierName, trackingNumber, trackingUrl }, adminUser) {
     const db = getDb();
-    const orderRef = db.collection('orders').doc(orderId);
-    const orderDoc = await orderRef.get();
-    if (!orderDoc.exists) throw new Error('Order not found');
+    let orderRef = db.collection('orders').doc(orderId);
+    let orderDoc = await orderRef.get();
+    if (!orderDoc.exists) {
+      const cleanNum = orderId.toString().trim().replace(/^#/, '');
+      const snap = await db.collection('orders').where('orderNumber', '==', cleanNum).limit(1).get();
+      if (!snap.empty) {
+        orderDoc = snap.docs[0];
+        orderRef = orderDoc.ref;
+      } else {
+        throw new Error('Order not found');
+      }
+    }
 
     const orderData = orderDoc.data();
     const now = new Date();

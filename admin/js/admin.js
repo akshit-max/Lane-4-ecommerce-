@@ -64,6 +64,12 @@
     });
   }
 
+  function formatDateString(val, dateOnly) {
+    return formatDateTime(val, dateOnly);
+  }
+  window.formatDateTime = formatDateTime;
+  window.formatDateString = formatDateString;
+
   function formatLogDate(val) {
     if (!val) return '—';
     const ms = toMillis(val);
@@ -627,6 +633,8 @@
     else if (viewName === 'settings') loadSettings();
     else if (viewName === 'logs') loadLogs();
   }
+  window.switchView = switchView;
+  window.showView = switchView;
 
   // --- SEAMLESS TRANSITIONS & SKELETON LOADERS ---
   let topLoaderTimer = null;
@@ -729,11 +737,15 @@
       <div>${bodyHtml}</div>
     `;
     modal.style.display = 'flex';
+    document.body.classList.add('modal-open');
+    document.documentElement.classList.add('modal-open');
   }
 
   function hideModal(result = null) {
     const modal = document.getElementById('admin-modal');
     if (modal) modal.style.display = 'none';
+    document.body.classList.remove('modal-open');
+    document.documentElement.classList.remove('modal-open');
     if (activeModalResolver) {
       const resolver = activeModalResolver;
       activeModalResolver = null;
@@ -750,6 +762,21 @@
       modal.onclick = (e) => {
         if (e.target === modal) hideModal(null);
       };
+
+      // Prevent background scrolling while modal is open
+      modal.addEventListener('wheel', (e) => {
+        const content = document.getElementById('admin-modal-content');
+        if (content && !content.contains(e.target)) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+
+      modal.addEventListener('touchmove', (e) => {
+        const content = document.getElementById('admin-modal-content');
+        if (content && !content.contains(e.target)) {
+          e.preventDefault();
+        }
+      }, { passive: false });
     }
 
     window.addEventListener('keydown', (e) => {
@@ -819,6 +846,8 @@
       if (okBtn) okBtn.onclick = () => hideModal(true);
 
       modal.style.display = 'flex';
+      document.body.classList.add('modal-open');
+      document.documentElement.classList.add('modal-open');
     });
   }
 
@@ -952,7 +981,11 @@
 
   function previewQrModal(imgSrc) {
     let existing = document.getElementById('lane4-admin-qr-modal');
-    if (existing) existing.remove();
+    if (existing) {
+      existing.remove();
+      document.body.classList.remove('modal-open');
+      document.documentElement.classList.remove('modal-open');
+    }
 
     const currentImg = imgSrc || (document.getElementById('admin-qr-preview-img') ? document.getElementById('admin-qr-preview-img').src : '6424266ea05809dff501d86e/lane4-share.png');
 
@@ -969,7 +1002,7 @@
             <div style="font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;">Storefront Payment QR</div>
             <div style="font-size:16px;font-weight:900;color:#0f172a;margin-top:2px;">UPI Payment QR Preview</div>
           </div>
-          <button type="button" onclick="document.getElementById('lane4-admin-qr-modal').remove()" style="background:#f1f5f9;border:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#475569;font-size:18px;cursor:pointer;" title="Close">&times;</button>
+          <button type="button" id="lane4-qr-modal-close-icon" style="background:#f1f5f9;border:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#475569;font-size:18px;cursor:pointer;" title="Close">&times;</button>
         </div>
         <div style="padding:24px;text-align:center;background:#ffffff;">
           <div style="background:#ffffff;border:2px solid #0f172a;border-radius:12px;padding:16px;display:inline-block;box-shadow:0 8px 24px -4px rgba(15,23,42,0.12);">
@@ -981,15 +1014,29 @@
         </div>
         <div style="padding:12px 20px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
           <span style="font-size:11px;color:#64748b;">Scan with any UPI app camera</span>
-          <button type="button" onclick="document.getElementById('lane4-admin-qr-modal').remove()" class="btn" style="background:#0f172a;color:#ffffff;padding:8px 18px;font-size:12px;font-weight:800;border-radius:6px;cursor:pointer;">Close</button>
+          <button type="button" id="lane4-qr-modal-close-btn" class="btn" style="background:#0f172a;color:#ffffff;padding:8px 18px;font-size:12px;font-weight:800;border-radius:6px;cursor:pointer;">Close</button>
         </div>
       </div>
     `;
 
+    function closeQr() {
+      modal.remove();
+      document.body.classList.remove('modal-open');
+      document.documentElement.classList.remove('modal-open');
+    }
+
     modal.onclick = (e) => {
-      if (e.target === modal) modal.remove();
+      if (e.target === modal) closeQr();
     };
+
+    const closeIcon = modal.querySelector('#lane4-qr-modal-close-icon');
+    const closeBtn = modal.querySelector('#lane4-qr-modal-close-btn');
+    if (closeIcon) closeIcon.onclick = closeQr;
+    if (closeBtn) closeBtn.onclick = closeQr;
+
     document.body.appendChild(modal);
+    document.body.classList.add('modal-open');
+    document.documentElement.classList.add('modal-open');
   }
   window.previewQrModal = previewQrModal;
 
@@ -1493,7 +1540,12 @@
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding-top:14px;border-top:1px solid #e2e8f0;">
           <button type="button" class="btn btn-outline" onclick="hideModal()">Stay on Payments</button>
           <button type="button" class="btn btn-primary" style="background:#000;color:#fff;padding:10px 18px;font-weight:800;font-size:13px;display:inline-flex;align-items:center;gap:8px;" onclick="goToOrderFulfillment('${orderId}')">
-            <span>📦 Go to Order & Dispatch Tracking →</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+              <line x1="12" y1="22.08" x2="12" y2="12"/>
+            </svg>
+            <span>Go to Order &amp; Dispatch Tracking &rarr;</span>
           </button>
         </div>
       </div>
@@ -1502,10 +1554,18 @@
 
   window.goToOrderFulfillment = function(orderId) {
     hideModal();
-    showView('orders');
-    setTimeout(() => {
-      openTrackingModal(orderId);
-    }, 350);
+    switchView('orders');
+
+    // Wait for the orders list to mount/load, then open the tracking modal for this order
+    const checkAndOpen = (attempts = 0) => {
+      const o = (window.currentOrders || []).find(it => it.orderId === orderId || it.id === orderId || it.orderNumber === orderId);
+      if (o || attempts >= 8) {
+        openTrackingModal(orderId);
+      } else {
+        setTimeout(() => checkAndOpen(attempts + 1), 120);
+      }
+    };
+    setTimeout(() => checkAndOpen(0), 180);
   };
 
   window.rejectPayment = function (paymentId) {
@@ -1675,7 +1735,7 @@
                     <th>Payable Total</th>
                     <th>Order Status</th>
                     <th>Payment Status</th>
-                    <th>Fulfillment & Courier</th>
+                    <th style="min-width:210px;">Fulfillment &amp; Courier</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1690,7 +1750,7 @@
                         <tr style="${isConfirmed ? 'background:#f0fdf4;' : ''}">
                           <td>
                             <strong style="font-size:13.5px;color:#0f172a;display:block;">#${orderNum}</strong>
-                            <span style="font-size:11px;color:#64748b;">${formatDateString(o.createdAt)}</span>
+                            <span style="font-size:11px;color:#64748b;">${formatDateTime(o.createdAt)}</span>
                           </td>
                           <td>
                             <div style="font-weight:800;color:#0f172a;">${escapeHtml((o.shippingAddress && o.shippingAddress.addressee) || 'Customer')}</div>
@@ -1722,7 +1782,7 @@
                               ${(o.paymentStatus || 'awaiting_payment').replace(/_/g, ' ')}
                             </span>
                           </td>
-                          <td>
+                          <td style="white-space:nowrap;">
                             ${o.fulfillment && o.fulfillment.trackingNumber ? `
                               <div style="font-size:12px;line-height:1.4;">
                                 <strong style="color:#0f172a;">${escapeHtml(o.fulfillment.courierName || 'Courier')}</strong><br />
@@ -1735,10 +1795,24 @@
                                 </div>
                               </div>
                             ` : `
-                              <button class="btn" style="${isConfirmed ? 'background:#16a34a;color:#fff;border:none;' : 'background:#fff;border:1.5px solid #000;color:#000;'}padding:6px 12px;font-size:11.5px;font-weight:800;border-radius:6px;display:inline-flex;align-items:center;gap:5px;cursor:pointer;" onclick="openTrackingModal('${orderRefId}')">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                                <span>${isConfirmed ? 'Dispatch & Add Tracking' : '+ Add Tracking'}</span>
-                              </button>
+                              ${isConfirmed ? `
+                                <button type="button" class="btn-dispatch" onclick="openTrackingModal('${orderRefId}')" title="Dispatch order and provide courier tracking">
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 21 16z"/>
+                                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                                    <line x1="12" y1="22.08" x2="12" y2="12"/>
+                                  </svg>
+                                  <span>Dispatch &amp; Add Tracking</span>
+                                </button>
+                              ` : `
+                                <button type="button" class="btn-add-tracking" onclick="openTrackingModal('${orderRefId}')" title="Add tracking details">
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="12" y1="5" x2="12" y2="19"/>
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                  </svg>
+                                  <span>Add Tracking</span>
+                                </button>
+                              `}
                             `}
                           </td>
                         </tr>
@@ -1776,15 +1850,34 @@
   };
 
   window.openTrackingModal = function (orderId) {
-    const o = (window.currentOrders || []).find(it => it.orderId === orderId || it.id === orderId);
+    const o = (window.currentOrders || []).find(it => it.orderId === orderId || it.id === orderId || it.orderNumber === orderId);
     const orderNum = o ? (o.orderNumber || o.orderId || orderId) : orderId;
     const targetId = o ? (o.orderId || o.id) : orderId;
+    const customerEmail = (o && o.customerEmail) || 'Customer Email';
+    const customerName = (o && o.shippingAddress && o.shippingAddress.addressee) || 'Customer';
 
-    showModal('Add Shipment Tracking', `
+    showModal('Dispatch Order & Attach Tracking', `
       <div style="display:flex;flex-direction:column;gap:16px;">
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 16px;">
-          <div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Order Fulfillment</div>
-          <div style="font-size:16px;font-weight:900;color:#0f172a;margin-top:2px;">Attach Courier Details for Order #${orderNum}</div>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Order Fulfillment & Dispatch</div>
+              <div style="font-size:16px;font-weight:900;color:#0f172a;margin-top:2px;">Order #${orderNum}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;">Recipient</div>
+              <div style="font-size:13px;font-weight:800;color:#0f172a;">${escapeHtml(customerName)}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notification Mechanism Explainer Card -->
+        <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:8px;padding:12px 14px;font-size:12.5px;color:#166534;line-height:1.5;">
+          <div style="font-weight:800;display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            <span>Customer Notification: Automated Email</span>
+          </div>
+          <div>An automated shipment confirmation email with the courier details, AWB/tracking code, and direct tracking button will be dispatched directly to <strong>${escapeHtml(customerEmail)}</strong>.</div>
         </div>
 
         <div>
@@ -1818,7 +1911,7 @@
         <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:14px;border-top:1px solid #e2e8f0;">
           <button type="button" class="btn btn-outline" onclick="hideModal()">Cancel</button>
           <button type="button" id="save-tracking-submit-btn" class="btn btn-primary" style="padding:9px 20px;font-size:13px;font-weight:700;">
-            Save & Notify Customer
+            Dispatch Order & Send Email
           </button>
         </div>
       </div>
@@ -1844,7 +1937,7 @@
         if (errEl) errEl.style.display = 'none';
 
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Saving...';
+        submitBtn.textContent = 'Dispatching...';
 
         try {
           await window.lane4ApiRequest(`/admin/orders/${targetId}/tracking`, {
@@ -1852,11 +1945,11 @@
             body: JSON.stringify({ courierName: courier || 'DTDC', trackingNumber: tracking, trackingUrl })
           });
           hideModal();
-          showToast('Tracking recorded and customer notified!');
+          showToast(`Order #${orderNum} dispatched! Tracking email sent to ${customerEmail}.`);
           loadOrders();
         } catch (err) {
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Save & Notify Customer';
+          submitBtn.textContent = 'Dispatch Order & Send Email';
           showToast(err.message || 'Failed to add tracking', 'error');
         }
       };

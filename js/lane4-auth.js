@@ -11,7 +11,7 @@
     if (user) {
       const email = (user.email || '').toLowerCase().trim();
       const role = user.role || '';
-      if (role === 'admin' || role === 'super_admin' || email.startsWith('admin_') || email.includes('admin@lane4swim.in')) {
+      if (role === 'admin' || role === 'super_admin' || role === 'order_manager' || role === 'product_manager' || role === 'inventory_manager' || email.startsWith('admin_') || email.startsWith('admin@') || email.includes('admin@lane4swim.in')) {
         try {
           localStorage.removeItem('lane4_user');
           localStorage.removeItem('lane4_auth_token');
@@ -541,8 +541,8 @@
       const email = form.email.value.trim().toLowerCase();
 
       // Client-side guard against admin logins in customer portal
-      if (email.startsWith('admin_') || email.includes('admin@lane4swim.in')) {
-        showAlert('Staff & administrator accounts must sign in at the Staff Operations Portal (/admin/). Storefront sign-in is reserved for customers.', 'error');
+      if (email.startsWith('admin_') || email.startsWith('admin@') || email.includes('admin@lane4swim.in')) {
+        showAlert('Administrator accounts cannot sign in to the customer storefront. Please access the Admin Portal at /admin/.', 'error');
         return;
       }
 
@@ -590,8 +590,8 @@
       const form = e.target;
       const email = form.email.value.trim().toLowerCase();
 
-      if (email.startsWith('admin_') || email.includes('admin@lane4swim.in')) {
-        showAlert('Staff accounts cannot be registered on customer storefront.', 'error');
+      if (email.startsWith('admin_') || email.startsWith('admin@') || email.includes('admin@lane4swim.in')) {
+        showAlert('Administrator accounts cannot be registered on customer storefront. Please access the Admin Portal at /admin/.', 'error');
         return;
       }
 
@@ -646,6 +646,8 @@
     const wrapper = document.getElementById('lane4-auth-modal-wrapper');
     if (!wrapper) return;
     wrapper.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
 
     const user = window.LANE4.getUser();
     const tabs = document.getElementById('lane4-auth-tabs');
@@ -748,7 +750,18 @@
   function closeAuthModal() {
     const wrapper = document.getElementById('lane4-auth-modal-wrapper');
     if (wrapper) wrapper.style.display = 'none';
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
   }
+
+  // Expose public API for cart and checkout authentication gates
+  window.LANE4_AUTH = {
+    open: openAuthModal,
+    close: closeAuthModal,
+    showAlert: showAlert,
+    hideAlert: hideAlert
+  };
+  window.openAuthModal = openAuthModal;
 
   document.addEventListener('DOMContentLoaded', initAuthUI);
   window.addEventListener('lane4:auth-changed', initAuthUI);

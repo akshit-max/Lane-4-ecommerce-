@@ -82,13 +82,52 @@
       };
     }
 
-    // 3. Pre-fill customer information if signed in
+    // 3. Pre-fill customer information if signed in or prompt login
     const user = window.LANE4.getUser();
     if (user) {
       const emailInput = document.querySelector('input[name="email"], #wf-ecom-email');
       if (emailInput) emailInput.value = user.email;
       const nameInput = document.querySelector('input[name="name"], .w-commerce-commercecheckoutshippingfullname');
       if (nameInput && user.displayName) nameInput.value = user.displayName;
+    } else {
+      setTimeout(() => {
+        if (window.LANE4_AUTH && window.LANE4_AUTH.open) {
+          window.LANE4_AUTH.open('login');
+          if (window.LANE4_AUTH.showAlert) {
+            window.LANE4_AUTH.showAlert('Please sign in or create an account to complete checkout and place your order.', 'info');
+          }
+        }
+      }, 300);
+
+      const mainContainer = document.querySelector('.w-commerce-commercelayoutmain') || document.querySelector('form');
+      if (mainContainer && !document.getElementById('lane4-checkout-auth-banner')) {
+        const banner = document.createElement('div');
+        banner.id = 'lane4-checkout-auth-banner';
+        banner.style.cssText = 'margin-bottom:24px;background:#fef2f2;border:2px solid #ef4444;border-radius:10px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;font-family:inherit;';
+        banner.innerHTML = `
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:40px;height:40px;border-radius:50%;background:#fee2e2;color:#b91c1c;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            </div>
+            <div>
+              <div style="font-size:14.5px;font-weight:800;color:#991b1b;">Login Required to Complete Checkout</div>
+              <div style="font-size:12.5px;color:#7f1d1d;line-height:1.4;">Please sign in or create a swimmer account to complete your order and submit payment.</div>
+            </div>
+          </div>
+          <button type="button" id="lane4-checkout-login-trigger" style="background:#0f172a;color:#ffffff;border:none;padding:10px 18px;border-radius:6px;font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">
+            SIGN IN / REGISTER &rarr;
+          </button>
+        `;
+        mainContainer.insertBefore(banner, mainContainer.firstChild);
+        const trig = banner.querySelector('#lane4-checkout-login-trigger');
+        if (trig) {
+          trig.onclick = () => {
+            if (window.LANE4_AUTH && window.LANE4_AUTH.open) {
+              window.LANE4_AUTH.open('login');
+            }
+          };
+        }
+      }
     }
 
     // 4. Setup State & City Dropdowns
@@ -558,6 +597,19 @@
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
+
+      // Enforce customer authentication before placing order
+      const user = window.LANE4.getUser();
+      if (!user || !user.uid) {
+        if (window.LANE4_AUTH && window.LANE4_AUTH.open) {
+          window.LANE4_AUTH.open('login');
+          if (window.LANE4_AUTH.showAlert) {
+            window.LANE4_AUTH.showAlert('Please sign in or create an account to complete checkout and place your order.', 'error');
+          }
+        }
+        alert('Please sign in or create an account to complete checkout and place your order.');
+        return;
+      }
 
       // Gather form values
       const email = document.querySelector('input[name="email"], #wf-ecom-email')?.value.trim();
