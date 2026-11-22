@@ -33,10 +33,26 @@ class OrderController {
       if (!req.user) {
         return res.status(401).json({ success: false, message: 'Authentication required' });
       }
-      const orders = await orderService.getMyOrders(req.user.uid);
+      const orders = await orderService.getMyOrders(req.user.uid, req.user.email);
       return sendSuccess(res, orders);
     } catch (err) {
       next(err);
+    }
+  }
+
+  async trackOrder(req, res, next) {
+    try {
+      const { orderNumber, email } = req.body;
+      const tracking = await orderService.trackOrder(orderNumber, email);
+      return sendSuccess(res, tracking, 'Order tracking details retrieved.');
+    } catch (err) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'TRACKING_NOT_FOUND',
+          message: err.message || 'No order found matching the provided reference number and email.'
+        }
+      });
     }
   }
 

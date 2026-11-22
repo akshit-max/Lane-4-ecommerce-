@@ -27,12 +27,27 @@ class AuthController {
       const decoded = await auth.verifyIdToken(idToken);
       const profile = await authService.getCustomerProfile(decoded.uid);
 
+      const role = decoded.role || (profile && profile.role) || 'customer';
+      const email = (decoded.email || '').toLowerCase().trim();
+      const bootstrapAdmin = (config.adminBootstrap && config.adminBootstrap.email ? config.adminBootstrap.email : 'admin@lane4swim.in').toLowerCase().trim();
+
+      // Explicitly reject staff/admin accounts from customer storefront authentication
+      if (role === 'admin' || role === 'super_admin' || email.startsWith('admin_') || email === bootstrapAdmin) {
+        return sendError(
+          res,
+          'ADMIN_ACCESS_RESTRICTED',
+          'Administrator and staff accounts cannot log in to the customer storefront. Please access the Staff Operations Portal at /admin/.',
+          null,
+          403
+        );
+      }
+
       return sendSuccess(res, {
         user: {
           uid: decoded.uid,
           email: decoded.email,
           displayName: (profile && profile.displayName) || decoded.name || '',
-          role: decoded.role || (profile && profile.role) || 'customer'
+          role: 'customer'
         }
       }, 'Signed in successfully.');
     } catch (err) {

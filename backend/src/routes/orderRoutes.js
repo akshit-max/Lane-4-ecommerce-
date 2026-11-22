@@ -16,6 +16,7 @@ router.post(
 );
 
 router.get('/my-orders', authenticate, orderController.getMyOrders);
+router.post('/track', orderController.trackOrder);
 router.get('/:id', optionalAuthenticate, orderController.getOrderById);
 
 module.exports = router;

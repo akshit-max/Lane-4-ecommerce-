@@ -95,7 +95,19 @@ const handleWfGraphql = (req, res) => {
           userItems: [],
           userItemsCount: 0,
           subtotal: { value: 0 },
-          availableShippingMethods: [],
+          availableShippingMethods: [
+            {
+              id: 'pan_india_express',
+              name: 'PAN India Express Delivery',
+              description: 'Tracked PAN India express courier (3–5 business days)',
+              price: {
+                value: 0,
+                unit: 'INR',
+                decimalValue: '0.00',
+                string: 'FREE'
+              }
+            }
+          ],
           statusFlags: { requiresShipping: false, shouldRecalc: false }
         },
         userSubscriptions: []

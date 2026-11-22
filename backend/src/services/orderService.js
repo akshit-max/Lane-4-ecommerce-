@@ -7,6 +7,15 @@ const { formatINR } = require('../utils/currency');
 const { sendMail, wrapBrandedTemplate } = require('../config/email');
 const { logger } = require('../utils/logger');
 
+function toMillis(d) {
+  if (!d) return 0;
+  if (typeof d.toMillis === 'function') return d.toMillis();
+  if (d._seconds !== undefined) return d._seconds * 1000 + Math.floor((d._nanoseconds || 0) / 1e6);
+  if (d.seconds !== undefined) return d.seconds * 1000;
+  const t = new Date(d).getTime();
+  return isNaN(t) ? 0 : t;
+}
+
 class OrderService {
   _generateOrderNumber() {
     const year = new Date().getFullYear().toString().slice(-2);
@@ -256,16 +265,52 @@ class OrderService {
     return order;
   }
 
-  async getMyOrders(customerId) {
+  async getMyOrders(customerId, customerEmail = null) {
     const db = getDb();
-    if (!db || !customerId) return [];
+    if (!db || (!customerId && !customerEmail)) return [];
 
-    const snap = await db.collection('orders')
-      .where('customerId', '==', customerId)
-      .get();
+    const orderMap = new Map();
 
-    const orders = snap.docs.map(d => d.data());
-    orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    // 1. Fetch orders tied to registered customerId
+    if (customerId) {
+      const snap = await db.collection('orders')
+        .where('customerId', '==', customerId)
+        .get();
+      snap.docs.forEach(d => {
+        const data = d.data();
+        orderMap.set(data.orderNumber || d.id, {
+          ...data,
+          id: d.id,
+          orderId: data.orderId || d.id
+        });
+      });
+    }
+
+    // 2. Also fetch and auto-link any guest orders placed before signup with this email
+    if (customerEmail) {
+      const cleanEmail = customerEmail.toLowerCase().trim();
+      const snap = await db.collection('orders')
+        .where('customerEmail', '==', cleanEmail)
+        .get();
+      snap.docs.forEach(d => {
+        const data = d.data();
+        const key = data.orderNumber || d.id;
+        if (!orderMap.has(key)) {
+          if (customerId && !data.customerId) {
+            d.ref.update({ customerId, updatedAt: new Date() }).catch(() => {});
+          }
+          orderMap.set(key, {
+            ...data,
+            id: d.id,
+            orderId: data.orderId || d.id,
+            customerId: customerId || data.customerId
+          });
+        }
+      });
+    }
+
+    const orders = Array.from(orderMap.values());
+    orders.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
     return orders;
   }
 
@@ -283,9 +328,82 @@ class OrderService {
     }
 
     const snap = await query.get();
-    let orders = snap.docs.map(d => d.data());
-    orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    let orders = snap.docs.map(d => {
+      const data = d.data();
+      return {
+        ...data,
+        id: d.id,
+        orderId: data.orderId || d.id
+      };
+    });
+
+    // Ensure newest orders are ALWAYS at index 0 (top of table)
+    orders.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
     return orders;
+  }
+
+  async trackOrder(orderNumber, email) {
+    const db = getDb();
+    if (!db) throw new Error('Database unavailable');
+
+    if (!orderNumber || !email) {
+      throw new Error('Both order number and customer email address are required to track an order.');
+    }
+
+    const cleanNum = orderNumber.toString().trim().replace(/^#/, '').toUpperCase();
+    const cleanEmail = email.toString().trim().toLowerCase();
+
+    // 1. Locate order by orderNumber or document ID
+    let snap = await db.collection('orders').where('orderNumber', '==', cleanNum).limit(1).get();
+    let orderDoc = !snap.empty ? snap.docs[0] : null;
+
+    if (!orderDoc) {
+      // Check document ID
+      const directDoc = await db.collection('orders').doc(cleanNum).get();
+      if (directDoc.exists) {
+        orderDoc = directDoc;
+      }
+    }
+
+    if (!orderDoc) {
+      throw new Error(`No order found matching reference #${cleanNum}. Please verify your order number and email.`);
+    }
+
+    const order = orderDoc.data();
+    const recordEmail = (order.customerEmail || '').toLowerCase().trim();
+
+    if (recordEmail !== cleanEmail) {
+      throw new Error('The email address provided does not match the customer record for this order.');
+    }
+
+    return {
+      orderId: orderDoc.id,
+      orderNumber: order.orderNumber || orderDoc.id,
+      status: order.status || order.orderStatus || 'pending_payment',
+      paymentStatus: order.paymentStatus || 'awaiting_payment',
+      items: (order.items || []).map(it => ({
+        name: it.name,
+        quantity: it.quantity,
+        size: it.size || null,
+        variantLabel: it.variantLabel || null,
+        unitPriceFormatted: it.unitPriceFormatted || '',
+        totalPriceFormatted: it.totalPriceFormatted || ''
+      })),
+      pricing: {
+        finalPayableFormatted: order.pricing ? order.pricing.finalPayableFormatted : '',
+        subtotalFormatted: order.pricing ? order.pricing.subtotalFormatted : '',
+        shippingFormatted: order.pricing ? order.pricing.shippingFormatted : 'FREE'
+      },
+      shippingAddress: {
+        addressee: order.shippingAddress ? order.shippingAddress.addressee : 'Customer',
+        city: order.shippingAddress ? order.shippingAddress.city : '',
+        state: order.shippingAddress ? order.shippingAddress.state : '',
+        postalCode: order.shippingAddress ? order.shippingAddress.postalCode : ''
+      },
+      fulfillment: order.fulfillment || order.tracking || {},
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt
+    };
   }
 
   async updateOrderStatus(orderId, newStatus, adminUser) {

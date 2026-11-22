@@ -445,7 +445,6 @@
 
         const token = res.data.token;
         localStorage.setItem('lane4_admin_token', token);
-        localStorage.setItem('lane4_auth_token', token);
         if (res.data.admin) {
           localStorage.setItem('lane4_admin_user', JSON.stringify(res.data.admin));
           activeAdmin = res.data.admin;
@@ -1447,13 +1446,19 @@
         submitBtn.innerHTML = '<span>Approving...</span>';
 
         try {
-          await window.lane4ApiRequest(`/admin/payments/${paymentId}/approve`, {
+          const res = await window.lane4ApiRequest(`/admin/payments/${paymentId}/approve`, {
             method: 'POST',
             body: JSON.stringify({ internalNote: note })
           });
+          const verifiedOrderId = (res && res.data && res.data.orderId) || (p && p.orderId) || paymentId;
+          const verifiedOrderNum = (res && res.data && res.data.orderNumber) || orderNum;
+
           hideModal();
-          showToast('Payment verified and approved! Order is now confirmed.', 'success', 'PAYMENT RECEIVED');
+          showToast(`Payment verified for #${verifiedOrderNum}! Order is now CONFIRMED.`, 'success', 'PAYMENT RECEIVED');
           loadPayments();
+
+          // Surface Next Operational Step Modal immediately
+          showNextStepModal(verifiedOrderId, verifiedOrderNum);
         } catch (err) {
           submitBtn.disabled = false;
           submitBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Verify & Approve Payment</span>';
@@ -1461,6 +1466,46 @@
         }
       };
     }
+  };
+
+  function showNextStepModal(orderId, orderNumber) {
+    showModal('Payment Verified — Next Step', `
+      <div style="display:flex;flex-direction:column;gap:18px;">
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px;display:flex;gap:14px;align-items:flex-start;">
+          <div style="width:38px;height:38px;border-radius:50%;background:#dcfce7;display:flex;align-items:center;justify-content:center;color:#16a34a;flex-shrink:0;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div>
+            <div style="font-size:15px;font-weight:800;color:#166534;margin-bottom:3px;">Payment Approved for Order #${orderNumber}</div>
+            <div style="font-size:13px;color:#15803d;line-height:1.4;">Customer payment is verified in full. Order status is now updated to <strong>CONFIRMED</strong>.</div>
+          </div>
+        </div>
+
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;">
+          <div style="font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:#475569;margin-bottom:8px;">Warehouse & Fulfillment Next Steps:</div>
+          <ol style="margin:0;padding-left:18px;font-size:13px;color:#334155;line-height:1.7;">
+            <li>Package the competition gear at the store.</li>
+            <li>Book courier partner (<strong>DTDC</strong>, <strong>India Post Speed Post</strong>, or <strong>BlueDart</strong>).</li>
+            <li>Add the Courier Name and Tracking / AWB Number to notify the customer and mark as <strong>SHIPPED</strong>.</li>
+          </ol>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding-top:14px;border-top:1px solid #e2e8f0;">
+          <button type="button" class="btn btn-outline" onclick="hideModal()">Stay on Payments</button>
+          <button type="button" class="btn btn-primary" style="background:#000;color:#fff;padding:10px 18px;font-weight:800;font-size:13px;display:inline-flex;align-items:center;gap:8px;" onclick="goToOrderFulfillment('${orderId}')">
+            <span>📦 Go to Order & Dispatch Tracking →</span>
+          </button>
+        </div>
+      </div>
+    `);
+  }
+
+  window.goToOrderFulfillment = function(orderId) {
+    hideModal();
+    showView('orders');
+    setTimeout(() => {
+      openTrackingModal(orderId);
+    }, 350);
   };
 
   window.rejectPayment = function (paymentId) {
@@ -1548,6 +1593,8 @@
   };
 
   // --- ORDERS ---
+  window.orderFilter = window.orderFilter || 'all';
+
   async function loadOrders() {
     const container = document.getElementById('view-orders');
     if (!container) return;
@@ -1558,59 +1605,145 @@
 
     try {
       const res = await window.lane4ApiRequest('/admin/orders');
-      const orders = res.data || [];
+      const allOrders = res.data || [];
+
+      // Sort newest created orders strictly to the top
+      allOrders.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
+      window.currentOrders = allOrders;
+
+      const confirmedCount = allOrders.filter(o => o.status === 'confirmed').length;
+      const processingCount = allOrders.filter(o => o.status === 'processing').length;
+      const shippedCount = allOrders.filter(o => o.status === 'shipped' || o.status === 'out_for_delivery').length;
+      const deliveredCount = allOrders.filter(o => o.status === 'delivered').length;
+      const pendingCount = allOrders.filter(o => o.status === 'pending_payment' || o.status === 'payment_verification').length;
+
+      // Filter based on active tab
+      const orders = allOrders.filter(o => {
+        if (window.orderFilter === 'confirmed') return o.status === 'confirmed';
+        if (window.orderFilter === 'processing') return o.status === 'processing';
+        if (window.orderFilter === 'shipped') return o.status === 'shipped' || o.status === 'out_for_delivery';
+        if (window.orderFilter === 'delivered') return o.status === 'delivered';
+        if (window.orderFilter === 'pending') return o.status === 'pending_payment' || o.status === 'payment_verification';
+        return true;
+      });
 
       container.innerHTML = `
         <div class="card">
-          <div class="card-header">
-            <div class="card-title">Customer Orders (${orders.length})</div>
+          <div class="card-header" style="flex-wrap:wrap;gap:12px;align-items:center;">
+            <div>
+              <div class="card-title">Customer Orders & Fulfillment (${allOrders.length})</div>
+              <div style="font-size:12px;color:#64748b;margin-top:2px;">Orders sorted with the newest transactions first. Update fulfillment and attach shipment tracking.</div>
+            </div>
+            ${confirmedCount > 0 ? `
+              <div style="background:#f0fdf4;border:1px solid #bbf7d0;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:800;color:#166534;display:inline-flex;align-items:center;gap:6px;">
+                <span style="width:8px;height:8px;border-radius:50%;background:#16a34a;display:inline-block;"></span>
+                <span>${confirmedCount} Order${confirmedCount > 1 ? 's' : ''} Ready to Dispatch</span>
+              </div>
+            ` : ''}
           </div>
+
+          <!-- Order Status Filter Tabs -->
+          <div style="display:flex;flex-wrap:wrap;gap:6px;padding:12px 18px;background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+            <button type="button" class="btn ${window.orderFilter === 'all' ? 'btn-primary' : 'btn-outline'}" style="padding:5px 12px;font-size:12px;border-radius:20px;cursor:pointer;${window.orderFilter === 'all' ? 'background:#000;color:#fff;' : ''}" onclick="window.setOrderFilter('all')">
+              All Orders (${allOrders.length})
+            </button>
+            <button type="button" class="btn ${window.orderFilter === 'confirmed' ? 'btn-primary' : 'btn-outline'}" style="padding:5px 12px;font-size:12px;border-radius:20px;cursor:pointer;${window.orderFilter === 'confirmed' ? 'background:#16a34a;color:#fff;' : 'border-color:#bbf7d0;color:#166534;'}" onclick="window.setOrderFilter('confirmed')">
+              Ready to Dispatch (${confirmedCount})
+            </button>
+            <button type="button" class="btn ${window.orderFilter === 'processing' ? 'btn-primary' : 'btn-outline'}" style="padding:5px 12px;font-size:12px;border-radius:20px;cursor:pointer;${window.orderFilter === 'processing' ? 'background:#000;color:#fff;' : ''}" onclick="window.setOrderFilter('processing')">
+              Processing (${processingCount})
+            </button>
+            <button type="button" class="btn ${window.orderFilter === 'shipped' ? 'btn-primary' : 'btn-outline'}" style="padding:5px 12px;font-size:12px;border-radius:20px;cursor:pointer;${window.orderFilter === 'shipped' ? 'background:#000;color:#fff;' : ''}" onclick="window.setOrderFilter('shipped')">
+              Shipped (${shippedCount})
+            </button>
+            <button type="button" class="btn ${window.orderFilter === 'delivered' ? 'btn-primary' : 'btn-outline'}" style="padding:5px 12px;font-size:12px;border-radius:20px;cursor:pointer;${window.orderFilter === 'delivered' ? 'background:#000;color:#fff;' : ''}" onclick="window.setOrderFilter('delivered')">
+              Delivered (${deliveredCount})
+            </button>
+            <button type="button" class="btn ${window.orderFilter === 'pending' ? 'btn-primary' : 'btn-outline'}" style="padding:5px 12px;font-size:12px;border-radius:20px;cursor:pointer;${window.orderFilter === 'pending' ? 'background:#000;color:#fff;' : ''}" onclick="window.setOrderFilter('pending')">
+              Pending Payment (${pendingCount})
+            </button>
+          </div>
+
           <div class="card-body" style="padding:0;">
             <div class="table-responsive">
               <table>
                 <thead>
                   <tr>
                     <th>Order #</th>
-                    <th>Customer</th>
-                    <th>Items</th>
-                    <th>Total</th>
+                    <th>Customer & Address</th>
+                    <th>Ordered Items</th>
+                    <th>Payable Total</th>
                     <th>Order Status</th>
                     <th>Payment Status</th>
-                    <th>Tracking</th>
+                    <th>Fulfillment & Courier</th>
                   </tr>
                 </thead>
                 <tbody>
-                  ${orders.length === 0 ? '<tr><td colspan="7" style="text-align:center;padding:24px;color:#888;">No orders recorded.</td></tr>' :
-                    orders.map(o => `
-                      <tr>
-                        <td><strong>#${o.orderNumber || o.orderId}</strong></td>
-                        <td>
-                          <div style="font-weight:700;">${o.shippingAddress ? o.shippingAddress.addressee : 'Customer'}</div>
-                          <div style="font-size:12px;color:#666;">${o.customerEmail}</div>
-                          <div style="font-size:11px;color:#888;">${o.shippingAddress ? `${o.shippingAddress.city}, PIN ${o.shippingAddress.postalCode}` : ''}</div>
-                        </td>
-                        <td>${(o.items || []).map(it => `<div>${it.quantity}&times; ${it.name} ${it.variantLabel ? `(${it.variantLabel})` : ''}</div>`).join('')}</td>
-                        <td><strong>${o.pricing ? o.pricing.finalPayableFormatted : ''}</strong></td>
-                        <td>
-                          <select onchange="updateOrderStatus('${o.orderId}', this.value)" style="padding:5px 8px;border-radius:4px;border:1px solid #ccc;font-weight:700;font-size:12px;">
-                            <option value="pending_payment" ${o.status === 'pending_payment' ? 'selected' : ''}>Pending Payment</option>
-                            <option value="payment_verification" ${o.status === 'payment_verification' ? 'selected' : ''}>Payment Verification</option>
-                            <option value="confirmed" ${o.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
-                            <option value="processing" ${o.status === 'processing' ? 'selected' : ''}>Processing</option>
-                            <option value="shipped" ${o.status === 'shipped' ? 'selected' : ''}>Shipped</option>
-                            <option value="out_for_delivery" ${o.status === 'out_for_delivery' ? 'selected' : ''}>Out For Delivery</option>
-                            <option value="delivered" ${o.status === 'delivered' ? 'selected' : ''}>Delivered</option>
-                            <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
-                          </select>
-                        </td>
-                        <td><span class="badge badge-${o.paymentStatus}">${o.paymentStatus.replace(/_/g, ' ')}</span></td>
-                        <td>
-                          ${o.fulfillment && o.fulfillment.trackingNumber ? `
-                            <div style="font-size:12px;"><strong>${o.fulfillment.courierName}</strong><br /><code>${o.fulfillment.trackingNumber}</code></div>
-                          ` : `<button class="btn btn-outline" style="padding:4px 8px;font-size:11px;" onclick="openTrackingModal('${o.orderId}')">+ Add Tracking</button>`}
-                        </td>
-                      </tr>
-                    `).join('')}
+                  ${orders.length === 0 ? '<tr><td colspan="7" style="text-align:center;padding:32px 20px;color:#64748b;font-size:13px;">No orders found in this view.</td></tr>' :
+                    orders.map(o => {
+                      const orderRefId = o.orderId || o.id;
+                      const orderNum = o.orderNumber || orderRefId;
+                      const isConfirmed = o.status === 'confirmed';
+                      const isShipped = o.status === 'shipped' || o.status === 'out_for_delivery' || o.status === 'delivered';
+
+                      return `
+                        <tr style="${isConfirmed ? 'background:#f0fdf4;' : ''}">
+                          <td>
+                            <strong style="font-size:13.5px;color:#0f172a;display:block;">#${orderNum}</strong>
+                            <span style="font-size:11px;color:#64748b;">${formatDateString(o.createdAt)}</span>
+                          </td>
+                          <td>
+                            <div style="font-weight:800;color:#0f172a;">${escapeHtml((o.shippingAddress && o.shippingAddress.addressee) || 'Customer')}</div>
+                            <div style="font-size:12px;color:#475569;">${escapeHtml(o.customerEmail || '—')}</div>
+                            <div style="font-size:11px;color:#64748b;">${o.shippingAddress ? `${escapeHtml(o.shippingAddress.city || '')}, PIN ${escapeHtml(o.shippingAddress.postalCode || '')}` : ''}</div>
+                          </td>
+                          <td>
+                            <div style="font-size:12.5px;color:#334155;">
+                              ${(o.items || []).map(it => `<div><strong>${it.quantity}&times;</strong> ${escapeHtml(it.name)} ${it.size ? `<span style="font-size:11px;color:#64748b;">(${it.size})</span>` : ''}</div>`).join('')}
+                            </div>
+                          </td>
+                          <td>
+                            <strong style="font-size:14px;color:#0f172a;">${o.pricing ? o.pricing.finalPayableFormatted : ''}</strong>
+                          </td>
+                          <td>
+                            <select onchange="updateOrderStatus('${orderRefId}', this.value)" style="padding:6px 9px;border-radius:6px;border:1.5px solid ${isConfirmed ? '#16a34a' : '#cbd5e1'};background:#fff;font-weight:700;font-size:12px;color:#0f172a;">
+                              <option value="pending_payment" ${o.status === 'pending_payment' ? 'selected' : ''}>Pending Payment</option>
+                              <option value="payment_verification" ${o.status === 'payment_verification' ? 'selected' : ''}>Payment Verification</option>
+                              <option value="confirmed" ${o.status === 'confirmed' ? 'selected' : ''}>Confirmed (Ready to Pack)</option>
+                              <option value="processing" ${o.status === 'processing' ? 'selected' : ''}>Processing</option>
+                              <option value="shipped" ${o.status === 'shipped' ? 'selected' : ''}>Shipped</option>
+                              <option value="out_for_delivery" ${o.status === 'out_for_delivery' ? 'selected' : ''}>Out For Delivery</option>
+                              <option value="delivered" ${o.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                              <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                            </select>
+                          </td>
+                          <td>
+                            <span class="badge ${o.paymentStatus === 'verified' ? 'badge-verified' : (o.paymentStatus === 'rejected' ? 'badge-rejected' : 'badge-pending')}" style="font-size:11px;">
+                              ${(o.paymentStatus || 'awaiting_payment').replace(/_/g, ' ')}
+                            </span>
+                          </td>
+                          <td>
+                            ${o.fulfillment && o.fulfillment.trackingNumber ? `
+                              <div style="font-size:12px;line-height:1.4;">
+                                <strong style="color:#0f172a;">${escapeHtml(o.fulfillment.courierName || 'Courier')}</strong><br />
+                                <code style="font-size:11.5px;background:#e2e8f0;padding:2px 6px;border-radius:4px;">${escapeHtml(o.fulfillment.trackingNumber)}</code>
+                                <div style="margin-top:4px;">
+                                  <a href="${o.fulfillment.trackingUrl || `https://www.google.com/search?q=${encodeURIComponent((o.fulfillment.courierName || '') + ' ' + o.fulfillment.trackingNumber)}`}" target="_blank" style="font-size:11px;font-weight:700;color:#2563eb;text-decoration:none;display:inline-flex;align-items:center;gap:3px;">
+                                    <span>Track Package</span>
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                  </a>
+                                </div>
+                              </div>
+                            ` : `
+                              <button class="btn" style="${isConfirmed ? 'background:#16a34a;color:#fff;border:none;' : 'background:#fff;border:1.5px solid #000;color:#000;'}padding:6px 12px;font-size:11.5px;font-weight:800;border-radius:6px;display:inline-flex;align-items:center;gap:5px;cursor:pointer;" onclick="openTrackingModal('${orderRefId}')">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>${isConfirmed ? 'Dispatch & Add Tracking' : '+ Add Tracking'}</span>
+                              </button>
+                            `}
+                          </td>
+                        </tr>
+                      `;
+                    }).join('')}
                 </tbody>
               </table>
             </div>
@@ -1623,6 +1756,11 @@
       hideTopLoader();
     }
   }
+
+  window.setOrderFilter = function (filter) {
+    window.orderFilter = filter;
+    loadOrders();
+  };
 
   window.updateOrderStatus = async function (orderId, newStatus) {
     try {
@@ -1638,11 +1776,15 @@
   };
 
   window.openTrackingModal = function (orderId) {
+    const o = (window.currentOrders || []).find(it => it.orderId === orderId || it.id === orderId);
+    const orderNum = o ? (o.orderNumber || o.orderId || orderId) : orderId;
+    const targetId = o ? (o.orderId || o.id) : orderId;
+
     showModal('Add Shipment Tracking', `
       <div style="display:flex;flex-direction:column;gap:16px;">
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 16px;">
           <div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Order Fulfillment</div>
-          <div style="font-size:16px;font-weight:900;color:#0f172a;margin-top:2px;">Attach Courier Details for Order #${orderId}</div>
+          <div style="font-size:16px;font-weight:900;color:#0f172a;margin-top:2px;">Attach Courier Details for Order #${orderNum}</div>
         </div>
 
         <div>
@@ -1705,7 +1847,7 @@
         submitBtn.textContent = 'Saving...';
 
         try {
-          await window.lane4ApiRequest(`/admin/orders/${orderId}/tracking`, {
+          await window.lane4ApiRequest(`/admin/orders/${targetId}/tracking`, {
             method: 'POST',
             body: JSON.stringify({ courierName: courier || 'DTDC', trackingNumber: tracking, trackingUrl })
           });
@@ -1909,11 +2051,15 @@
         if (tB !== tA) return tB - tA;
         return (toMillis(b.updatedAt) || 0) - (toMillis(a.updatedAt) || 0);
       });
+      window.currentProducts = prods;
 
       container.innerHTML = `
         <div class="card">
           <div class="card-header" style="flex-wrap:wrap;gap:12px;">
-            <div class="card-title">Catalog Products (${prods.length})</div>
+            <div>
+              <div class="card-title">Catalog Products (${prods.length})</div>
+              <div style="font-size:12px;color:#64748b;margin-top:2px;">Manage inventory items, regular retail prices, sale discounts, and visibility.</div>
+            </div>
             <button class="btn" id="btn-add-product" style="background:#000;color:#fff;display:inline-flex;align-items:center;gap:6px;">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               <span>Add New Product</span>
@@ -1957,9 +2103,19 @@
                           </td>
                           <td><span class="badge" style="background:#f1f5f9;color:#334155;">${escapeHtml(p.category || p.categorySlug || 'gear')}</span></td>
                           <td><code>${escapeHtml(p.sku || '—')}</code></td>
-                          <td style="font-weight:700;">${window.LANE4.formatINR(p.regularPricePaise || p.pricePaise)}</td>
-                          <td style="color:${p.salePricePaise ? '#16a34a' : '#64748b'};font-weight:${p.salePricePaise ? '700' : '400'};">
-                            ${p.salePricePaise ? window.LANE4.formatINR(p.salePricePaise) : '—'}
+                          <td>
+                            <div style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;" title="Click to edit prices" onclick="openEditProductModal('${p.id}')">
+                              <span style="font-weight:700;color:#0f172a;">${window.LANE4.formatINR(p.regularPricePaise || p.pricePaise)}</span>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                            </div>
+                          </td>
+                          <td>
+                            <div style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;" title="Click to edit prices" onclick="openEditProductModal('${p.id}')">
+                              <span style="color:${p.salePricePaise ? '#16a34a' : '#64748b'};font-weight:${p.salePricePaise ? '700' : '400'};">
+                                ${p.salePricePaise ? window.LANE4.formatINR(p.salePricePaise) : '—'}
+                              </span>
+                              ${p.salePricePaise ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>' : ''}
+                            </div>
                           </td>
                           <td>
                             <span style="font-weight:700;color:${totalStock <= 5 ? '#dc2626' : '#0f172a'};">${totalStock} units</span>
@@ -1969,11 +2125,15 @@
                           </td>
                           <td>
                             <div style="display:flex;gap:6px;">
-                              <a href="../product/${p.slug}.html" target="_blank" class="btn btn-outline" style="padding:5px 9px;font-size:11px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
+                              <a href="../product/${p.slug}.html" target="_blank" class="btn btn-outline" style="padding:5px 9px;font-size:11px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;" title="Preview storefront page">
                                 <span>View</span>
                                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                               </a>
-                              <button class="btn btn-danger btn-del-prod" data-id="${p.id}" data-name="${p.name.replace(/"/g, '&quot;')}" style="padding:5px 9px;font-size:11px;display:inline-flex;align-items:center;gap:4px;">
+                              <button class="btn btn-outline btn-edit-prod" onclick="openEditProductModal('${p.id}')" style="padding:5px 9px;font-size:11px;display:inline-flex;align-items:center;gap:4px;border-color:#cbd5e1;color:#0f172a;cursor:pointer;" title="Edit product and prices">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                                <span>Edit</span>
+                              </button>
+                              <button class="btn btn-danger btn-del-prod" data-id="${p.id}" data-name="${p.name.replace(/"/g, '&quot;')}" style="padding:5px 9px;font-size:11px;display:inline-flex;align-items:center;gap:4px;" title="Archive product">
                                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                                 <span>Delete</span>
                               </button>
@@ -2008,6 +2168,140 @@
       hideTopLoader();
     }
   }
+
+  window.openEditProductModal = async function (productId) {
+    const p = (window.currentProducts || []).find(it => it.id === productId || it._id === productId);
+    if (!p) {
+      showToast('Product record not found', 'error');
+      return;
+    }
+
+    let catOptions = '<option value="training-gear">Training Gear</option><option value="goggles">Goggles</option><option value="racing-caps">Racing Caps</option><option value="swimwear">Swimwear</option><option value="accessories">Accessories</option>';
+    try {
+      const res = await window.lane4ApiRequest('/admin/categories');
+      if (res && res.data && res.data.length > 0) {
+        catOptions = res.data.map(c => `<option value="${c.slug}" ${(c.slug === p.category || c.slug === p.categorySlug) ? 'selected' : ''}>${c.name}</option>`).join('');
+      }
+    } catch (e) {}
+
+    const regularRupees = (p.regularPricePaise || p.pricePaise || 0) / 100;
+    const saleRupees = p.salePricePaise ? (p.salePricePaise / 100) : '';
+    const stockQty = (p.variants && p.variants.length > 0)
+      ? p.variants.reduce((acc, v) => acc + (v.stockQuantity || 0), 0)
+      : (p.stockQuantity || 50);
+
+    const img = (p.images && p.images[0] && p.images[0].url) || '6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg';
+
+    showModal('Edit Product & Pricing', `
+      <form id="form-edit-product">
+        <div style="background:#f8fafc;padding:12px 14px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:16px;display:flex;align-items:center;gap:12px;">
+          <img src="${resolveAdminAsset(img)}" style="width:48px;height:48px;border-radius:6px;object-fit:cover;border:1px solid #cbd5e1;" onerror="this.onerror=null;this.src='${resolveAdminAsset('6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg')}';" />
+          <div>
+            <div style="font-weight:800;font-size:14px;color:#0f172a;">${escapeHtml(p.name)}</div>
+            <div style="font-size:12px;color:#64748b;">SKU: <code>${escapeHtml(p.sku || '—')}</code> &bull; Slug: <code>${escapeHtml(p.slug || '')}</code></div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group" style="flex:2;">
+            <label class="form-label">Product Title *</label>
+            <input type="text" id="edit-prod-name" class="form-input" value="${escapeHtml(p.name)}" required />
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Category *</label>
+            <select id="edit-prod-cat" class="form-select">
+              ${catOptions}
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Regular Price (₹ INR) *</label>
+            <input type="number" step="0.01" min="1" id="edit-prod-regular" class="form-input" value="${regularRupees}" required />
+            <div style="font-size:11px;color:#64748b;margin-top:3px;">Catalog base retail price</div>
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Sale / Offer Price (₹ INR)</label>
+            <input type="number" step="0.01" min="0" id="edit-prod-sale" class="form-input" value="${saleRupees}" placeholder="Leave blank if no sale" />
+            <div style="font-size:11px;color:#16a34a;margin-top:3px;">Discounted checkout price</div>
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Available Stock (Units) *</label>
+            <input type="number" min="0" id="edit-prod-stock" class="form-input" value="${stockQty}" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Storefront Status</label>
+            <select id="edit-prod-status" class="form-select">
+              <option value="published" ${p.isPublished !== false ? 'selected' : ''}>Published (Active in Storefront)</option>
+              <option value="draft" ${p.isPublished === false ? 'selected' : ''}>Draft (Hidden from Storefront)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Product Description</label>
+          <textarea id="edit-prod-desc" class="form-textarea" rows="3">${escapeHtml(p.description || '')}</textarea>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid #e2e8f0;">
+          <button type="button" class="btn btn-outline" onclick="hideModal()">Cancel</button>
+          <button type="submit" id="btn-save-prod" class="btn btn-primary" style="background:#000;color:#fff;display:inline-flex;align-items:center;gap:6px;padding:9px 18px;font-weight:800;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Save Price & Catalog Updates</span>
+          </button>
+        </div>
+      </form>
+    `);
+
+    const editForm = document.getElementById('form-edit-product');
+    if (editForm) {
+      editForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const saveBtn = document.getElementById('btn-save-prod');
+        if (saveBtn) {
+          saveBtn.disabled = true;
+          saveBtn.textContent = 'Saving...';
+        }
+
+        const regularPrice = parseFloat(document.getElementById('edit-prod-regular').value);
+        const saleVal = document.getElementById('edit-prod-sale').value.trim();
+        const salePrice = saleVal ? parseFloat(saleVal) : null;
+        const stockQuantity = parseInt(document.getElementById('edit-prod-stock').value, 10);
+        const name = document.getElementById('edit-prod-name').value.trim();
+        const category = document.getElementById('edit-prod-cat').value;
+        const isPublished = document.getElementById('edit-prod-status').value === 'published';
+        const description = document.getElementById('edit-prod-desc').value.trim();
+
+        try {
+          await window.lane4ApiRequest(`/admin/products/${productId}`, {
+            method: 'PATCH',
+            body: JSON.stringify({
+              name,
+              category,
+              regularPrice,
+              salePrice,
+              stockQuantity,
+              isPublished,
+              description
+            })
+          });
+          hideModal();
+          showToast(`Prices and details for "${name}" updated successfully!`, 'success');
+          await loadProducts();
+        } catch (err) {
+          if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save Price & Catalog Updates';
+          }
+          showToast(err.message || 'Failed to update product', 'error');
+        }
+      };
+    }
+  };
 
   async function openAddProductModal() {
     let catOptions = '<option value="training-gear">Training Gear</option><option value="goggles">Goggles</option><option value="racing-caps">Racing Caps</option><option value="swimwear">Swimwear</option><option value="accessories">Accessories</option>';

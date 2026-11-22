@@ -5,7 +5,73 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LANE4 Admin Portal | The Lane4 Performance Store</title>
   <link rel="icon" type="image/svg+xml" href="../6424266ea05809dff501d86e/lane4-favicon.svg">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap">
+  <!-- Lane4 Brand & System Typography (matching main storefront) -->
+  <style>
+    @font-face {
+      font-family: 'Generalsans';
+      src: url('../6424266ea05809dff501d86e/6424266ea0580930f001d8ae_GeneralSans-Regular.otf') format('opentype'),
+           url('/6424266ea05809dff501d86e/6424266ea0580930f001d8ae_GeneralSans-Regular.otf') format('opentype');
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Generalsans';
+      src: url('../6424266ea05809dff501d86e/6424266ea058093d9301d8ad_GeneralSans-Light.otf') format('opentype'),
+           url('/6424266ea05809dff501d86e/6424266ea058093d9301d8ad_GeneralSans-Light.otf') format('opentype');
+      font-weight: 300;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Generalsans';
+      src: url('../6424266ea05809dff501d86e/6424266ea058093f8c01d8b0_GeneralSans-Medium.otf') format('opentype'),
+           url('/6424266ea05809dff501d86e/6424266ea058093f8c01d8b0_GeneralSans-Medium.otf') format('opentype');
+      font-weight: 500 600;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Generalsans';
+      src: url('../6424266ea05809dff501d86e/6424266ea058091bfa01d8af_GeneralSans-Bold.otf') format('opentype'),
+           url('/6424266ea05809dff501d86e/6424266ea058091bfa01d8af_GeneralSans-Bold.otf') format('opentype');
+      font-weight: 700 900;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'General Sans';
+      src: url('../6424266ea05809dff501d86e/6424266ea0580930f001d8ae_GeneralSans-Regular.otf') format('opentype'),
+           url('/6424266ea05809dff501d86e/6424266ea0580930f001d8ae_GeneralSans-Regular.otf') format('opentype');
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'General Sans';
+      src: url('../6424266ea05809dff501d86e/6424266ea058093d9301d8ad_GeneralSans-Light.otf') format('opentype'),
+           url('/6424266ea05809dff501d86e/6424266ea058093d9301d8ad_GeneralSans-Light.otf') format('opentype');
+      font-weight: 300;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'General Sans';
+      src: url('../6424266ea05809dff501d86e/6424266ea058093f8c01d8b0_GeneralSans-Medium.otf') format('opentype'),
+           url('/6424266ea05809dff501d86e/6424266ea058093f8c01d8b0_GeneralSans-Medium.otf') format('opentype');
+      font-weight: 500 600;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'General Sans';
+      src: url('../6424266ea05809dff501d86e/6424266ea058091bfa01d8af_GeneralSans-Bold.otf') format('opentype'),
+           url('/6424266ea05809dff501d86e/6424266ea058091bfa01d8af_GeneralSans-Bold.otf') format('opentype');
+      font-weight: 700 900;
+      font-style: normal;
+      font-display: swap;
+    }
+  </style>
   <script>
     (function () {
       try {
@@ -33,6 +99,7 @@
   </script>
   <style>
     :root {
+      --font-family-system: 'Generalsans', 'General Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       --bg: #f8fafc;
       --card-bg: #ffffff;
       --border: #e2e8f0;
@@ -46,7 +113,8 @@
       --radius: 8px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Lato', -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; }
+    body { font-family: var(--font-family-system); background: var(--bg); color: var(--text); min-height: 100vh; display: flex; }
+    button, input, select, textarea, optgroup { font-family: inherit; }
     
     /* Instant Zero-Glitch Authentication Gating */
     html.admin-unauthed body {
@@ -288,7 +356,7 @@
     #admin-main { flex: 1; padding: 32px; overflow-x: hidden; }
     .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
     .page-title { font-size: 28px; font-weight: 900; letter-spacing: -0.5px; }
-    .btn { background: var(--primary); color: #fff; padding: 10px 18px; border-radius: 6px; font-size: 13px; font-weight: 700; text-decoration: none; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+    .btn { background: var(--primary); color: #fff; padding: 10px 18px; border-radius: 6px; font-size: 13px; font-weight: 700; text-decoration: none; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-family: inherit; }
     .btn:hover { background: var(--primary-hover); }
     .btn-success { background: var(--success); }
     .btn-danger { background: var(--danger); }
