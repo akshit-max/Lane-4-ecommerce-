@@ -152,12 +152,35 @@ class PaymentService {
     const db = getDb();
     if (!db) throw new Error('Database unavailable');
 
-    if (!orderId) throw new Error('Order ID is required');
-    if (!upiReferenceNumber || upiReferenceNumber.trim().length < 6) {
-      throw new Error('Please enter a valid UPI / UTR Transaction Reference Number (min 6 characters).');
+    if (!orderId) {
+      const err = new Error('Order ID is required');
+      err.statusCode = 400;
+      throw err;
+    }
+    const cleanUtr = (upiReferenceNumber || '').trim();
+    if (!/^\d{12}$/.test(cleanUtr)) {
+      const err = new Error('Please enter a valid 12-digit numeric UPI Reference / UTR Number.');
+      err.statusCode = 400;
+      throw err;
     }
     if (!fileBuffer || fileBuffer.length === 0) {
-      throw new Error('Please upload your payment confirmation screenshot.');
+      const err = new Error('Please upload your payment confirmation screenshot.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    // Check for duplicate UTR submitted or verified for another active order
+    const dupCheckSnap = await db.collection('payments')
+      .where('upiReferenceNumber', '==', cleanUtr)
+      .get();
+    const dupOther = dupCheckSnap.docs.find(d => {
+      const p = d.data();
+      return p.orderId !== orderId && (p.status === 'verified' || p.status === 'verification_pending');
+    });
+    if (dupOther) {
+      const err = new Error(`This UPI Reference / UTR Number (${cleanUtr}) has already been submitted or verified for another order.`);
+      err.statusCode = 400;
+      throw err;
     }
 
     // Locate order
@@ -201,7 +224,7 @@ class PaymentService {
       attempts = (existingDoc.data().submissionAttempts || 1) + 1;
 
       await db.collection('payments').doc(paymentId).update({
-        upiReferenceNumber: upiReferenceNumber.trim(),
+        upiReferenceNumber: cleanUtr,
         status: 'verification_pending',
         proofScreenshot: {
           publicId: uploadResult.publicId,
@@ -220,7 +243,7 @@ class PaymentService {
         orderId,
         orderNumber: orderData.orderNumber || orderId,
         amountPaise: orderData.pricing ? orderData.pricing.finalPayablePaise : 0,
-        upiReferenceNumber: upiReferenceNumber.trim(),
+        upiReferenceNumber: cleanUtr,
         status: 'verification_pending',
         proofScreenshot: {
           publicId: uploadResult.publicId,
@@ -245,7 +268,7 @@ class PaymentService {
     await db.collection('notifications').add({
       type: 'payment_submitted',
       title: 'New UPI Payment Proof Submitted',
-      message: `Payment proof submitted for order ${orderData.orderNumber || orderId} (UTR: ${upiReferenceNumber.trim()})`,
+      message: `Payment proof submitted for order ${orderData.orderNumber || orderId} (UTR: ${cleanUtr})`,
       referenceId: orderId,
       isRead: false,
       createdAt: new Date()
@@ -263,7 +286,7 @@ class PaymentService {
           <p>Hi ${orderData.shippingAddress ? orderData.shippingAddress.addressee : 'Swimmer'},</p>
           <p>We have successfully received your payment proof for Order <strong>#${orderData.orderNumber || orderId}</strong>.</p>
           <p><strong>Amount:</strong> ${payableFormatted}</p>
-          <p><strong>UPI Ref (UTR):</strong> ${upiReferenceNumber.trim()}</p>
+          <p><strong>UPI Ref (UTR):</strong> ${cleanUtr}</p>
           <p>Our store team is verifying the transaction against our account records. Once verified, your order will be confirmed and processed for shipment.</p>
           <p>You can check your order status at any time from your account.</p>
         `
@@ -275,7 +298,7 @@ class PaymentService {
       orderId,
       paymentStatus: 'verification_pending',
       orderStatus: 'payment_verification',
-      upiReferenceNumber: upiReferenceNumber.trim(),
+      upiReferenceNumber: cleanUtr,
       screenshotUrl: uploadResult.secureUrl
     };
   }
@@ -352,6 +375,20 @@ class PaymentService {
       };
     }
 
+    // Server-side duplicate UTR validation across other verified payments
+    const utr = (paymentData.upiReferenceNumber || '').trim();
+    if (utr) {
+      const existingVerifiedSnap = await db.collection('payments')
+        .where('upiReferenceNumber', '==', utr)
+        .where('status', '==', 'verified')
+        .get();
+      const conflict = existingVerifiedSnap.docs.find(d => d.id !== paymentId && d.data().orderId !== paymentData.orderId);
+      if (conflict) {
+        const conflictData = conflict.data();
+        throw new Error(`Duplicate UTR: This UPI reference number (${utr}) has already been verified for order #${conflictData.orderNumber || conflictData.orderId}. Cannot approve duplicate.`);
+      }
+    }
+
     const orderRef = db.collection('orders').doc(paymentData.orderId);
     const orderDoc = await orderRef.get();
     if (!orderDoc.exists) throw new Error('Associated order record not found.');
@@ -366,16 +403,63 @@ class PaymentService {
         verifiedAt: now,
         verifiedByUid: adminUser.uid,
         verifiedByName: adminUser.displayName || adminUser.email,
-        internalNotes: internalNote || 'Manually confirmed against bank UPI credit.'
+        internalNotes: internalNote || 'Manually verified against bank records.'
       },
       updatedAt: now
     });
+
+    // Deduct physical inventory & product variants stock if not already deducted
+    if (!orderData.stockDeducted && orderData.items && orderData.items.length > 0) {
+      for (const item of orderData.items) {
+        try {
+          // 1. Update inventory collection document
+          const invRef = db.collection('inventory').doc(item.sku);
+          const invDoc = await invRef.get();
+          if (invDoc.exists) {
+            const inv = invDoc.data();
+            const newAvail = Math.max(0, (inv.availableQuantity || 0) - item.quantity);
+            await invRef.update({
+              availableQuantity: newAvail,
+              reservedQuantity: Math.max(0, (inv.reservedQuantity || 0) - item.quantity),
+              isOutOfStock: newAvail <= 0,
+              updatedAt: now
+            });
+          }
+
+          // 2. Update products collection document (variants + total stock)
+          let pSnap = await db.collection('products').where('slug', '==', item.slug || item.productId).limit(1).get();
+          if (pSnap.empty && item.productId) {
+            const pDocDirect = await db.collection('products').doc(item.productId).get();
+            if (pDocDirect.exists) pSnap = { empty: false, docs: [pDocDirect] };
+          }
+          if (!pSnap.empty) {
+            const pDoc = pSnap.docs[0];
+            const pData = pDoc.data();
+            const variants = (pData.variants || []).map(v => {
+              if (v.sku === item.sku || v.variantId === item.variantId) {
+                return { ...v, stockQuantity: Math.max(0, (v.stockQuantity || 0) - item.quantity) };
+              }
+              return v;
+            });
+            const totalStock = variants.length > 0
+              ? variants.reduce((s, v) => s + (v.stockQuantity || 0), 0)
+              : Math.max(0, (pData.stockQuantity || 0) - item.quantity);
+            await pDoc.ref.update({
+              variants,
+              stockQuantity: totalStock,
+              updatedAt: now
+            });
+          }
+        } catch (_) {}
+      }
+    }
 
     // Update order
     await orderRef.update({
       paymentStatus: 'verified',
       status: 'confirmed',
       orderStatus: 'confirmed',
+      stockDeducted: true,
       updatedAt: now
     });
 
@@ -432,21 +516,23 @@ class PaymentService {
     const now = new Date();
     const reasonText = rejectionReason.trim() || 'Payment could not be verified with the provided transaction reference.';
 
-    // Update payment
+    // Update payment audit trail: store under rejection, never under verification
     await paymentRef.update({
       status: 'rejected',
-      verification: {
-        verifiedAt: now,
-        verifiedByUid: adminUser.uid,
-        verifiedByName: adminUser.displayName || adminUser.email,
-        rejectionReason: reasonText
+      rejection: {
+        rejectedAt: now,
+        rejectedByUid: adminUser.uid,
+        rejectedByName: adminUser.displayName || adminUser.email,
+        reason: reasonText
       },
       updatedAt: now
     });
 
-    // Update order: allow customer to resubmit payment proof
+    // Update order status so it reflects payment rejection and cannot proceed to shipping
     await orderRef.update({
       paymentStatus: 'rejected',
+      status: 'payment_rejected',
+      orderStatus: 'payment_rejected',
       updatedAt: now
     });
 

@@ -4,7 +4,11 @@
     { "source": "/api/(.*)", "destination": "https://lane4-backend.onrender.com/api/$1" },
     { "source": "/api", "destination": "https://lane4-backend.onrender.com/api" },
     { "source": "/admin", "destination": "/admin/index.html" },
-    { "source": "/admin/", "destination": "/admin/index.html" }
+    { "source": "/admin/", "destination": "/admin/index.html" },
+    { "source": "/product/:slug.html", "destination": "/product/detail.html?slug=:slug" },
+    { "source": "/product/:slug", "destination": "/product/detail.html?slug=:slug" },
+    { "source": "/category/:slug.html", "destination": "/category/detail.html?slug=:slug" },
+    { "source": "/category/:slug", "destination": "/category/detail.html?slug=:slug" }
   ],
   "headers": [
     {
@@ -16,4 +20,3 @@
     }
   ]
 }
-

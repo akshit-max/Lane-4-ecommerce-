@@ -7,9 +7,18 @@ class ReturnService {
       throw new Error('Order ID, return reason, and UPI ID for refund are required.');
     }
 
-    const orderDoc = await db.collection('orders').doc(orderId).get();
-    if (!orderDoc.exists) throw new Error('Order not found');
-    const orderData = orderDoc.data();
+    let orderDoc = await db.collection('orders').doc(orderId).get();
+    let orderData = orderDoc.exists ? orderDoc.data() : null;
+    let actualOrderId = orderId;
+    if (!orderData) {
+      const snap = await db.collection('orders').where('orderNumber', '==', orderId).limit(1).get();
+      if (!snap.empty) {
+        orderDoc = snap.docs[0];
+        orderData = orderDoc.data();
+        actualOrderId = orderDoc.id;
+      }
+    }
+    if (!orderData) throw new Error('Order not found');
 
     if (customer && orderData.customerId && orderData.customerId !== customer.uid) {
       throw new Error('Unauthorized return request.');
@@ -21,7 +30,7 @@ class ReturnService {
     const returnRecord = {
       returnId,
       docId: docRef.id,
-      orderId,
+      orderId: actualOrderId,
       orderNumber: orderData.orderNumber || orderId,
       customerId: customer ? customer.uid : null,
       customerEmail: orderData.customerEmail,

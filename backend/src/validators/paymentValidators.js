@@ -4,8 +4,8 @@ const submitProofValidator = [
   body('orderId').trim().notEmpty().withMessage('Associated Order ID is required'),
   body('upiReferenceNumber')
     .trim()
-    .isLength({ min: 6 })
-    .withMessage('Valid UPI Reference / UTR Number (min 6 characters) is required')
+    .matches(/^\d{12}$/)
+    .withMessage('Please enter a valid 12-digit numeric UPI Reference / UTR Number.')
 ];
 
 const rejectPaymentValidator = [

@@ -5,12 +5,14 @@
  * Usage: node src/scripts/createInitialAdmin.js [email] [password]
  */
 
+const crypto = require('crypto');
 const { getAuth, getDb } = require('../config/firebaseAdmin');
 const { config } = require('../config/environment');
 
 async function createAdmin() {
   const email = process.argv[2] || config.adminBootstrap.email;
   const password = process.argv[3] || config.adminBootstrap.password;
+  const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
 
   console.log(`\n--- LANE4 INITIAL ADMIN BOOTSTRAP ---`);
   console.log(`Target Email: ${email}`);
@@ -69,6 +71,7 @@ async function createAdmin() {
     await db.collection('adminUsers').doc(uid).set({
       uid,
       email,
+      passwordHash,
       displayName: 'LANE4 Chief Administrator',
       role: 'super_admin',
       permissions: [

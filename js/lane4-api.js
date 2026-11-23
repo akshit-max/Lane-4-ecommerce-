@@ -39,14 +39,13 @@
       return url;
     }
     const cleanUrl = url.replace(/^(\.\.\/|\.\/|\/)+/, '');
-    const isFile = typeof window !== 'undefined' && window.location && window.location.protocol === 'file:';
     const path = (typeof window !== 'undefined' && window.location && window.location.pathname) || '';
     const isSubfolder = /\/(product|category|blog|authors|utility-pages|category-blog|admin)(\/|$)/i.test(path);
 
-    if (isFile) {
-      return isSubfolder ? `../${cleanUrl}` : cleanUrl;
+    if (isSubfolder) {
+      return `../${cleanUrl}`;
     }
-    return `/${cleanUrl}`;
+    return cleanUrl;
   };
 
   window.LANE4.setUser = function (user, token) {

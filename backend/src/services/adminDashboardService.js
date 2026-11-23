@@ -45,10 +45,19 @@ class AdminDashboardService {
     let pendingOrdersCount = 0;
     let processingOrdersCount = 0;
     let deliveredOrdersCount = 0;
+    let cancelledOrdersCount = 0;
+    let pendingRefundsCount = 0;
 
     for (const ord of allOrders) {
-      if (ord.paymentStatus === 'verified') {
+      // Issue 7: Realized revenue strictly excludes cancelled and refunded orders
+      if (ord.paymentStatus === 'verified' && ord.status !== 'cancelled' && ord.status !== 'refunded') {
         totalRevenuePaise += (ord.pricing ? ord.pricing.finalPayablePaise : 0);
+      }
+      if (ord.status === 'cancelled') {
+        cancelledOrdersCount++;
+        if (ord.refundStatus === 'pending_refund') {
+          pendingRefundsCount++;
+        }
       }
       if (ord.paymentStatus === 'verification_pending') {
         pendingPaymentsCount++;
@@ -62,26 +71,38 @@ class AdminDashboardService {
       }
     }
 
-    // Sort recent orders
-    allOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    // Issue 15: Sort recent orders newest first using reliable database timestamp converter
+    allOrders.sort((a, b) => toTimestampMillis(b.createdAt) - toTimestampMillis(a.createdAt));
     const recentOrders = allOrders.slice(0, 5);
 
     // 2. Customers count
     const usersSnap = await db.collection('users').get();
     const totalCustomers = usersSnap.size;
 
-    // 3. Products & Low Stock
+    // 3. Products & Low Stock (Issue 18)
     const productsSnap = await db.collection('products').where('isDeleted', '==', false).get();
     const totalProducts = productsSnap.size;
 
     const inventorySnap = await db.collection('inventory').get();
     const inventoryItems = inventorySnap.docs.map(d => d.data());
-    const lowStockCount = inventoryItems.filter(it => it.availableQuantity <= (it.lowStockThreshold || 5)).length;
+    let lowStockCount = 0;
+    if (inventoryItems.length > 0) {
+      lowStockCount = inventoryItems.filter(it => (it.availableQuantity !== undefined ? it.availableQuantity : 0) <= (it.lowStockThreshold !== undefined ? it.lowStockThreshold : 5)).length;
+    } else {
+      productsSnap.docs.forEach(doc => {
+        const prod = doc.data();
+        if (prod.variants && prod.variants.length > 0) {
+          lowStockCount += prod.variants.filter(v => (v.stockQuantity !== undefined ? v.stockQuantity : 0) <= (v.lowStockThreshold !== undefined ? v.lowStockThreshold : 5)).length;
+        } else if ((prod.stockQuantity !== undefined ? prod.stockQuantity : 50) <= (prod.lowStockThreshold !== undefined ? prod.lowStockThreshold : 5)) {
+          lowStockCount++;
+        }
+      });
+    }
 
     // 4. Recent pending payments
     const paymentsSnap = await db.collection('payments').where('status', '==', 'verification_pending').get();
     const pendingPayments = paymentsSnap.docs.map(d => ({ paymentId: d.id, ...d.data() }));
-    pendingPayments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    pendingPayments.sort((a, b) => toTimestampMillis(b.createdAt) - toTimestampMillis(a.createdAt));
     const recentPayments = pendingPayments.slice(0, 5);
 
     return {
@@ -92,6 +113,8 @@ class AdminDashboardService {
       pendingOrdersCount,
       processingOrdersCount,
       deliveredOrdersCount,
+      cancelledOrdersCount,
+      pendingRefundsCount,
       totalCustomers,
       totalProducts,
       lowStockCount,

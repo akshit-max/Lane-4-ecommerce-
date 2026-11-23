@@ -85,22 +85,21 @@ class AuthController {
       }
 
       const decoded = await auth.verifyIdToken(idToken);
-      const userEmail = (decoded.email || email || '').toLowerCase().trim();
       let profile = await authService.getCustomerProfile(decoded.uid);
-      if (!profile && db && userEmail) {
+      if (!profile && db && email) {
         // Try looking up by email in users collection
-        const existingSnap = await db.collection('users').where('email', '==', userEmail).limit(1).get();
+        const existingSnap = await db.collection('users').where('email', '==', email).limit(1).get();
         if (!existingSnap.empty) {
           profile = existingSnap.docs[0].data();
         }
       }
 
       // If user document does not exist yet in users collection, create it immediately
-      if (!profile && db && userEmail) {
+      if (!profile && db && email) {
         profile = {
           uid: decoded.uid,
-          email: userEmail,
-          displayName: decoded.name || decoded.displayName || (userEmail.split('@')[0] ? userEmail.split('@')[0].charAt(0).toUpperCase() + userEmail.split('@')[0].slice(1) : 'Swimmer'),
+          email,
+          displayName: decoded.name || decoded.displayName || (email.split('@')[0] ? email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1) : 'Swimmer'),
           phoneNumber: decoded.phoneNumber || '',
           emailVerified: Boolean(decoded.email_verified),
           role: 'customer',
@@ -114,6 +113,7 @@ class AuthController {
       }
 
       const role = decoded.role || (profile && profile.role) || 'customer';
+      const userEmail = (decoded.email || email || '').toLowerCase().trim();
       const bootstrapAdmin = (config.adminBootstrap && config.adminBootstrap.email ? config.adminBootstrap.email : 'admin@lane4swim.in').toLowerCase().trim();
 
       // Check if user is an administrator
@@ -172,7 +172,11 @@ class AuthController {
       let adminData = null;
 
       // 1. Password-based Administrator Authentication
-      if (email && password) {
+      if (email !== undefined || password !== undefined) {
+        if (!email || !password || typeof email !== 'string' || typeof password !== 'string' || !email.trim() || !password.trim()) {
+          return sendError(res, 'INVALID_CREDENTIALS', 'Administrator email and password are required and cannot be empty.', null, 401);
+        }
+
         const cleanEmail = email.toLowerCase().trim();
         const snap = await db.collection('adminUsers').where('email', '==', cleanEmail).limit(1).get();
         if (snap.empty) {
@@ -199,17 +203,18 @@ class AuthController {
           return sendError(res, 'ACCOUNT_DEACTIVATED', 'This administrator account has been deactivated.', null, 403);
         }
 
-        const isBootstrap = cleanEmail === (config.adminBootstrap.email || 'admin@lane4swim.in').toLowerCase();
-        let passwordMatches = false;
-
+        const submittedHash = crypto.createHash('sha256').update(password).digest('hex');
         const defaultPass = config.adminBootstrap.password || 'AdminSecurePass2026!';
-        if (isBootstrap && password === defaultPass) {
+        const defaultHash = crypto.createHash('sha256').update(defaultPass).digest('hex');
+
+        let passwordMatches = false;
+        if (data.passwordHash) {
+          // Strictly verify against the hashed password stored in the database document
+          passwordMatches = (submittedHash === data.passwordHash);
+        } else if (password === defaultPass || submittedHash === defaultHash) {
+          // Migrate legacy record to store hashed password directly in Firestore
           passwordMatches = true;
-        } else if (data.passwordHash) {
-          const hash = crypto.createHash('sha256').update(password).digest('hex');
-          passwordMatches = (hash === data.passwordHash);
-        } else if (password === defaultPass) {
-          passwordMatches = true;
+          await adminDoc.ref.update({ passwordHash: submittedHash, updatedAt: new Date() });
         }
 
         if (!passwordMatches) {
@@ -217,7 +222,11 @@ class AuthController {
         }
 
         adminData = { ...data, uid: adminDoc.id };
-        await adminDoc.ref.update({ lastLoginAt: new Date() });
+        if (adminDoc.ref && typeof adminDoc.ref.update === 'function') {
+          try { await adminDoc.ref.update({ lastLoginAt: new Date() }); } catch (_) {}
+        } else if (db && db.collection) {
+          try { await db.collection('adminUsers').doc(adminDoc.id).update({ lastLoginAt: new Date() }); } catch (_) {}
+        }
 
         // Record successful admin login in audit log
         try {
@@ -284,6 +293,19 @@ class AuthController {
     try {
       if (!req.user || !['super_admin', 'admin', 'order_manager', 'product_manager', 'inventory_manager'].includes(req.user.role)) {
         return sendError(res, 'FORBIDDEN', 'Access restricted to authorized store staff.', null, 403);
+      }
+
+      // Query database to ensure admin user still exists and isActive !== false
+      const db = getDb();
+      if (db && req.user.uid) {
+        const adminDoc = await db.collection('adminUsers').doc(req.user.uid).get();
+        if (!adminDoc.exists) {
+          return sendError(res, 'FORBIDDEN', 'Administrator account not found in database.', null, 403);
+        }
+        const adminData = adminDoc.data();
+        if (adminData.isActive === false) {
+          return sendError(res, 'ACCOUNT_DEACTIVATED', 'This administrator account has been deactivated.', null, 403);
+        }
       }
 
       return sendSuccess(res, {

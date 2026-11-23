@@ -6,13 +6,9 @@ const { logger } = require('../utils/logger');
 
 function generateProductHtmlPage(product) {
   try {
-    const outputPath = path.resolve(__dirname, `../../../product/${product.slug}.html`);
     const templatePath = path.resolve(__dirname, '../../../product/swim-training-fins.html');
-
-    // If existing product HTML exists, use it as base to preserve custom structure and variants
-    const fileToRead = fs.existsSync(outputPath) ? outputPath : templatePath;
-    if (!fs.existsSync(fileToRead)) return;
-    let html = fs.readFileSync(fileToRead, 'utf8');
+    if (!fs.existsSync(templatePath)) return;
+    let html = fs.readFileSync(templatePath, 'utf8');
 
     const primaryImg = (product.images && product.images[0] && product.images[0].url)
       ? (product.images[0].url.startsWith('http') || product.images[0].url.startsWith('/') ? product.images[0].url : `../${product.images[0].url}`)
@@ -27,29 +23,23 @@ function generateProductHtmlPage(product) {
     html = html.replace(/data-wf-item-slug="[^"]*"/, `data-wf-item-slug="${product.slug}"`);
     // Replace Title
     html = html.replace(/<title>.*?<\/title>/, `<title>${product.name} | The Lane4 Performance Store</title>`);
-
-    // Replace pd-heading (product title, tagline/shortDescription, price)
-    if (html.includes('class="pd-heading"')) {
-      html = html.replace(
-        /<div class="pd-heading"><h4 class="title-h4">.*?<\/h4><div class="paragraph-18px">.*?<\/div><h6[^>]*class="title-h6">.*?<\/h6><\/div>/,
-        `<div class="pd-heading"><h4 class="title-h4">${product.name}</h4><div class="paragraph-18px">${product.shortDescription || 'Pool-tested performance'}</div><h6 class="title-h6">${priceFormatted}</h6></div>`
-      );
-    }
-
-    // Replace primary product images only if using template
-    if (fileToRead === templatePath) {
-      html = html.replace(/src="\.\.\/6424266ea05809dff501d86e\/lane4-6dbhNuWa5oI-640x640\.jpg"/g, `src="${primaryImg}"`);
-      html = html.replace(/srcset="[^"]*lane4-6dbhNuWa5oI[^"]*"/g, `srcset="${primaryImg} 640w"`);
-    }
+    // Replace Breadcrumb
+    html = html.replace(/<a href="swim-training-fins\.html"[^>]*><div class="paragraph-14px">Swim Training Fins<\/div><\/a>/, `<a href="${product.slug}.html" aria-current="page" class="w-inline-block w--current"><div class="paragraph-14px">${product.name}</div></a>`);
+    // Replace pd-heading
+    html = html.replace(
+      /<div class="pd-heading"><h4 class="title-h4">.*?<\/h4><div class="paragraph-18px">.*?<\/div><h6[^>]*class="title-h6">.*?<\/h6><\/div>/,
+      `<div class="pd-heading"><h4 class="title-h4">${product.name}</h4><div class="paragraph-18px">${product.shortDescription || 'Pool-tested performance'}</div><h6 class="title-h6">${priceFormatted}</h6></div>`
+    );
+    // Replace primary product images
+    html = html.replace(/src="\.\.\/6424266ea05809dff501d86e\/lane4-6dbhNuWa5oI-640x640\.jpg"/g, `src="${primaryImg}"`);
+    html = html.replace(/srcset="[^"]*lane4-6dbhNuWa5oI[^"]*"/g, `srcset="${primaryImg} 640w"`);
 
     // Replace product description if present
-    if (product.description && html.includes('class="pd-description"')) {
-      html = html.replace(
-        /(<div class="pd-description">[\s\S]*?<div class="paragraph-20px">)[\s\S]*?(<\/div>)/,
-        `$1${product.description}$2`
-      );
+    if (product.description) {
+      html = html.replace(/Short-blade silicone training fins that build leg strength and improve kick technique without changing your natural stroke\./, product.description);
     }
 
+    const outputPath = path.resolve(__dirname, `../../../product/${product.slug}.html`);
     fs.writeFileSync(outputPath, html, 'utf8');
     logger.info(`Generated product storefront page: product/${product.slug}.html`);
   } catch (err) {
@@ -80,8 +70,8 @@ const INITIAL_PRODUCTS = [
       'Anti-Fog': 'Hydrophobic Internal Coating'
     },
     images: [
-      { publicId: 'lane4-surge-goggles-poolside-fit-1200', url: '6424266ea05809dff501d86e/lane4-surge-goggles-poolside-fit-1200.jpg', alt: 'Mirror Racing Goggles Poolside', order: 0 },
-      { publicId: 'lane4-bGOBoZorNoQ-1080x1620', url: '6424266ea05809dff501d86e/lane4-bGOBoZorNoQ-1080x1620.jpg', alt: 'Mirror Racing Goggles Angle View', order: 1 }
+      { publicId: 'lane4-goggles-product', url: '6424266ea05809dff501d86e/lane4-goggles-product.svg', alt: 'Lane4 Mirror Racing Goggles', order: 0 },
+      { publicId: 'lane4-surge-goggles-poolside-fit-800', url: '6424266ea05809dff501d86e/lane4-surge-goggles-poolside-fit-800.jpg', alt: 'Surge Mirror Racing Goggles Poolside', order: 1 }
     ],
     isFeatured: true,
     isBestseller: true,
@@ -346,6 +336,10 @@ class ProductService {
     const snapshot = await query.get();
     let products = snapshot.docs.map(doc => doc.data());
 
+    if (filters.onlyPublished !== false) {
+      products = products.filter(p => p.isPublished === true && p.slug !== 'test-product-cap' && p.sku !== '123' && !(p.name && p.name.toLowerCase().includes('test product')));
+    }
+
     // Search filter in-memory if requested
     if (filters.search) {
       const s = filters.search.toLowerCase().trim();
@@ -386,21 +380,30 @@ class ProductService {
     };
   }
 
-  async getProductBySlug(slug) {
+  async getProductBySlug(slug, allowUnpublished = false) {
     const db = getDb();
     if (!db) return null;
 
-    const snap = await db.collection('products')
+    let query = db.collection('products')
       .where('slug', '==', slug)
-      .where('isDeleted', '==', false)
-      .limit(1)
-      .get();
+      .where('isDeleted', '==', false);
+
+    if (!allowUnpublished) {
+      query = query.where('isPublished', '==', true);
+    }
+
+    const snap = await query.limit(1).get();
 
     if (snap.empty) {
       return null;
     }
 
-    return snap.docs[0].data();
+    const data = snap.docs[0].data();
+    if (!allowUnpublished && (data.isPublished === false || data.slug === 'test-product-cap' || data.sku === '123')) {
+      return null;
+    }
+
+    return data;
   }
 
   async getProductById(id) {

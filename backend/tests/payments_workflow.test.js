@@ -59,7 +59,7 @@ describe('Manual QR Payment & Admin Verification Workflow Test Suite', () => {
       .field('upiReferenceNumber', '123')
       .attach('screenshot', Buffer.from('fake-image-bytes'), 'receipt.jpg');
 
-    expect(shortUtrRes.status).toBe(500); // Validation message
+    expect(shortUtrRes.status).toBe(400); // Validation error (HTTP 400 Bad Request)
   });
 
   test('POST /api/payments/proof accepts valid screenshot and transitions order to verification_pending', async () => {

@@ -5,13 +5,19 @@ const { logger } = require('../utils/logger');
 
 function getEffectiveUnitPricePaise(product, variant) {
   if (!product) return 0;
-  // 1. Explicit sale price on variant
+  // 1. Explicit sale price on variant (only if positive and strictly less than regular price)
   if (variant && typeof variant.salePricePaise === 'number' && variant.salePricePaise > 0) {
-    return variant.salePricePaise;
+    const regular = variant.pricePaise || product.regularPricePaise || product.pricePaise;
+    if (!regular || variant.salePricePaise < regular) {
+      return variant.salePricePaise;
+    }
   }
-  // 2. Global product sale price
+  // 2. Global product sale price (only if positive and strictly less than regular price)
   if (typeof product.salePricePaise === 'number' && product.salePricePaise > 0) {
-    return product.salePricePaise;
+    const regular = (variant && variant.pricePaise) || product.regularPricePaise || product.pricePaise;
+    if (!regular || product.salePricePaise < regular) {
+      return product.salePricePaise;
+    }
   }
   // 3. Variant price
   if (variant && typeof variant.pricePaise === 'number' && variant.pricePaise > 0) {

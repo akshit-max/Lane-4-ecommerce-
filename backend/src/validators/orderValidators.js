@@ -9,11 +9,19 @@ const quoteValidator = [
 
 const createOrderValidator = [
   body('items').isArray({ min: 1 }).withMessage('Cart cannot be empty'),
+  body('customerEmail')
+    .optional({ nullable: true })
+    .trim()
+    .matches(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)
+    .withMessage('Please provide a valid standard email address.'),
   body('shippingAddress').isObject().withMessage('Shipping address object is required'),
   body('shippingAddress.addressLine1').trim().notEmpty().withMessage('Address line 1 is required'),
   body('shippingAddress.city').trim().notEmpty().withMessage('City is required'),
   body('shippingAddress.state').trim().notEmpty().withMessage('State is required'),
-  body('shippingAddress.postalCode').trim().notEmpty().withMessage('PIN / Postal code is required')
+  body('shippingAddress.postalCode')
+    .trim()
+    .matches(/^[1-9][0-9]{5}$/)
+    .withMessage('Please provide a valid 6-digit Indian PIN / Postal code.')
 ];
 
 const updateOrderStatusValidator = [
@@ -24,7 +32,18 @@ const updateOrderStatusValidator = [
 const addTrackingValidator = [
   param('id').notEmpty().withMessage('Order ID is required'),
   body('courierName').trim().notEmpty().withMessage('Courier partner name is required'),
-  body('trackingNumber').trim().notEmpty().withMessage('Tracking / AWB consignment number is required')
+  body('trackingNumber')
+    .trim()
+    .isLength({ min: 6, max: 35 })
+    .withMessage('Tracking / AWB number must be between 6 and 35 characters.')
+    .matches(/^[A-Za-z0-9\-_]+$/)
+    .withMessage('Tracking / AWB number must contain only letters, numbers, and hyphens.')
+    .custom((val) => {
+      if (/^(.)\1+$/.test(val)) {
+        throw new Error('Please provide a valid courier tracking / AWB number (cannot be a single repeated character).');
+      }
+      return true;
+    })
 ];
 
 module.exports = {

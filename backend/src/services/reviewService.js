@@ -5,12 +5,35 @@ class ReviewService {
     const db = getDb();
     if (!db) return [];
 
-    const snap = await db.collection('reviews')
+    let snap = await db.collection('reviews')
       .where('productId', '==', productId)
       .where('status', '==', 'approved')
       .get();
 
     let reviews = snap.docs.map(d => d.data());
+
+    if (reviews.length === 0) {
+      try {
+        const prodDoc = await db.collection('products').doc(productId).get();
+        if (prodDoc.exists && prodDoc.data().slug && prodDoc.data().slug !== productId) {
+          const altSnap = await db.collection('reviews')
+            .where('productId', '==', prodDoc.data().slug)
+            .where('status', '==', 'approved')
+            .get();
+          reviews = altSnap.docs.map(d => d.data());
+        } else {
+          const prodBySlug = await db.collection('products').where('slug', '==', productId).limit(1).get();
+          if (!prodBySlug.empty && prodBySlug.docs[0].id !== productId) {
+            const altSnap = await db.collection('reviews')
+              .where('productId', '==', prodBySlug.docs[0].id)
+              .where('status', '==', 'approved')
+              .get();
+            reviews = altSnap.docs.map(d => d.data());
+          }
+        }
+      } catch (_) {}
+    }
+
     reviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     return reviews;
   }

@@ -638,11 +638,13 @@
     const path = window.location.pathname;
     const match = path.match(/\/product\/([a-zA-Z0-9-]+)(?:\.html)?/);
     const slug = match ? match[1] : null;
+    const querySlug = new URLSearchParams(window.location.search).get('slug');
+    const effectiveSlug = (slug && slug !== 'detail') ? slug : querySlug;
 
-    if (!slug) return;
+    if (!effectiveSlug) return;
 
     try {
-      const res = await window.lane4ApiRequest(`/products/${encodeURIComponent(slug)}`);
+      const res = await window.lane4ApiRequest(`/products/${encodeURIComponent(effectiveSlug)}`);
       const product = res.data;
       if (!product) return;
 
@@ -653,10 +655,20 @@
       const shortDescEl = document.querySelector('.pd-heading .paragraph-18px');
       if (shortDescEl && product.shortDescription) shortDescEl.textContent = product.shortDescription;
 
-      const pricePaise = product.salePricePaise || product.regularPricePaise;
-      const priceText = window.LANE4 ? `${window.LANE4.formatINR(pricePaise)} INR` : `₹ ${(pricePaise/100).toFixed(2)} INR`;
+      // Fix Price Inconsistency: Regular price by default, sale price + strikethrough if active discount
+      const regPaise = product.regularPricePaise || 0;
+      const hasSale = product.salePricePaise && product.salePricePaise > 0 && product.salePricePaise < regPaise;
+      let priceHtml = '';
+      if (hasSale) {
+        const saleFormatted = window.LANE4 ? `${window.LANE4.formatINR(product.salePricePaise)} INR` : `₹ ${(product.salePricePaise/100).toFixed(2)} INR`;
+        const regFormatted = window.LANE4 ? `${window.LANE4.formatINR(regPaise)} INR` : `₹ ${(regPaise/100).toFixed(2)} INR`;
+        priceHtml = `${saleFormatted} <span style="font-size:14px;text-decoration:line-through;color:#94a3b8;font-weight:normal;margin-left:8px;">${regFormatted}</span>`;
+      } else {
+        const primaryPaise = regPaise > 0 ? regPaise : (product.salePricePaise || 0);
+        priceHtml = window.LANE4 ? `${window.LANE4.formatINR(primaryPaise)} INR` : `₹ ${(primaryPaise/100).toFixed(2)} INR`;
+      }
       const priceEl = document.querySelector('.pd-heading .title-h6, .pd-heading h6, h6[data-wf-sku-bindings]');
-      if (priceEl) priceEl.textContent = priceText;
+      if (priceEl) priceEl.innerHTML = priceHtml;
 
       const descEl = document.querySelector('.pd-description .paragraph-20px');
       if (descEl && product.description) descEl.textContent = product.description;
@@ -666,15 +678,30 @@
       if (product.name) document.title = `${product.name} | The Lane4 Performance Store`;
 
       // Update primary product images if available
-      if (product.images && product.images[0] && product.images[0].url) {
-        let imgUrl = product.images[0].url;
-        if (window.LANE4 && window.LANE4.resolveAssetUrl) imgUrl = window.LANE4.resolveAssetUrl(imgUrl);
-        if (!imgUrl.startsWith('http') && !imgUrl.startsWith('/') && !imgUrl.startsWith('../')) imgUrl = '../' + imgUrl;
-        document.querySelectorAll('.image-gallery .product-img, .product-img').forEach(img => {
-          img.src = imgUrl;
-          if (img.hasAttribute('srcset')) img.removeAttribute('srcset');
+      if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+        const galleryImgs = document.querySelectorAll('.image-gallery .product-img, .product-hero .product-img');
+        product.images.forEach((imgObj, idx) => {
+          if (galleryImgs[idx] && imgObj && imgObj.url) {
+            let imgUrl = imgObj.url;
+            if (window.LANE4 && window.LANE4.resolveAssetUrl) imgUrl = window.LANE4.resolveAssetUrl(imgUrl);
+            if (!imgUrl.startsWith('http') && !imgUrl.startsWith('/') && !imgUrl.startsWith('../')) imgUrl = '../' + imgUrl;
+            galleryImgs[idx].src = imgUrl;
+            if (galleryImgs[idx].hasAttribute('srcset')) galleryImgs[idx].removeAttribute('srcset');
+            galleryImgs[idx].style.opacity = '1';
+          }
         });
       }
+
+      // Ensure all gallery images have opacity: 1 and a fallback to restore original src on error
+      document.querySelectorAll('.image-gallery img, .product-hero img, .product-img, .product-image').forEach(img => {
+        img.style.opacity = '1';
+        if (!img.dataset.origSrc) img.dataset.origSrc = img.getAttribute('src') || img.src;
+        img.onerror = function () {
+          if (this.dataset.origSrc && this.src !== this.dataset.origSrc) {
+            this.src = this.dataset.origSrc;
+          }
+        };
+      });
 
       // Dynamic variants dropdown
       if (product.variants && product.variants.length > 0) {
@@ -726,10 +753,11 @@
         }
 
         const submitBtn = form.querySelector('button, input[type="submit"], input[type="button"]');
-        const origVal = submitBtn ? (submitBtn.textContent || submitBtn.value) : 'Buy Now Online';
+        const origVal = submitBtn ? ((submitBtn.textContent || submitBtn.value || '').trim() || 'Add to Bag') : 'Add to Bag';
         if (submitBtn) {
-          if (submitBtn.tagName === 'INPUT') submitBtn.value = 'Adding to cart...';
-          else submitBtn.textContent = 'Adding to cart...';
+          if (submitBtn.tagName === 'INPUT') submitBtn.value = 'Adding to Bag...';
+          else submitBtn.textContent = 'Adding to Bag...';
+          submitBtn.setAttribute('aria-busy', 'true');
           submitBtn.disabled = true;
         }
 
@@ -752,14 +780,22 @@
           updateCartBadge();
           renderCartDrawer();
           openCartDrawer();
+
+          if (submitBtn) {
+            if (submitBtn.tagName === 'INPUT') submitBtn.value = 'Added to Bag ✓';
+            else submitBtn.textContent = 'Added to Bag ✓';
+          }
         } catch (err) {
           alert(err.message || 'Unable to add product to cart.');
         } finally {
-          if (submitBtn) {
-            if (submitBtn.tagName === 'INPUT') submitBtn.value = origVal;
-            else submitBtn.textContent = origVal;
-            submitBtn.disabled = false;
-          }
+          setTimeout(() => {
+            if (submitBtn) {
+              if (submitBtn.tagName === 'INPUT') submitBtn.value = origVal;
+              else submitBtn.textContent = origVal;
+              submitBtn.setAttribute('aria-busy', 'false');
+              submitBtn.disabled = false;
+            }
+          }, 1200);
         }
       };
 
@@ -771,12 +807,27 @@
         buyBtn.type = 'button';
         buyBtn.className = submitInput.className;
         buyBtn.id = 'lane4-buy-now-btn';
-        buyBtn.textContent = submitInput.value || 'Buy Now Online';
+        const label = (submitInput.value || '').trim() || 'Add to Bag';
+        buyBtn.textContent = label;
+        buyBtn.setAttribute('aria-label', label);
+        buyBtn.setAttribute('aria-busy', 'false');
+        buyBtn.style.color = '#ffffff';
+        buyBtn.style.backgroundColor = '#000000';
+        buyBtn.style.fontWeight = '700';
         buyBtn.style.cursor = 'pointer';
         submitInput.parentNode.replaceChild(buyBtn, submitInput);
       } else {
         buyBtn = form.querySelector('button, [data-node-type="commerce-add-to-cart-button"]');
-        if (buyBtn) buyBtn.type = 'button';
+        if (buyBtn) {
+          buyBtn.type = 'button';
+          const label = (buyBtn.textContent || '').trim() || 'Add to Bag';
+          buyBtn.textContent = label;
+          buyBtn.setAttribute('aria-label', label);
+          buyBtn.setAttribute('aria-busy', 'false');
+          buyBtn.style.color = '#ffffff';
+          buyBtn.style.backgroundColor = '#000000';
+          buyBtn.style.fontWeight = '700';
+        }
       }
 
       form.removeAttribute('data-node-type');
@@ -798,8 +849,262 @@
           handleAddToCart(e);
         }
       });
+
+      // Hydrate & Mount Product Reviews & Ratings
+      initProductReviews(product);
     } catch (err) {
       console.warn('Could not load dynamic product variants:', err);
+    }
+  }
+
+  async function initProductReviews(product) {
+    if (!product || document.getElementById('lane4-product-reviews-section')) return;
+
+    // Look for mounting location: place directly below product-hero across full container width
+    const hero = document.querySelector('.product-hero');
+    const reviewSection = document.createElement('div');
+    reviewSection.id = 'lane4-product-reviews-section';
+    reviewSection.style.cssText = 'width:100%;margin:56px 0 40px;padding-top:40px;border-top:1.5px solid #e2e8f0;font-family:inherit;color:#0f172a;clear:both;';
+
+    if (hero && hero.parentNode) {
+      hero.parentNode.insertBefore(reviewSection, hero.nextSibling);
+    } else {
+      const targetParent = document.querySelector('.product-details') || document.querySelector('.pd-description') || document.querySelector('.section.product-detail') || document.querySelector('.w-layout-grid') || document.querySelector('main') || document.body;
+      if (!targetParent) return;
+      targetParent.appendChild(reviewSection);
+    }
+
+    // Add quick review anchor in product heading under price
+    const heading = document.querySelector('.pd-heading');
+    if (heading && !document.getElementById('lane4-quick-review-anchor')) {
+      const quickAnchor = document.createElement('div');
+      quickAnchor.id = 'lane4-quick-review-anchor';
+      quickAnchor.style.cssText = 'display:inline-flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer;font-size:13px;color:#0284c7;font-weight:600;';
+      quickAnchor.innerHTML = `
+        <span style="color:#f59e0b;font-size:14px;">★★★★★</span>
+        <span id="lane4-quick-rating-text" style="color:#64748b;font-size:12.5px;">Customer Reviews</span>
+        <span style="color:#cbd5e1;">·</span>
+        <span style="text-decoration:underline;color:#0284c7;">Add a review</span>
+      `;
+      quickAnchor.onclick = () => {
+        reviewSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const formContainer = reviewSection.querySelector('#lane4-write-review-container');
+        if (formContainer) {
+          formContainer.style.display = 'block';
+          reviewSection.querySelector('#lane4-review-author')?.focus();
+        }
+      };
+      heading.appendChild(quickAnchor);
+    }
+
+    reviewSection.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:24px;">
+        <div>
+          <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#64748b;margin-bottom:4px;">Swimmer Feedback</div>
+          <h3 style="font-size:22px;font-weight:600;margin:0 0 6px;color:#0f172a;">Customer Reviews &amp; Ratings</h3>
+          <div id="lane4-review-summary-stars" style="display:flex;align-items:center;gap:8px;font-size:14px;color:#f59e0b;">
+            <span>★★★★★</span>
+            <span style="font-size:13px;color:#64748b;font-weight:600;" id="lane4-review-count-label">Loading reviews...</span>
+          </div>
+        </div>
+        <button type="button" id="lane4-write-review-toggle" style="background:#0f172a;color:#ffffff;border:none;padding:10px 18px;border-radius:6px;font-size:12.5px;font-weight:600;letter-spacing:0.8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+          <span>Write a Review</span>
+        </button>
+      </div>
+
+      <!-- Write Review Form Container (collapsible) -->
+      <div id="lane4-write-review-container" style="display:none;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:10px;padding:24px;margin-bottom:28px;max-width:760px;box-shadow:0 4px 14px rgba(15,23,42,0.05);">
+        <h4 style="font-size:16px;font-weight:600;margin:0 0 14px;color:#0f172a;">Share Your Review for ${product.name}</h4>
+        <form id="lane4-write-review-form">
+          <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:#334155;margin-bottom:6px;">
+              Overall Rating *
+            </label>
+            <div id="lane4-star-selector" style="display:flex;gap:6px;font-size:24px;cursor:pointer;color:#cbd5e1;">
+              <span data-star="1">★</span>
+              <span data-star="2">★</span>
+              <span data-star="3">★</span>
+              <span data-star="4">★</span>
+              <span data-star="5">★</span>
+            </div>
+            <input type="hidden" id="lane4-selected-rating" value="5" />
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:#334155;margin-bottom:6px;">
+              Your Name *
+            </label>
+            <input type="text" id="lane4-review-author" required placeholder="e.g. Swimmer Rohan" style="width:100%;max-width:400px;padding:9px 12px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13.5px;font-family:inherit;" />
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:#334155;margin-bottom:6px;">
+              Headline / Summary
+            </label>
+            <input type="text" id="lane4-review-title" placeholder="e.g. Outstanding hydrodynamic fit in open water" style="width:100%;max-width:550px;padding:9px 12px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13.5px;font-family:inherit;" />
+          </div>
+
+          <div style="margin-bottom:16px;">
+            <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:#334155;margin-bottom:6px;">
+              Detailed Review *
+            </label>
+            <textarea id="lane4-review-comment" required rows="4" placeholder="How did this gear perform in practice or competition? Tell other swimmers about fit, feel, durability..." style="width:100%;padding:10px 12px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13.5px;font-family:inherit;"></textarea>
+          </div>
+
+          <div style="display:flex;gap:10px;">
+            <button type="submit" id="lane4-submit-review-btn" style="background:#0f172a;color:#ffffff;border:none;padding:12px 22px;border-radius:6px;font-size:12.5px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">
+              Submit Review
+            </button>
+            <button type="button" id="lane4-cancel-review-btn" style="background:#e2e8f0;color:#475569;border:none;padding:12px 18px;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer;">
+              Cancel
+            </button>
+          </div>
+        </form>
+        <div id="lane4-review-alert" style="display:none;margin-top:14px;padding:12px;border-radius:6px;font-size:13px;font-weight:600;"></div>
+      </div>
+
+      <!-- Approved Reviews List -->
+      <div id="lane4-approved-reviews-list">Loading verified reviews...</div>
+    `;
+
+    targetParent.appendChild(reviewSection);
+
+    // Star selection interactive hover/click
+    let selectedRating = 5;
+    const stars = reviewSection.querySelectorAll('#lane4-star-selector span');
+    function updateStarUI(val) {
+      stars.forEach((s, idx) => {
+        s.style.color = idx < val ? '#f59e0b' : '#cbd5e1';
+      });
+    }
+    updateStarUI(5);
+    stars.forEach(s => {
+      s.onclick = () => {
+        selectedRating = parseInt(s.getAttribute('data-star'), 10) || 5;
+        document.getElementById('lane4-selected-rating').value = selectedRating;
+        updateStarUI(selectedRating);
+      };
+    });
+
+    // Write review toggle & pre-fill
+    const toggleBtn = reviewSection.querySelector('#lane4-write-review-toggle');
+    const container = reviewSection.querySelector('#lane4-write-review-container');
+    const cancelBtn = reviewSection.querySelector('#lane4-cancel-review-btn');
+    const authorInput = reviewSection.querySelector('#lane4-review-author');
+
+    toggleBtn.onclick = () => {
+      const user = window.LANE4 ? window.LANE4.getUser() : null;
+      if (user && authorInput && !authorInput.value) {
+        authorInput.value = user.displayName || user.email.split('@')[0];
+      }
+      container.style.display = container.style.display === 'none' ? 'block' : 'none';
+      if (container.style.display === 'block') authorInput?.focus();
+    };
+    cancelBtn.onclick = () => {
+      container.style.display = 'none';
+    };
+
+    // Review form submit
+    const reviewForm = reviewSection.querySelector('#lane4-write-review-form');
+    const reviewAlert = reviewSection.querySelector('#lane4-review-alert');
+    const submitBtn = reviewSection.querySelector('#lane4-submit-review-btn');
+
+    reviewForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const rating = parseInt(document.getElementById('lane4-selected-rating').value, 10) || 5;
+      const authorName = authorInput.value.trim();
+      const title = document.getElementById('lane4-review-title').value.trim();
+      const comment = document.getElementById('lane4-review-comment').value.trim();
+
+      if (!authorName) {
+        alert('Please provide your name.');
+        authorInput.focus();
+        return;
+      }
+      if (!comment) {
+        alert('Please write a review comment.');
+        document.getElementById('lane4-review-comment').focus();
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+
+      try {
+        await window.lane4ApiRequest(`/products/${encodeURIComponent(product.id || product.slug)}/reviews`, {
+          method: 'POST',
+          body: JSON.stringify({ rating, authorName, title, comment })
+        });
+
+        reviewAlert.style.display = 'block';
+        reviewAlert.style.background = '#f0fdf4';
+        reviewAlert.style.color = '#15803d';
+        reviewAlert.style.border = '1px solid #bbf7d0';
+        reviewAlert.textContent = 'Thank you! Your review has been submitted for moderation and will appear here shortly.';
+        reviewForm.reset();
+        setTimeout(() => {
+          container.style.display = 'none';
+        }, 3500);
+      } catch (err) {
+        reviewAlert.style.display = 'block';
+        reviewAlert.style.background = '#fef2f2';
+        reviewAlert.style.color = '#b91c1c';
+        reviewAlert.style.border = '1px solid #fecaca';
+        reviewAlert.textContent = err.message || 'Unable to submit review. Please try again.';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Review';
+      }
+    };
+
+    // Fetch and render approved reviews
+    try {
+      const revRes = await window.lane4ApiRequest(`/products/${encodeURIComponent(product.id || product.slug)}/reviews`);
+      const reviews = (revRes && revRes.data) || [];
+      const listContainer = reviewSection.querySelector('#lane4-approved-reviews-list');
+      const countLabel = reviewSection.querySelector('#lane4-review-count-label');
+
+      if (reviews.length === 0) {
+        countLabel.textContent = 'No reviews yet';
+        const quickRatingText = document.getElementById('lane4-quick-rating-text');
+        if (quickRatingText) quickRatingText.textContent = 'No reviews yet';
+        listContainer.innerHTML = `
+          <div style="padding:24px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;text-align:center;">
+            <div style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:4px;">Be the first swimmer to review!</div>
+            <div style="font-size:12.5px;color:#64748b;">Share your training or race-day experience with fellow swimmers.</div>
+          </div>
+        `;
+        return;
+      }
+
+      const avg = reviews.reduce((sum, r) => sum + (r.rating || 5), 0) / reviews.length;
+      countLabel.textContent = `${avg.toFixed(1)} / 5.0 (${reviews.length} ${reviews.length === 1 ? 'review' : 'reviews'})`;
+      const quickRatingText = document.getElementById('lane4-quick-rating-text');
+      if (quickRatingText) {
+        quickRatingText.textContent = `${avg.toFixed(1)} (${reviews.length})`;
+      }
+
+      listContainer.innerHTML = reviews.map(r => {
+        const starStr = '★'.repeat(r.rating || 5) + '☆'.repeat(5 - (r.rating || 5));
+        const dateStr = r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+
+        return `
+          <div style="border-bottom:1px solid #f1f5f9;padding:16px 0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="color:#f59e0b;font-size:15px;letter-spacing:1px;">${starStr}</span>
+                <span style="font-size:13.5px;font-weight:600;color:#0f172a;">${r.authorName || 'Verified Swimmer'}</span>
+                ${r.isVerifiedPurchase ? `<span style="font-size:10px;font-weight:600;background:#dcfce7;color:#166534;padding:2px 6px;border-radius:4px;text-transform:uppercase;">Verified Purchase</span>` : ''}
+              </div>
+              <div style="font-size:12px;color:#94a3b8;">${dateStr}</div>
+            </div>
+            ${r.title ? `<div style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:4px;">${r.title}</div>` : ''}
+            <div style="font-size:13px;color:#475569;line-height:1.5;">${r.comment}</div>
+          </div>
+        `;
+      }).join('');
+    } catch (err) {
+      console.warn('Could not load product reviews:', err);
     }
   }
 

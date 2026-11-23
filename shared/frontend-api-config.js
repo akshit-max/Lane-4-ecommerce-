@@ -81,11 +81,12 @@ async function lane4ApiRequest(endpoint, options = {}) {
 
   // Attach Authentication Token: Admin token prioritized on admin paths, customer auth token on store
   const isAdminRequest = endpoint.includes('/admin') || (typeof window !== 'undefined' && window.location && window.location.pathname.includes('/admin'));
+  const isAuthAction = endpoint.includes('/auth/login') || endpoint.includes('/auth/admin/login') || endpoint.includes('/auth/register');
   const adminToken = localStorage.getItem('lane4_admin_token');
   const userToken = localStorage.getItem('lane4_auth_token');
   const authToken = (isAdminRequest && adminToken) ? adminToken : (adminToken || userToken);
 
-  if (authToken && !headers['Authorization']) {
+  if (!isAuthAction && authToken && !headers['Authorization']) {
     headers['Authorization'] = `Bearer ${authToken}`;
   }
 

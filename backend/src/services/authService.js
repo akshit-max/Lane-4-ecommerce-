@@ -125,13 +125,13 @@ class AuthService {
     const addressRef = db.collection('users').doc(uid).collection('addresses').doc();
     const newAddress = {
       addressId: addressRef.id,
-      addressee: addressData.addressee.trim(),
-      phone: addressData.phone.trim(),
-      addressLine1: addressData.addressLine1.trim(),
+      addressee: (addressData.addressee || '').trim(),
+      phone: (addressData.phone || '').trim(),
+      addressLine1: (addressData.addressLine1 || '').trim(),
       addressLine2: addressData.addressLine2 ? addressData.addressLine2.trim() : '',
-      city: addressData.city.trim(),
-      state: addressData.state.trim(),
-      postalCode: addressData.postalCode.trim(),
+      city: (addressData.city || '').trim(),
+      state: (addressData.state || '').trim(),
+      postalCode: (addressData.postalCode || '').trim(),
       country: 'India',
       isDefault: Boolean(addressData.isDefault),
       createdAt: new Date()

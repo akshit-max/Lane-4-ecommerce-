@@ -5,6 +5,9 @@ const { authenticate } = require('../middleware/authenticate');
 const { requireAdmin } = require('../middleware/requireAdmin');
 const { requirePermission } = require('../middleware/requirePermission');
 const { upload } = require('../middleware/uploadMiddleware');
+const { validateRequest } = require('../middleware/validateRequest');
+const { addTrackingValidator, updateOrderStatusValidator } = require('../validators/orderValidators');
+const { rejectPaymentValidator } = require('../validators/paymentValidators');
 
 // All admin routes require valid authentication & staff role
 router.use(authenticate, requireAdmin);
@@ -16,14 +19,14 @@ router.get('/logs', requirePermission('super_admin'), adminController.listLogs);
 // Orders
 router.get('/orders', adminController.listOrders);
 router.get('/orders/:id', adminController.getOrder);
-router.patch('/orders/:id/status', adminController.updateOrderStatus);
-router.post('/orders/:id/tracking', adminController.addTracking);
+router.patch('/orders/:id/status', updateOrderStatusValidator, validateRequest, adminController.updateOrderStatus);
+router.post('/orders/:id/tracking', addTrackingValidator, validateRequest, adminController.addTracking);
 
 // Payments (QR Manual Verification)
 router.get('/payments', adminController.listPayments);
 router.get('/payments/:id', adminController.getPayment);
 router.post('/payments/:id/approve', adminController.approvePayment);
-router.post('/payments/:id/reject', adminController.rejectPayment);
+router.post('/payments/:id/reject', rejectPaymentValidator, validateRequest, adminController.rejectPayment);
 router.post('/payments/:id/upload-proof', upload.single('screenshot'), adminController.uploadPaymentProof);
 
 // Products

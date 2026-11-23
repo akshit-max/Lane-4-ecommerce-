@@ -132,6 +132,21 @@ class CouponService {
     }
   }
 
+  async revertCouponRedemption(code) {
+    if (!code) return;
+    const cleanCode = code.toUpperCase().trim();
+    const db = getDb();
+    const docRef = db.collection('coupons').doc(cleanCode);
+    const doc = await docRef.get();
+    if (doc.exists) {
+      const current = doc.data().usedCount || 0;
+      await docRef.update({
+        usedCount: Math.max(0, current - 1),
+        updatedAt: new Date()
+      });
+    }
+  }
+
   async listCoupons() {
     const db = getDb();
     const snap = await db.collection('coupons').get();
@@ -186,6 +201,24 @@ class CouponService {
     const db = getDb();
     await db.collection('coupons').doc(cleanCode).delete();
     return { code: cleanCode, deleted: true };
+  }
+
+  async getCouponByCode(code) {
+    if (!code) return null;
+    const cleanCode = code.toUpperCase().trim();
+    const db = getDb();
+    if (!db) return null;
+    const doc = await db.collection('coupons').doc(cleanCode).get();
+    if (doc.exists) {
+      const data = doc.data();
+      return { id: doc.id, ...data, usedCount: data.usedCount || 0, currentUses: data.usedCount || 0 };
+    }
+    const snap = await db.collection('coupons').where('code', '==', cleanCode).limit(1).get();
+    if (!snap.empty) {
+      const data = snap.docs[0].data();
+      return { id: snap.docs[0].id, ...data, usedCount: data.usedCount || 0, currentUses: data.usedCount || 0 };
+    }
+    return null;
   }
 }
 

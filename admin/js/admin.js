@@ -306,59 +306,65 @@
   async function checkAdminAuth() {
     const adminToken = localStorage.getItem('lane4_admin_token');
     const loginScreen = document.getElementById('admin-login-screen');
+    const alertEl = document.getElementById('admin-login-alert');
+
+    // Bind form submission & toggle password handlers
+    setupLoginForm();
 
     if (!adminToken) {
       document.documentElement.classList.remove('admin-authed');
       document.documentElement.classList.add('admin-unauthed');
       if (loginScreen) loginScreen.style.display = 'flex';
-      setupLoginForm();
       return;
     }
 
-    // Client-side JWT inspection for instant, zero-delay rendering on page refresh
-    const payload = parseJwt(adminToken);
-    const now = Math.floor(Date.now() / 1000);
+    // Keep Operations Console guarded while verifying credentials with the backend
+    document.documentElement.classList.remove('admin-authed');
+    document.documentElement.classList.add('admin-unauthed');
+    if (loginScreen) loginScreen.style.display = 'flex';
+    if (alertEl) {
+      alertEl.style.display = 'block';
+      alertEl.style.background = '#eff6ff';
+      alertEl.style.color = '#1d4ed8';
+      alertEl.textContent = 'Verifying administrator session with database...';
+    }
 
-    if (!payload || (payload.exp && payload.exp < now)) {
-      console.warn('Admin token has expired or is invalid.');
+    try {
+      const res = await window.lane4ApiRequest('/auth/admin/verify', {
+        headers: { Authorization: `Bearer ${adminToken}` }
+      });
+
+      if (res && res.data && res.data.valid && res.data.admin) {
+        activeAdmin = res.data.admin;
+        localStorage.setItem('lane4_admin_user', JSON.stringify(res.data.admin));
+
+        if (alertEl) {
+          alertEl.style.display = 'none';
+          alertEl.textContent = '';
+        }
+        document.documentElement.classList.remove('admin-unauthed');
+        document.documentElement.classList.add('admin-authed');
+        if (loginScreen) loginScreen.style.display = 'none';
+
+        updateAdminUserDisplay(activeAdmin);
+        initAdminPanel();
+      } else {
+        throw new Error('Administrator session verification failed.');
+      }
+    } catch (err) {
+      console.warn('Session verification rejected by server:', err);
       localStorage.removeItem('lane4_admin_token');
       localStorage.removeItem('lane4_admin_user');
       document.documentElement.classList.remove('admin-authed');
       document.documentElement.classList.add('admin-unauthed');
-      if (loginScreen) {
-        loginScreen.style.display = 'flex';
-        const alertEl = document.getElementById('admin-login-alert');
-        if (alertEl) {
-          alertEl.style.display = 'block';
-          alertEl.style.background = '#fef2f2';
-          alertEl.style.color = '#b91c1c';
-          alertEl.textContent = 'Administrator session has expired. Please sign in again.';
-        }
+      if (loginScreen) loginScreen.style.display = 'flex';
+      if (alertEl) {
+        alertEl.style.display = 'block';
+        alertEl.style.background = '#fef2f2';
+        alertEl.style.color = '#b91c1c';
+        alertEl.textContent = 'Administrator session expired or invalid. Please sign in with your credentials.';
       }
-      setupLoginForm();
-      return;
     }
-
-    // Token is valid: immediately show operations console and hide login screen
-    document.documentElement.classList.remove('admin-unauthed');
-    document.documentElement.classList.add('admin-authed');
-    if (loginScreen) loginScreen.style.display = 'none';
-
-    // Restore cached admin user profile
-    const savedUser = localStorage.getItem('lane4_admin_user');
-    let adminProfile = null;
-    try { adminProfile = savedUser ? JSON.parse(savedUser) : null; } catch (_) {}
-    activeAdmin = adminProfile || {
-      email: payload.email || 'admin@lane4swim.in',
-      role: payload.role || 'super_admin',
-      uid: payload.uid
-    };
-
-    updateAdminUserDisplay(activeAdmin);
-    initAdminPanel();
-
-    // Verify token with backend asynchronously without blocking or flashing UI
-    verifyAdminSessionWithServer(adminToken);
   }
 
   async function verifyAdminSessionWithServer(token) {
@@ -412,8 +418,10 @@
 
     form.onsubmit = async (e) => {
       e.preventDefault();
-      const email = document.getElementById('admin-email').value.trim();
-      const password = document.getElementById('admin-pass').value;
+      const emailInput = document.getElementById('admin-email');
+      const passInput = document.getElementById('admin-pass');
+      const email = emailInput ? emailInput.value.trim() : '';
+      const password = passInput ? passInput.value : '';
 
       if (!email || !password) {
         if (alertEl) {
@@ -429,7 +437,7 @@
         alertEl.style.display = 'block';
         alertEl.style.background = '#eff6ff';
         alertEl.style.color = '#1d4ed8';
-        alertEl.textContent = 'Authenticating staff credentials...';
+        alertEl.textContent = 'Authenticating staff credentials with database...';
       }
       if (submitBtn) submitBtn.disabled = true;
 
@@ -606,6 +614,8 @@
       coupons: 'Promotional Coupons & Rules',
       customers: 'Customer Accounts & Profiles',
       enquiries: 'Customer Support & Contact Submissions',
+      reviews: 'Customer Reviews Moderation',
+      returns: 'Customer Returns & Exchanges',
       settings: 'Store Profile & UPI Payment Settings',
       logs: 'Administrative Activity Audit Logs'
     };
@@ -624,6 +634,8 @@
     else if (viewName === 'coupons') loadCoupons();
     else if (viewName === 'customers') loadCustomers();
     else if (viewName === 'enquiries') loadEnquiries();
+    else if (viewName === 'reviews') loadReviews();
+    else if (viewName === 'returns') loadReturns();
     else if (viewName === 'settings') loadSettings();
     else if (viewName === 'logs') loadLogs();
   }
@@ -746,6 +758,8 @@
       resolver(result);
     }
   }
+  window.hideModal = hideModal;
+  window.showModal = showModal;
 
   function setupModalEvents() {
     const closeBtn = document.getElementById('admin-modal-close-btn');
@@ -1272,7 +1286,21 @@
                                   <span>Reject</span>
                                 </button>
                               </div>
-                            ` : `<span style="font-size:12px;color:#666;">Verified by ${p.verification ? (p.verification.verifiedByName || 'Staff') : 'Staff'}</span>`}
+                            ` : (p.status === 'rejected' ? `
+                              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                <span style="font-size:12px;color:#dc2626;font-weight:700;">Rejected</span>
+                                <button type="button" class="btn btn-outline" style="padding:4px 9px;font-size:11.5px;font-weight:600;" onclick="viewPaymentDetail('${p.paymentId}')">
+                                  <span>View Audit</span>
+                                </button>
+                              </div>
+                            ` : `
+                              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                <span style="font-size:12px;color:#16a34a;font-weight:600;">Verified</span>
+                                <button type="button" class="btn btn-outline" style="padding:4px 9px;font-size:11.5px;font-weight:600;display:inline-flex;align-items:center;gap:4px;" onclick="goToOrderFulfillment('${p.orderId || p.paymentId}')" title="Dispatch and attach courier tracking">
+                                  <span>Fulfill Order &rarr;</span>
+                                </button>
+                              </div>
+                            `)}
                           </td>
                         </tr>
                       `;
@@ -1361,13 +1389,19 @@
             <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Submitted At</div>
             <div style="margin-top:4px;font-size:13px;font-weight:600;color:#1e293b;">${formatDateTime(p.createdAt)}</div>
           </div>
-          ${p.verification && p.verification.verifiedByName ? `
+          ${(p.status === 'rejected' || p.rejection) ? `
+            <div>
+              <div style="font-size:11px;font-weight:700;color:#ef4444;text-transform:uppercase;">Rejected By</div>
+              <div style="margin-top:4px;font-size:13px;font-weight:600;color:#991b1b;">${(p.rejection && p.rejection.rejectedByName) || 'Admin Staff'} (${formatDateTime(p.rejection ? p.rejection.rejectedAt : p.updatedAt)})</div>
+              <div style="font-size:11px;color:#b91c1c;font-style:italic;">Reason: "${(p.rejection && p.rejection.reason) || p.rejectionReason || 'Payment verification failed'}"</div>
+            </div>
+          ` : (p.verification && p.verification.verifiedByName ? `
             <div>
               <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Verified By</div>
               <div style="margin-top:4px;font-size:13px;font-weight:600;color:#1e293b;">${p.verification.verifiedByName} (${formatDateTime(p.verification.verifiedAt)})</div>
               <div style="font-size:11px;color:#64748b;font-style:italic;">"${p.verification.internalNotes || ''}"</div>
             </div>
-          ` : ''}
+          ` : '')}
         </div>
 
         ${p.status === 'verification_pending' ? `
@@ -1448,7 +1482,7 @@
           </div>
           <div>
             <div style="font-size:14px;font-weight:800;color:#166534;margin-bottom:2px;">Approve Payment for Order #${orderNum} ${amountStr ? `(${amountStr})` : ''}</div>
-            <div style="font-size:12.5px;color:#15803d;line-height:1.4;">Approving will mark this payment as VERIFIED, confirm the order, transition status to PROCESSING, and send an email confirmation to the customer.</div>
+            <div style="font-size:12.5px;color:#15803d;line-height:1.4;">Approving will mark this payment as VERIFIED, confirm the order, transition status to CONFIRMED, and send an email confirmation to the customer.</div>
           </div>
         </div>
 
@@ -1458,9 +1492,9 @@
 
         <div>
           <label for="approve-note-input" class="form-label" style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;color:#334155;margin-bottom:6px;">
-            Internal Staff Verification Note (Optional)
+            Internal Staff Verification Note (Required)
           </label>
-          <input type="text" id="approve-note-input" class="form-input" style="width:100%;font-size:13.5px;padding:10px 12px;border:1.5px solid #cbd5e1;border-radius:6px;" value="Confirmed against bank UPI records." placeholder="e.g. Confirmed in ICICI statement" />
+          <input type="text" id="approve-note-input" class="form-input" style="width:100%;font-size:13.5px;padding:10px 12px;border:1.5px solid #cbd5e1;border-radius:6px;" value="" placeholder="Enter verification note (e.g. Verified in ICICI / UPI merchant dashboard)" />
           <div style="font-size:11.5px;color:#64748b;margin-top:4px;">Saved in the administrative audit trail for reconciliation.</div>
         </div>
 
@@ -1482,7 +1516,7 @@
     const submitBtn = document.getElementById('submit-approve-btn');
     if (submitBtn) {
       submitBtn.onclick = async () => {
-        const note = (document.getElementById('approve-note-input')?.value || '').trim() || 'Confirmed against bank UPI records.';
+        const note = (document.getElementById('approve-note-input')?.value || '').trim() || 'Verified by admin staff';
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span>Approving...</span>';
 
@@ -1670,6 +1704,7 @@
       const shippedCount = allOrders.filter(o => o.status === 'shipped' || o.status === 'out_for_delivery').length;
       const deliveredCount = allOrders.filter(o => o.status === 'delivered').length;
       const pendingCount = allOrders.filter(o => o.status === 'pending_payment' || o.status === 'payment_verification').length;
+      const cancelledCount = allOrders.filter(o => o.status === 'cancelled').length;
 
       // Filter based on active tab
       const orders = allOrders.filter(o => {
@@ -1678,6 +1713,7 @@
         if (window.orderFilter === 'shipped') return o.status === 'shipped' || o.status === 'out_for_delivery';
         if (window.orderFilter === 'delivered') return o.status === 'delivered';
         if (window.orderFilter === 'pending') return o.status === 'pending_payment' || o.status === 'payment_verification';
+        if (window.orderFilter === 'cancelled') return o.status === 'cancelled';
         return true;
       });
 
@@ -1715,6 +1751,9 @@
             </button>
             <button type="button" class="btn ${window.orderFilter === 'pending' ? 'btn-primary' : 'btn-outline'}" style="padding:5px 12px;font-size:12px;border-radius:20px;cursor:pointer;${window.orderFilter === 'pending' ? 'background:#000;color:#fff;' : ''}" onclick="window.setOrderFilter('pending')">
               Pending Payment (${pendingCount})
+            </button>
+            <button type="button" class="btn ${window.orderFilter === 'cancelled' ? 'btn-primary' : 'btn-outline'}" style="padding:5px 12px;font-size:12px;border-radius:20px;cursor:pointer;${window.orderFilter === 'cancelled' ? 'background:#ef4444;color:#fff;' : 'border-color:#fca5a5;color:#b91c1c;'}" onclick="window.setOrderFilter('cancelled')">
+              Cancelled (${cancelledCount})
             </button>
           </div>
 
@@ -1824,16 +1863,42 @@
     loadOrders();
   };
 
+  function formatStatusLabel(status) {
+    const map = {
+      pending_payment: 'Pending Payment',
+      payment_verification: 'Payment Verification',
+      confirmed: 'Confirmed',
+      processing: 'Processing',
+      shipped: 'Shipped',
+      out_for_delivery: 'Out for Delivery',
+      delivered: 'Delivered',
+      cancelled: 'Cancelled',
+      payment_rejected: 'Payment Rejected'
+    };
+    return map[status] || (status ? status.replace(/_/g, ' ') : status);
+  }
+
   window.updateOrderStatus = async function (orderId, newStatus) {
+    if (newStatus === 'cancelled') {
+      const o = (window.currentOrders || []).find(it => it.orderId === orderId || it.id === orderId || it.orderNumber === orderId);
+      const orderNum = o ? (o.orderNumber || o.orderId || orderId) : orderId;
+      const confirmed = window.confirm(`Are you sure you want to cancel Order #${orderNum}?\n\nThis will mark the order as Cancelled, release reserved inventory, and record refund tracking.`);
+      if (!confirmed) {
+        loadOrders();
+        return;
+      }
+    }
+
     try {
       await window.lane4ApiRequest(`/admin/orders/${orderId}/status`, {
         method: 'PATCH',
         body: JSON.stringify({ status: newStatus })
       });
-      showToast(`Order status updated to ${newStatus}.`);
+      showToast(`Order status updated to ${formatStatusLabel(newStatus)}.`);
       loadOrders();
     } catch (err) {
       showToast(err.message || 'Error updating order status', 'error');
+      loadOrders();
     }
   };
 
@@ -2329,6 +2394,25 @@
           <div style="font-size:11px;color:#64748b;margin-top:3px;">Displayed directly below the product title on product detail and catalog pages</div>
         </div>
 
+        <!-- Product Image Change & Upload Section -->
+        <div class="form-group" style="background:#f8fafc;padding:14px;border-radius:6px;border:1.5px dashed #cbd5e1;margin-bottom:16px;">
+          <label class="form-label" style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <span>Change / Replace Product Image</span>
+          </label>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+            <img id="edit-prod-img-preview" src="${resolveAdminAsset(img)}" alt="Product Image" style="width:60px;height:60px;border-radius:6px;object-fit:cover;border:1px solid #cbd5e1;background:#fff;" />
+            <div style="flex:1;">
+              <input type="file" id="edit-prod-image-file" accept="image/png,image/jpeg,image/webp" style="font-size:12px;" />
+              <div id="edit-prod-img-name" style="font-size:11px;color:#64748b;margin-top:4px;">Upload new JPG, PNG, or WebP to replace</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:11px;color:#94a3b8;text-transform:uppercase;font-weight:700;">OR URL:</span>
+            <input type="url" id="edit-prod-image-url" class="form-input" placeholder="Direct Image URL (e.g. https://...)" value="${img.startsWith('http') ? escapeHtml(img) : ''}" style="font-size:12px;" />
+          </div>
+        </div>
+
         <div class="form-group">
           <label class="form-label">Product Description</label>
           <textarea id="edit-prod-desc" class="form-textarea" rows="3">${escapeHtml(p.description || '')}</textarea>
@@ -2336,13 +2420,31 @@
 
         <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid #e2e8f0;">
           <button type="button" class="btn btn-outline" onclick="hideModal()">Cancel</button>
-          <button type="submit" id="btn-save-prod" class="btn btn-primary" style="background:#000;color:#fff;display:inline-flex;align-items:center;gap:6px;padding:9px 18px;font-weight:800;">
+          <button type="submit" id="btn-save-prod" class="btn btn-primary" style="background:#000;color:#fff;display:inline-flex;align-items:center;gap:6px;padding:9px 18px;font-weight:600;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>Save Price & Catalog Updates</span>
+            <span>Save Price &amp; Catalog Updates</span>
           </button>
         </div>
       </form>
     `);
+
+    // Live preview for image file change
+    const fileInput = document.getElementById('edit-prod-image-file');
+    const previewImg = document.getElementById('edit-prod-img-preview');
+    const previewName = document.getElementById('edit-prod-img-name');
+    if (fileInput) {
+      fileInput.onchange = () => {
+        if (fileInput.files && fileInput.files[0]) {
+          const file = fileInput.files[0];
+          previewName.textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            if (previewImg) previewImg.src = ev.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+    }
 
     const editForm = document.getElementById('form-edit-product');
     if (editForm) {
@@ -2365,18 +2467,40 @@
         const description = document.getElementById('edit-prod-desc').value.trim();
 
         try {
+          let updatedImageUrl = null;
+          if (fileInput && fileInput.files && fileInput.files[0]) {
+            if (saveBtn) saveBtn.textContent = 'Uploading Image...';
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
+            const uploadRes = await window.lane4ApiRequest('/admin/uploads/image', {
+              method: 'POST',
+              body: formData
+            });
+            updatedImageUrl = uploadRes.data && uploadRes.data.url;
+          } else {
+            const directUrl = document.getElementById('edit-prod-image-url').value.trim();
+            if (directUrl && directUrl !== img) {
+              updatedImageUrl = directUrl;
+            }
+          }
+
+          const patchPayload = {
+            name,
+            category,
+            regularPrice,
+            salePrice,
+            stockQuantity,
+            isPublished,
+            shortDescription,
+            description
+          };
+          if (updatedImageUrl) {
+            patchPayload.imageUrl = updatedImageUrl;
+          }
+
           await window.lane4ApiRequest(`/admin/products/${productId}`, {
             method: 'PATCH',
-            body: JSON.stringify({
-              name,
-              category,
-              regularPrice,
-              salePrice,
-              stockQuantity,
-              isPublished,
-              shortDescription,
-              description
-            })
+            body: JSON.stringify(patchPayload)
           });
           hideModal();
           showToast(`Prices and details for "${name}" updated successfully!`, 'success');
@@ -2637,6 +2761,18 @@
       const res = await window.lane4ApiRequest('/admin/categories');
       const cats = res.data || [];
 
+      // Sort categories by displayOrder ascending, breaking ties cleanly by name
+      cats.sort((a, b) => {
+        const orderDiff = (parseInt(a.displayOrder, 10) || 99) - (parseInt(b.displayOrder, 10) || 99);
+        if (orderDiff !== 0) return orderDiff;
+        return (a.name || '').localeCompare(b.name || '');
+      });
+      // Resequence cleanly so each category gets a unique ascending order number (#1, #2, #3, ...) without duplicate #6
+      cats.forEach((c, idx) => {
+        c.computedOrder = idx + 1;
+      });
+      window.currentCategories = cats;
+
       container.innerHTML = `
         <div class="card">
           <div class="card-header" style="flex-wrap:wrap;gap:12px;">
@@ -2663,7 +2799,7 @@
                   ${cats.length === 0 ? '<tr><td colspan="6" style="text-align:center;padding:24px;color:#888;">No categories found.</td></tr>' :
                     cats.map(c => `
                       <tr>
-                        <td><strong>#${c.displayOrder}</strong></td>
+                        <td><strong>#${c.computedOrder || c.displayOrder}</strong></td>
                         <td><strong style="color:#0f172a;">${c.name}</strong></td>
                         <td><code>${c.slug}</code></td>
                         <td style="color:#64748b;font-size:13px;max-width:300px;">${c.description || '—'}</td>
@@ -2710,6 +2846,9 @@
   }
 
   function openAddCategoryModal() {
+    const maxOrder = (window.currentCategories || []).reduce((max, c) => Math.max(max, parseInt(c.computedOrder || c.displayOrder, 10) || 0), 0);
+    const nextOrder = maxOrder + 1;
+
     const formHtml = `
       <form id="form-create-category">
         <div class="form-row">
@@ -2719,7 +2858,7 @@
           </div>
           <div class="form-group" style="flex:1;">
             <label class="form-label">Display Order</label>
-            <input type="number" id="new-cat-order" class="form-input" value="6" min="1" />
+            <input type="number" id="new-cat-order" class="form-input" value="${nextOrder}" min="1" />
           </div>
         </div>
 
@@ -2774,7 +2913,8 @@
       try {
         const name = nameInput.value.trim();
         const slug = slugInput.value.trim();
-        const displayOrder = parseInt(document.getElementById('new-cat-order').value, 10) || 6;
+        const defaultOrder = (window.currentCategories || []).length + 1;
+        const displayOrder = parseInt(document.getElementById('new-cat-order').value, 10) || defaultOrder;
         const description = document.getElementById('new-cat-desc').value.trim();
         const isPublished = document.getElementById('new-cat-published').checked;
 
@@ -3128,6 +3268,210 @@
       hideTopLoader();
     }
   }
+
+  // --- CUSTOMER REVIEWS MODERATION ---
+  async function loadReviews() {
+    const container = document.getElementById('view-reviews');
+    if (!container) return;
+    if (!container.children.length) {
+      container.innerHTML = getSkeletonHtml('table');
+    }
+    showTopLoader();
+
+    try {
+      const res = await window.lane4ApiRequest('/admin/reviews');
+      const reviews = res.data || [];
+      window.currentReviews = reviews;
+
+      container.innerHTML = `
+        <div class="card">
+          <div class="card-header" style="flex-wrap:wrap;gap:12px;">
+            <div>
+              <div class="card-title">Customer Reviews Moderation (${reviews.length})</div>
+              <div style="font-size:12px;color:#64748b;margin-top:2px;">Approve authentic customer ratings and feedback before displaying on product pages.</div>
+            </div>
+            <button class="btn btn-outline" style="font-size:12px;padding:6px 12px;" onclick="loadReviews()">Refresh</button>
+          </div>
+          <div class="card-body" style="padding:0;">
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Review ID</th>
+                    <th>Product / Item</th>
+                    <th>Customer</th>
+                    <th>Rating</th>
+                    <th>Review Content</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${reviews.length === 0 ? '<tr><td colspan="8" style="text-align:center;padding:24px;color:#888;">No reviews submitted yet.</td></tr>' :
+                    reviews.map(r => {
+                      const stars = '★'.repeat(r.rating || 5) + '☆'.repeat(Math.max(0, 5 - (r.rating || 5)));
+                      return `
+                        <tr>
+                          <td><code>${escapeHtml(r.reviewId ? r.reviewId.slice(0, 8) : '—')}</code></td>
+                          <td><strong>${escapeHtml(r.productName || r.productId || 'Swimming Gear')}</strong></td>
+                          <td>
+                            <div style="font-weight:600;color:#0f172a;">${escapeHtml(r.authorName || 'Verified Swimmer')}</div>
+                            ${r.isVerifiedPurchase ? '<span style="font-size:10px;color:#16a34a;font-weight:600;">✓ Verified Buyer</span>' : ''}
+                          </td>
+                          <td><span style="color:#eab308;font-size:14px;letter-spacing:1px;" title="${r.rating} stars">${stars}</span></td>
+                          <td style="max-width:320px;">
+                            ${r.title ? `<div style="font-weight:600;font-size:13px;color:#0f172a;margin-bottom:2px;">${escapeHtml(r.title)}</div>` : ''}
+                            <div style="font-size:12px;color:#475569;line-height:1.4;">${escapeHtml(r.comment || '—')}</div>
+                          </td>
+                          <td style="font-size:12px;color:#64748b;white-space:nowrap;">${formatDateTime(r.createdAt, true)}</td>
+                          <td><span class="badge ${r.status === 'approved' ? 'badge-active' : (r.status === 'rejected' ? 'badge-cancelled' : 'badge-pending')}">${escapeHtml(r.status || 'pending')}</span></td>
+                          <td>
+                            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                              ${r.status !== 'approved' ? `
+                                <button class="btn btn-success" style="padding:4px 8px;font-size:11px;" onclick="moderateReview('${r.reviewId || r.id}', 'approved')">Approve</button>
+                              ` : ''}
+                              ${r.status !== 'rejected' ? `
+                                <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#dc2626;" onclick="moderateReview('${r.reviewId || r.id}', 'rejected')">Reject</button>
+                              ` : ''}
+                              <button class="btn btn-danger" style="padding:4px 8px;font-size:11px;" onclick="deleteReview('${r.reviewId || r.id}')">Delete</button>
+                            </div>
+                          </td>
+                        </tr>
+                      `;
+                    }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    } catch (err) {
+      container.innerHTML = `<p style="color:#ef4444;padding:20px;">Error loading reviews: ${err.message}</p>`;
+    } finally {
+      hideTopLoader();
+    }
+  }
+  window.loadReviews = loadReviews;
+
+  window.moderateReview = async function (reviewId, status) {
+    try {
+      await window.lane4ApiRequest(`/admin/reviews/${reviewId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status })
+      });
+      showToast(`Review marked as ${status}.`, 'success');
+      loadReviews();
+    } catch (err) {
+      showToast(err.message || 'Failed to moderate review', 'error');
+    }
+  };
+
+  window.deleteReview = async function (reviewId) {
+    if (!confirm('Are you sure you want to permanently delete this review?')) return;
+    try {
+      await window.lane4ApiRequest(`/admin/reviews/${reviewId}`, {
+        method: 'DELETE'
+      });
+      showToast('Review deleted successfully.', 'success');
+      loadReviews();
+    } catch (err) {
+      showToast(err.message || 'Failed to delete review', 'error');
+    }
+  };
+
+  // --- RETURNS & REFUNDS MANAGEMENT ---
+  async function loadReturns() {
+    const container = document.getElementById('view-returns');
+    if (!container) return;
+    if (!container.children.length) {
+      container.innerHTML = getSkeletonHtml('table');
+    }
+    showTopLoader();
+
+    try {
+      const res = await window.lane4ApiRequest('/admin/returns');
+      const returns = res.data || [];
+      window.currentReturns = returns;
+
+      container.innerHTML = `
+        <div class="card">
+          <div class="card-header" style="flex-wrap:wrap;gap:12px;">
+            <div>
+              <div class="card-title">Returns &amp; Exchange Requests (${returns.length})</div>
+              <div style="font-size:12px;color:#64748b;margin-top:2px;">Moderate customer return requests, inspect return reasons, and issue UPI refunds.</div>
+            </div>
+            <button class="btn btn-outline" style="font-size:12px;padding:6px 12px;" onclick="loadReturns()">Refresh</button>
+          </div>
+          <div class="card-body" style="padding:0;">
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Return ID</th>
+                    <th>Order #</th>
+                    <th>Customer Email</th>
+                    <th>Reason</th>
+                    <th>Refund UPI ID</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${returns.length === 0 ? '<tr><td colspan="8" style="text-align:center;padding:24px;color:#888;">No return requests received yet.</td></tr>' :
+                    returns.map(ret => {
+                      const returnDocId = ret.docId || ret.id;
+                      return `
+                        <tr>
+                          <td><strong>${escapeHtml(ret.returnId || 'RET-001')}</strong></td>
+                          <td><code>#${escapeHtml(ret.orderNumber || ret.orderId)}</code></td>
+                          <td>${escapeHtml(ret.customerEmail || '—')}</td>
+                          <td style="max-width:280px;font-size:12.5px;color:#334155;">${escapeHtml(ret.reason || '—')}</td>
+                          <td><code style="background:#f1f5f9;padding:3px 6px;border-radius:4px;font-weight:600;">${escapeHtml(ret.customerUpiId || '—')}</code></td>
+                          <td style="font-size:12px;color:#64748b;white-space:nowrap;">${formatDateTime(ret.createdAt, true)}</td>
+                          <td><span class="badge ${ret.status === 'approved' ? 'badge-active' : (ret.status === 'refunded' ? 'badge-delivered' : (ret.status === 'rejected' ? 'badge-cancelled' : 'badge-pending'))}">${escapeHtml(ret.status || 'requested')}</span></td>
+                          <td>
+                            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                              ${ret.status === 'requested' ? `
+                                <button class="btn btn-success" style="padding:4px 8px;font-size:11px;" onclick="updateReturnStatus('${returnDocId}', 'approved')">Approve</button>
+                                <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#dc2626;" onclick="updateReturnStatus('${returnDocId}', 'rejected')">Reject</button>
+                              ` : ''}
+                              ${ret.status === 'approved' ? `
+                                <button class="btn btn-primary" style="background:#000;color:#fff;padding:4px 8px;font-size:11px;" onclick="updateReturnStatus('${returnDocId}', 'refunded')">Mark Refunded</button>
+                              ` : ''}
+                              ${ret.status === 'refunded' ? '<span style="font-size:12px;color:#16a34a;font-weight:600;">Refund Completed</span>' : ''}
+                            </div>
+                          </td>
+                        </tr>
+                      `;
+                    }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    } catch (err) {
+      container.innerHTML = `<p style="color:#ef4444;padding:20px;">Error loading returns: ${err.message}</p>`;
+    } finally {
+      hideTopLoader();
+    }
+  }
+  window.loadReturns = loadReturns;
+
+  window.updateReturnStatus = async function (returnDocId, status) {
+    try {
+      await window.lane4ApiRequest(`/admin/returns/${returnDocId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status })
+      });
+      showToast(`Return status updated to ${status}.`, 'success');
+      loadReturns();
+    } catch (err) {
+      showToast(err.message || 'Failed to update return', 'error');
+    }
+  };
 
   // --- AUDIT LOGS ---
   async function loadLogs() {

@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const productService = require('./productService');
 const categoryService = require('./categoryService');
 const couponService = require('./couponService');
@@ -32,6 +33,7 @@ class SeedService {
 
     const email = config.adminBootstrap.email;
     const password = config.adminBootstrap.password;
+    const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
 
     try {
       const snap = await db.collection('adminUsers').where('email', '==', email).limit(1).get();
@@ -82,6 +84,7 @@ class SeedService {
         await db.collection('adminUsers').doc(uid).set({
           uid,
           email,
+          passwordHash,
           displayName: 'LANE4 Chief Administrator',
           role: 'super_admin',
           permissions: [
@@ -109,6 +112,16 @@ class SeedService {
         });
 
         logger.info(`Bootstrap super administrator successfully registered with email: ${email}`);
+      } else {
+        const adminDoc = snap.docs[0];
+        const data = adminDoc.data();
+        if (!data.passwordHash) {
+          await adminDoc.ref.update({
+            passwordHash,
+            updatedAt: new Date()
+          });
+          logger.info(`Bootstrap administrator passwordHash synced to Firestore document (${adminDoc.id}).`);
+        }
       }
     } catch (err) {
       logger.error('Failed to create bootstrap admin account', err);

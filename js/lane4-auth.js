@@ -3,6 +3,44 @@
  * Styled to perfectly match The Lane4 Performance Store design system.
  */
 
+window.LANE4_VALIDATION = {
+  isValidEmail: function (email) {
+    if (!email || typeof email !== 'string') return false;
+    const re = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+    return re.test(email.trim());
+  },
+  isValidIndianPhone: function (phone) {
+    if (!phone || typeof phone !== 'string') return false;
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length === 12 && digits.startsWith('91')) {
+      return /^[6-9]\d{9}$/.test(digits.slice(2));
+    }
+    if (digits.length === 11 && digits.startsWith('0')) {
+      return /^[6-9]\d{9}$/.test(digits.slice(1));
+    }
+    return /^[6-9]\d{9}$/.test(digits);
+  },
+  normalizeIndianPhone: function (phone) {
+    if (!phone) return '';
+    const digits = phone.replace(/\D/g, '');
+    const clean10 = digits.slice(-10);
+    return clean10.length === 10 ? `+91 ${clean10}` : phone;
+  },
+  isValidPostalCode: function (pin) {
+    if (!pin) return false;
+    return /^\d{6}$/.test(String(pin).trim());
+  }
+};
+
+window.INDIAN_STATES = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", 
+  "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", 
+  "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", 
+  "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands", 
+  "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Jammu and Kashmir", "Ladakh", 
+  "Lakshadweep", "Puducherry"
+];
+
 (function () {
   function initAuthUI() {
     let user = window.LANE4.getUser();
@@ -381,37 +419,163 @@
 
         <!-- ACCOUNT PROFILE PANEL -->
         <div id="lane4-account-panel" style="display:none;">
-          <div style="display:flex;align-items:center;gap:14px;padding-bottom:18px;border-bottom:1px solid #e2e8f0;margin-bottom:18px;">
-            <div style="width:48px;height:48px;border-radius:50%;background:#000000;color:#ffffff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;" id="lane4-account-avatar">
+          <div style="display:flex;align-items:center;gap:14px;padding-bottom:16px;border-bottom:1px solid #e2e8f0;margin-bottom:16px;">
+            <div style="width:44px;height:44px;border-radius:50%;background:#000000;color:#ffffff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;" id="lane4-account-avatar">
               S
             </div>
-            <div>
-              <div id="lane4-account-name" style="font-weight:800;font-size:16px;color:#0f172a;"></div>
-              <div id="lane4-account-email" style="font-size:13px;color:#64748b;margin-top:2px;"></div>
+            <div style="flex:1;min-width:0;">
+              <div id="lane4-account-name" style="font-weight:600;font-size:15px;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+              <div id="lane4-account-email" style="font-size:12.5px;color:#64748b;margin-top:2px;"></div>
             </div>
           </div>
 
-          <div style="margin-bottom:20px;">
-            <div style="font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#475569;margin-bottom:12px;">Recent Orders</div>
-            <div id="lane4-account-orders" style="font-size:13px;color:#64748b;max-height:220px;overflow-y:auto;">Loading orders...</div>
+          <!-- Subtabs for Account: Orders, Profile, Addresses -->
+          <div style="display:flex;background:#f1f5f9;padding:3px;border-radius:8px;margin-bottom:16px;gap:3px;" id="lane4-acc-subtabs">
+            <button type="button" class="lane4-acc-subtab-btn active" data-subtab="orders" style="flex:1;padding:8px 0;background:#000000;color:#ffffff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">My Orders</button>
+            <button type="button" class="lane4-acc-subtab-btn" data-subtab="profile" style="flex:1;padding:8px 0;background:transparent;color:#64748b;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Profile</button>
+            <button type="button" class="lane4-acc-subtab-btn" data-subtab="addresses" style="flex:1;padding:8px 0;background:transparent;color:#64748b;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Addresses</button>
           </div>
 
-          <button id="lane4-logout-btn" style="width:100%;background:#f1f5f9;color:#0f172a;border:1px solid #cbd5e1;padding:12px;border-radius:8px;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            <span>SIGN OUT</span>
-          </button>
+          <!-- Tab Content: Orders -->
+          <div id="lane4-acc-tab-orders" style="display:block;">
+            <div id="lane4-account-orders" style="font-size:13px;color:#64748b;max-height:280px;overflow-y:auto;">Loading orders...</div>
+          </div>
+
+          <!-- Tab Content: Profile -->
+          <div id="lane4-acc-tab-profile" style="display:none;">
+            <form id="lane4-profile-form">
+              <div class="lane4-auth-form-group">
+                <label class="lane4-auth-label">Full Name</label>
+                <input type="text" id="lane4-profile-name" class="lane4-auth-input" required />
+              </div>
+              <div class="lane4-auth-form-group">
+                <label class="lane4-auth-label">Email Address (Read-only)</label>
+                <input type="email" id="lane4-profile-email" class="lane4-auth-input" disabled style="background:#f8fafc;color:#64748b;cursor:not-allowed;" />
+              </div>
+              <div class="lane4-auth-form-group">
+                <label class="lane4-auth-label">Mobile Number</label>
+                <input type="tel" id="lane4-profile-phone" class="lane4-auth-input" placeholder="+91 98765 43210" />
+                <div style="font-size:11px;color:#64748b;margin-top:3px;">10-digit Indian phone number</div>
+              </div>
+              <button type="submit" id="lane4-profile-save-btn" class="lane4-auth-submit-btn" style="padding:11px;font-size:12px;">
+                <span>SAVE PROFILE CHANGES</span>
+              </button>
+            </form>
+          </div>
+
+          <!-- Tab Content: Addresses -->
+          <div id="lane4-acc-tab-addresses" style="display:none;">
+            <div id="lane4-addresses-list" style="max-height:220px;overflow-y:auto;margin-bottom:14px;">Loading addresses...</div>
+            <button type="button" id="lane4-add-address-toggle" style="width:100%;background:#ffffff;color:#0f172a;border:1.5px dashed #cbd5e1;padding:10px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+              <span>+ Add New Delivery Address</span>
+            </button>
+            <form id="lane4-new-address-form" style="display:none;margin-top:14px;padding:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
+              <div class="lane4-auth-form-group" style="margin-bottom:10px;">
+                <label class="lane4-auth-label">Recipient / Addressee Name *</label>
+                <input type="text" id="lane4-addr-name" required class="lane4-auth-input" style="padding:8px 10px;font-size:13px;" />
+              </div>
+              <div class="lane4-auth-form-group" style="margin-bottom:10px;">
+                <label class="lane4-auth-label">Phone Number *</label>
+                <input type="tel" id="lane4-addr-phone" required class="lane4-auth-input" placeholder="+91 98765 43210" style="padding:8px 10px;font-size:13px;" />
+              </div>
+              <div class="lane4-auth-form-group" style="margin-bottom:10px;">
+                <label class="lane4-auth-label">Street Address Line 1 *</label>
+                <input type="text" id="lane4-addr-line1" required class="lane4-auth-input" placeholder="House/Flat No, Apartment, Street" style="padding:8px 10px;font-size:13px;" />
+              </div>
+              <div class="lane4-auth-form-group" style="margin-bottom:10px;">
+                <label class="lane4-auth-label">Address Line 2 (Optional)</label>
+                <input type="text" id="lane4-addr-line2" class="lane4-auth-input" placeholder="Landmark, Area" style="padding:8px 10px;font-size:13px;" />
+              </div>
+              <div style="display:flex;gap:8px;margin-bottom:10px;">
+                <div style="flex:1;">
+                  <label class="lane4-auth-label">State *</label>
+                  <select id="lane4-addr-state" required class="lane4-auth-input" style="padding:8px 10px;font-size:13px;">
+                    <option value="">Select State</option>
+                  </select>
+                </div>
+                <div style="flex:1;">
+                  <label class="lane4-auth-label">City *</label>
+                  <input type="text" id="lane4-addr-city" required class="lane4-auth-input" placeholder="e.g. Nagpur" style="padding:8px 10px;font-size:13px;" />
+                </div>
+              </div>
+              <div class="lane4-auth-form-group" style="margin-bottom:12px;">
+                <label class="lane4-auth-label">PIN / Postal Code (6 Digits) *</label>
+                <input type="text" id="lane4-addr-pin" maxlength="6" required class="lane4-auth-input" placeholder="440010" style="padding:8px 10px;font-size:13px;" />
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button type="submit" class="lane4-auth-submit-btn" style="flex:1;padding:10px;font-size:12px;margin-top:0;">Save Address</button>
+                <button type="button" id="lane4-cancel-addr-btn" style="padding:10px 14px;background:#e2e8f0;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;color:#475569;">Cancel</button>
+              </div>
+            </form>
+          </div>
+
+          <div style="margin-top:18px;border-top:1px solid #e2e8f0;padding-top:14px;">
+            <button id="lane4-logout-btn" style="width:100%;background:#f1f5f9;color:#0f172a;border:1px solid #cbd5e1;padding:11px;border-radius:8px;font-weight:600;font-size:12.5px;letter-spacing:0.8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              <span>SIGN OUT</span>
+            </button>
+          </div>
         </div>
 
         <!-- DEDICATED ORDER DETAILS PANEL -->
         <div id="lane4-order-details-panel" style="display:none;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #e2e8f0;">
-            <button type="button" id="lane4-order-back-btn" style="background:#f1f5f9;border:1px solid #cbd5e1;padding:7px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:#0f172a;transition:all 0.15s;">
+            <button type="button" id="lane4-order-back-btn" style="background:#f1f5f9;border:1px solid #cbd5e1;padding:7px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:#0f172a;transition:all 0.15s;">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
               <span>Back to Orders</span>
             </button>
-            <span style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:0.8px;text-transform:uppercase;">Order Details</span>
+            <span style="font-size:11px;font-weight:600;color:#64748b;letter-spacing:0.8px;text-transform:uppercase;">Order Details</span>
           </div>
           <div id="lane4-order-details-content" style="max-height:65vh;overflow-y:auto;padding-right:2px;"></div>
+        </div>
+
+        <!-- RETURN REQUEST PANEL -->
+        <div id="lane4-return-panel" style="display:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #e2e8f0;">
+            <button type="button" id="lane4-return-back-btn" style="background:#f1f5f9;border:1px solid #cbd5e1;padding:7px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:#0f172a;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+              <span>Back to Order</span>
+            </button>
+            <span style="font-size:11px;font-weight:600;color:#64748b;letter-spacing:0.8px;text-transform:uppercase;">Return / Exchange</span>
+          </div>
+          <form id="lane4-return-form">
+            <input type="hidden" id="lane4-return-order-id" />
+            <div style="font-size:13px;color:#334155;margin-bottom:12px;">
+              Requesting return for Order <strong id="lane4-return-order-num"></strong>
+            </div>
+            <div class="lane4-auth-form-group">
+              <label class="lane4-auth-label">Select Item *</label>
+              <select id="lane4-return-item-select" required class="lane4-auth-input" style="font-size:13px;padding:9px 12px;"></select>
+            </div>
+            <div class="lane4-auth-form-group">
+              <label class="lane4-auth-label">Reason for Return *</label>
+              <select id="lane4-return-reason" required class="lane4-auth-input" style="font-size:13px;padding:9px 12px;">
+                <option value="">Choose a reason...</option>
+                <option value="Wrong Size / Fit Issue">Wrong Size / Fit Issue</option>
+                <option value="Damaged / Defective Item">Damaged / Defective Item</option>
+                <option value="Wrong Item Delivered">Wrong Item Delivered</option>
+                <option value="Item Not as Described">Item Not as Described</option>
+                <option value="Quality Not as Expected">Quality Not as Expected</option>
+                <option value="Changed Mind / Other">Changed Mind / Other</option>
+              </select>
+            </div>
+            <div class="lane4-auth-form-group">
+              <label class="lane4-auth-label">Refund UPI ID *</label>
+              <input type="text" id="lane4-return-upi" required class="lane4-auth-input" placeholder="e.g. name@okhdfcbank or 9876543210@upi" />
+              <div style="font-size:11px;color:#64748b;margin-top:3px;">Your refund will be dispatched directly to this UPI ID upon inspection</div>
+            </div>
+            <div class="lane4-auth-form-group">
+              <label class="lane4-auth-label">Additional Comments / Exchange Details</label>
+              <textarea id="lane4-return-comments" class="lane4-auth-input" rows="3" placeholder="Please specify if you want an exchange for another size, or any defect details..."></textarea>
+            </div>
+            <button type="submit" id="lane4-return-submit-btn" class="lane4-auth-submit-btn">
+              <span>SUBMIT RETURN REQUEST</span>
+            </button>
+          </form>
+          <div id="lane4-return-success" style="display:none;padding:16px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;text-align:center;">
+            <div style="color:#16a34a;font-weight:700;font-size:15px;margin-bottom:6px;">Return Request Submitted!</div>
+            <div style="font-size:12.5px;color:#334155;line-height:1.5;" id="lane4-return-success-msg"></div>
+          </div>
         </div>
       </div>
     `;
@@ -570,11 +734,17 @@
       };
     }
 
+    // Initialize subtabs & forms
+    initSubtabs();
+    initProfileForm();
+    initAddressForm();
+
     // Handle Login Form
     document.getElementById('lane4-login-form').onsubmit = async (e) => {
       e.preventDefault();
       const form = e.target;
       const email = form.email.value.trim().toLowerCase();
+      const password = form.password.value;
 
       // Client-side guard against admin logins in customer portal
       if (email.startsWith('admin_') || email.startsWith('admin@') || email.includes('admin@lane4swim.in')) {
@@ -582,16 +752,27 @@
         return;
       }
 
+      if (!email || !window.LANE4_VALIDATION.isValidEmail(email)) {
+        showAlert('Please enter a valid email address.', 'error');
+        return;
+      }
+      if (!password || password.length < 6) {
+        showAlert('Password must be at least 6 characters.', 'error');
+        return;
+      }
+
       showAlert('Authenticating swimmer credentials...', 'info');
 
       try {
-        const token = 'test_token_' + encodeURIComponent(email);
         const res = await window.lane4ApiRequest('/auth/login', {
           method: 'POST',
-          body: JSON.stringify({ idToken: token })
+          body: JSON.stringify({ email, password })
         });
 
-        const loggedInUser = res.data.user;
+        const token = (res.data && res.data.token) || ('cust_token_' + btoa(JSON.stringify({ email, time: Date.now() })));
+        const loggedInUser = res.data && res.data.user;
+
+        if (!loggedInUser) throw new Error('Invalid login response from server.');
 
         // Double check response role
         if (loggedInUser.role === 'admin' || loggedInUser.role === 'super_admin') {
@@ -629,9 +810,29 @@
       e.preventDefault();
       const form = e.target;
       const email = form.email.value.trim().toLowerCase();
+      const displayName = form.displayName.value.trim();
+      const password = form.password.value;
+      const phone = form.phone.value.trim();
 
       if (email.startsWith('admin_') || email.startsWith('admin@') || email.includes('admin@lane4swim.in')) {
         showAlert('Administrator accounts cannot be registered on customer storefront. Please access the Admin Portal at /admin/.', 'error');
+        return;
+      }
+
+      if (!displayName || displayName.length < 2) {
+        showAlert('Please enter your full name.', 'error');
+        return;
+      }
+      if (!email || !window.LANE4_VALIDATION.isValidEmail(email)) {
+        showAlert('Please enter a valid email address.', 'error');
+        return;
+      }
+      if (phone && !window.LANE4_VALIDATION.isValidIndianPhone(phone)) {
+        showAlert('Please enter a valid 10-digit Indian mobile number.', 'error');
+        return;
+      }
+      if (!password || password.length < 6) {
+        showAlert('Password must be at least 6 characters long.', 'error');
         return;
       }
 
@@ -639,24 +840,42 @@
 
       try {
         const payload = {
-          displayName: form.displayName.value.trim(),
+          displayName,
           email,
-          password: form.password.value,
-          phone: form.phone.value.trim()
+          password,
+          phone
         };
 
-        const res = await window.lane4ApiRequest('/auth/register', {
+        await window.lane4ApiRequest('/auth/register', {
           method: 'POST',
           body: JSON.stringify(payload)
         });
 
+        // Immediately login to receive full token & session
+        const loginRes = await window.lane4ApiRequest('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email, password })
+        });
+
+        const token = (loginRes.data && loginRes.data.token) || ('cust_token_' + btoa(JSON.stringify({ email, time: Date.now() })));
+        const user = (loginRes.data && loginRes.data.user) || { email, displayName, role: 'customer' };
+
         showAlert('Account created! Logging you in...', 'success');
-        const token = 'test_token_' + encodeURIComponent(payload.email);
         window.LANE4.setUser({
-          ...(res.data || {}),
-          email: payload.email,
-          displayName: payload.displayName
+          ...user,
+          email,
+          displayName,
+          phoneNumber: phone
         }, token);
+
+        // Merge guest cart if any
+        const guestId = localStorage.getItem('lane4_guest_id');
+        if (guestId) {
+          await window.lane4ApiRequest('/cart/merge', {
+            method: 'POST',
+            body: JSON.stringify({ guestId })
+          }).catch(() => {});
+        }
 
         setTimeout(() => {
           closeAuthModal();
@@ -710,6 +929,8 @@
       if (trackForm) trackForm.style.display = 'none';
       const orderDetailsPanel = document.getElementById('lane4-order-details-panel');
       if (orderDetailsPanel) orderDetailsPanel.style.display = 'none';
+      const returnPanel = document.getElementById('lane4-return-panel');
+      if (returnPanel) returnPanel.style.display = 'none';
       accPanel.style.display = 'block';
 
       const initials = (user.displayName || user.email || 'S').slice(0, 1).toUpperCase();
@@ -717,10 +938,26 @@
       document.getElementById('lane4-account-name').textContent = user.displayName || 'LANE4 Swimmer';
       document.getElementById('lane4-account-email').textContent = user.email;
 
+      // Reset subtabs to orders
+      const subtabs = document.getElementById('lane4-acc-subtabs');
+      if (subtabs) {
+        subtabs.querySelectorAll('.lane4-acc-subtab-btn').forEach((b, idx) => {
+          b.style.background = idx === 0 ? '#000000' : 'transparent';
+          b.style.color = idx === 0 ? '#ffffff' : '#64748b';
+        });
+        document.getElementById('lane4-acc-tab-orders').style.display = 'block';
+        document.getElementById('lane4-acc-tab-profile').style.display = 'none';
+        document.getElementById('lane4-acc-tab-addresses').style.display = 'none';
+      }
+
       loadCustomerOrders();
     } else {
       tabs.style.display = 'flex';
       accPanel.style.display = 'none';
+      const orderDetailsPanel = document.getElementById('lane4-order-details-panel');
+      if (orderDetailsPanel) orderDetailsPanel.style.display = 'none';
+      const returnPanel = document.getElementById('lane4-return-panel');
+      if (returnPanel) returnPanel.style.display = 'none';
       const tabBtns = tabs.querySelectorAll('.lane4-auth-tab-btn');
       tabBtns.forEach(b => {
         if (b.getAttribute('data-tab') === view) {
@@ -945,7 +1182,337 @@
           </div>
         ` : ''}
       </div>
+
+      <!-- Return / Exchange Action -->
+      <div style="margin-top:14px;">
+        <button type="button" id="lane4-order-return-btn" style="width:100%;background:#ffffff;color:#0f172a;border:1.5px solid #cbd5e1;padding:11px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>
+          <span>Request Return / Exchange</span>
+        </button>
+      </div>
     `;
+
+    const returnBtn = document.getElementById('lane4-order-return-btn');
+    if (returnBtn) {
+      returnBtn.onclick = () => openReturnForm(ord);
+    }
+  }
+
+  function openReturnForm(ord) {
+    const detailsPanel = document.getElementById('lane4-order-details-panel');
+    const returnPanel = document.getElementById('lane4-return-panel');
+    const returnForm = document.getElementById('lane4-return-form');
+    const returnSuccess = document.getElementById('lane4-return-success');
+    if (!returnPanel || !returnForm) return;
+
+    if (detailsPanel) detailsPanel.style.display = 'none';
+    returnPanel.style.display = 'block';
+    if (returnSuccess) returnSuccess.style.display = 'none';
+    returnForm.style.display = 'block';
+
+    const orderRef = ord.orderNumber || ord.orderId;
+    document.getElementById('lane4-return-order-id').value = ord.orderId || orderRef;
+    document.getElementById('lane4-return-order-num').textContent = `#${orderRef}`;
+
+    const itemSelect = document.getElementById('lane4-return-item-select');
+    itemSelect.innerHTML = '<option value="ALL">Entire Order (All Items)</option>';
+    (ord.items || []).forEach((it, idx) => {
+      const opt = document.createElement('option');
+      opt.value = it.productId || it.sku || `item_${idx}`;
+      opt.textContent = `${it.quantity || 1}x ${it.name || 'Lane4 Item'} ${it.size ? `(${it.size})` : ''}`;
+      itemSelect.appendChild(opt);
+    });
+
+    document.getElementById('lane4-return-reason').value = '';
+    document.getElementById('lane4-return-upi').value = '';
+    document.getElementById('lane4-return-comments').value = '';
+
+    document.getElementById('lane4-return-back-btn').onclick = () => {
+      returnPanel.style.display = 'none';
+      if (detailsPanel) detailsPanel.style.display = 'block';
+    };
+
+    returnForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const reason = document.getElementById('lane4-return-reason').value;
+      const upiIdForRefund = document.getElementById('lane4-return-upi').value.trim();
+      const comments = document.getElementById('lane4-return-comments').value.trim();
+      const selectedItemVal = itemSelect.value;
+
+      if (!reason) {
+        showAlert('Please choose a reason for the return / exchange.', 'error');
+        return;
+      }
+      if (!upiIdForRefund || !upiIdForRefund.includes('@')) {
+        showAlert('Please enter a valid refund UPI ID (e.g. name@okhdfcbank).', 'error');
+        return;
+      }
+
+      const submitBtn = document.getElementById('lane4-return-submit-btn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting Return Request...';
+
+      let itemsToReturn = ord.items || [];
+      if (selectedItemVal !== 'ALL') {
+        const matched = (ord.items || []).filter(it => (it.productId === selectedItemVal || it.sku === selectedItemVal));
+        if (matched.length > 0) itemsToReturn = matched;
+      }
+
+      try {
+        const res = await window.lane4ApiRequest('/returns', {
+          method: 'POST',
+          body: JSON.stringify({
+            orderId: ord.orderId || orderRef,
+            reason,
+            upiIdForRefund,
+            comments,
+            items: itemsToReturn
+          })
+        });
+
+        const ret = res.data;
+        returnForm.style.display = 'none';
+        if (returnSuccess) {
+          returnSuccess.style.display = 'block';
+          document.getElementById('lane4-return-success-msg').innerHTML = `
+            Reference ID: <strong style="color:#0f172a;">${ret.returnId || 'L4-RET'}</strong>.<br>
+            Our operations team has been notified. We will inspect your request and dispatch DTDC pickup instructions to your email (<code>${ord.customerEmail || ''}</code>).
+          `;
+        }
+      } catch (err) {
+        showAlert(err.message || 'Unable to submit return request. Please contact support.', 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'SUBMIT RETURN REQUEST';
+      }
+    };
+  }
+
+  function initSubtabs() {
+    const subtabs = document.getElementById('lane4-acc-subtabs');
+    if (!subtabs) return;
+    subtabs.querySelectorAll('.lane4-acc-subtab-btn').forEach(btn => {
+      btn.onclick = () => {
+        subtabs.querySelectorAll('.lane4-acc-subtab-btn').forEach(b => {
+          b.style.background = 'transparent';
+          b.style.color = '#64748b';
+        });
+        btn.style.background = '#000000';
+        btn.style.color = '#ffffff';
+
+        const subtab = btn.getAttribute('data-subtab');
+        document.getElementById('lane4-acc-tab-orders').style.display = subtab === 'orders' ? 'block' : 'none';
+        document.getElementById('lane4-acc-tab-profile').style.display = subtab === 'profile' ? 'block' : 'none';
+        document.getElementById('lane4-acc-tab-addresses').style.display = subtab === 'addresses' ? 'block' : 'none';
+        hideAlert();
+
+        if (subtab === 'orders') loadCustomerOrders();
+        else if (subtab === 'profile') loadCustomerProfile();
+        else if (subtab === 'addresses') loadCustomerAddresses();
+      };
+    });
+  }
+
+  async function loadCustomerProfile() {
+    const user = window.LANE4.getUser();
+    if (!user) return;
+    const nameInput = document.getElementById('lane4-profile-name');
+    const emailInput = document.getElementById('lane4-profile-email');
+    const phoneInput = document.getElementById('lane4-profile-phone');
+
+    if (emailInput) emailInput.value = user.email || '';
+    if (nameInput) nameInput.value = user.displayName || '';
+    if (phoneInput) phoneInput.value = user.phoneNumber || '';
+
+    try {
+      const res = await window.lane4ApiRequest('/customers/profile');
+      if (res && res.data) {
+        const prof = res.data;
+        if (nameInput && prof.displayName) nameInput.value = prof.displayName;
+        if (phoneInput && prof.phoneNumber) phoneInput.value = prof.phoneNumber;
+      }
+    } catch (_) {}
+  }
+
+  function initProfileForm() {
+    const form = document.getElementById('lane4-profile-form');
+    if (!form) return;
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const displayName = document.getElementById('lane4-profile-name').value.trim();
+      const phoneNumber = document.getElementById('lane4-profile-phone').value.trim();
+
+      if (!displayName) {
+        showAlert('Please enter your full name.', 'error');
+        return;
+      }
+      if (phoneNumber && !window.LANE4_VALIDATION.isValidIndianPhone(phoneNumber)) {
+        showAlert('Please enter a valid 10-digit Indian phone number.', 'error');
+        return;
+      }
+
+      const saveBtn = document.getElementById('lane4-profile-save-btn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'SAVING...';
+
+      try {
+        const res = await window.lane4ApiRequest('/customers/profile', {
+          method: 'PATCH',
+          body: JSON.stringify({ displayName, phoneNumber })
+        });
+        const updated = res.data || {};
+        const curr = window.LANE4.getUser() || {};
+        window.LANE4.setUser({ ...curr, displayName: updated.displayName || displayName, phoneNumber: updated.phoneNumber || phoneNumber });
+        showAlert('Profile updated successfully!', 'success');
+        document.getElementById('lane4-account-name').textContent = displayName;
+      } catch (err) {
+        showAlert(err.message || 'Failed to update profile.', 'error');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'SAVE PROFILE CHANGES';
+      }
+    };
+  }
+
+  async function loadCustomerAddresses() {
+    const listEl = document.getElementById('lane4-addresses-list');
+    if (!listEl) return;
+    listEl.innerHTML = '<div style="font-size:12px;color:#64748b;padding:8px 0;">Loading addresses...</div>';
+
+    // Populate state dropdown if empty
+    const stateSelect = document.getElementById('lane4-addr-state');
+    if (stateSelect && stateSelect.options.length <= 1) {
+      window.INDIAN_STATES.forEach(st => {
+        const opt = document.createElement('option');
+        opt.value = st;
+        opt.textContent = st;
+        stateSelect.appendChild(opt);
+      });
+    }
+
+    try {
+      const res = await window.lane4ApiRequest('/customers/addresses');
+      const addrs = (res && res.data) || [];
+      if (addrs.length === 0) {
+        listEl.innerHTML = `
+          <div style="padding:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;font-size:12.5px;color:#64748b;text-align:center;">
+            No saved addresses found. Add a delivery address below for one-click checkout.
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = addrs.map(a => `
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:8px;position:relative;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div style="font-size:13px;font-weight:600;color:#0f172a;">${a.addressee || 'Delivery Address'}</div>
+            <button type="button" class="lane4-delete-addr-btn" data-id="${a.addressId || a.id}" style="background:none;border:none;color:#ef4444;font-size:11.5px;font-weight:600;cursor:pointer;padding:2px 6px;">Delete</button>
+          </div>
+          <div style="font-size:12px;color:#475569;margin-top:4px;line-height:1.4;">
+            ${a.addressLine1}${a.addressLine2 ? ', ' + a.addressLine2 : ''}<br>
+            ${a.city}, ${a.state} - PIN ${a.postalCode}
+          </div>
+          ${a.phone ? `<div style="font-size:11.5px;color:#64748b;margin-top:3px;">Phone: ${a.phone}</div>` : ''}
+        </div>
+      `).join('');
+
+      listEl.querySelectorAll('.lane4-delete-addr-btn').forEach(btn => {
+        btn.onclick = async () => {
+          const id = btn.getAttribute('data-id');
+          if (!confirm('Are you sure you want to remove this delivery address?')) return;
+          try {
+            await window.lane4ApiRequest(`/customers/addresses/${encodeURIComponent(id)}`, { method: 'DELETE' });
+            loadCustomerAddresses();
+          } catch (err) {
+            showAlert(err.message || 'Unable to delete address.', 'error');
+          }
+        };
+      });
+    } catch (err) {
+      listEl.innerHTML = '<div style="font-size:12px;color:#ef4444;">Unable to load saved addresses.</div>';
+    }
+  }
+
+  function initAddressForm() {
+    const toggleBtn = document.getElementById('lane4-add-address-toggle');
+    const newForm = document.getElementById('lane4-new-address-form');
+    const cancelBtn = document.getElementById('lane4-cancel-addr-btn');
+    if (!toggleBtn || !newForm) return;
+
+    toggleBtn.onclick = () => {
+      newForm.style.display = newForm.style.display === 'none' ? 'block' : 'none';
+      if (newForm.style.display === 'block') {
+        const user = window.LANE4.getUser();
+        if (user) {
+          if (!document.getElementById('lane4-addr-name').value) document.getElementById('lane4-addr-name').value = user.displayName || '';
+          if (!document.getElementById('lane4-addr-phone').value) document.getElementById('lane4-addr-phone').value = user.phoneNumber || '';
+        }
+      }
+    };
+
+    if (cancelBtn) {
+      cancelBtn.onclick = () => {
+        newForm.style.display = 'none';
+      };
+    }
+
+    newForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const addressee = document.getElementById('lane4-addr-name').value.trim();
+      const phone = document.getElementById('lane4-addr-phone').value.trim();
+      const addressLine1 = document.getElementById('lane4-addr-line1').value.trim();
+      const addressLine2 = document.getElementById('lane4-addr-line2').value.trim();
+      const state = document.getElementById('lane4-addr-state').value;
+      const city = document.getElementById('lane4-addr-city').value.trim();
+      const postalCode = document.getElementById('lane4-addr-pin').value.trim();
+
+      if (!addressee) {
+        showAlert('Please enter addressee full name.', 'error');
+        return;
+      }
+      if (!phone || !window.LANE4_VALIDATION.isValidIndianPhone(phone)) {
+        showAlert('Please enter a valid 10-digit Indian phone number.', 'error');
+        return;
+      }
+      if (!addressLine1) {
+        showAlert('Please enter street address line 1.', 'error');
+        return;
+      }
+      if (!state) {
+        showAlert('Please select delivery state.', 'error');
+        return;
+      }
+      if (!city) {
+        showAlert('Please enter delivery city.', 'error');
+        return;
+      }
+      if (!postalCode || !window.LANE4_VALIDATION.isValidPostalCode(postalCode)) {
+        showAlert('Please enter a valid 6-digit PIN / postal code.', 'error');
+        return;
+      }
+
+      try {
+        await window.lane4ApiRequest('/customers/addresses', {
+          method: 'POST',
+          body: JSON.stringify({
+            addressee,
+            phone,
+            addressLine1,
+            addressLine2,
+            state,
+            city,
+            postalCode
+          })
+        });
+
+        showAlert('Address saved successfully!', 'success');
+        newForm.reset();
+        newForm.style.display = 'none';
+        loadCustomerAddresses();
+      } catch (err) {
+        showAlert(err.message || 'Unable to save address.', 'error');
+      }
+    };
   }
 
   async function loadCustomerOrders() {

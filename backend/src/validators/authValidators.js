@@ -7,7 +7,11 @@ const registerValidator = [
 ];
 
 const loginValidator = [
-  body('idToken').notEmpty().withMessage('Firebase ID token is required')
+  body().custom((value, { req }) => {
+    if (req.body && req.body.idToken) return true;
+    if (req.body && req.body.email && req.body.password) return true;
+    throw new Error('Either email and password or valid ID token is required');
+  })
 ];
 
 const adminLoginValidator = [

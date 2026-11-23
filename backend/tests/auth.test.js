@@ -123,5 +123,59 @@ describe('Authentication & Authorization Test Suite', () => {
     expect(res.status).toBe(500); // Handled service exception
     expect(res.body.success).toBe(false);
   });
+
+  test('POST /api/auth/admin/login rejects empty or invalid administrator credentials', async () => {
+    // Empty body
+    const emptyRes = await request(app)
+      .post('/api/auth/admin/login')
+      .send({});
+    expect(emptyRes.status).toBe(400);
+
+    // Empty string fields
+    const emptyFieldsRes = await request(app)
+      .post('/api/auth/admin/login')
+      .send({ email: '', password: '' });
+    expect(emptyFieldsRes.status).toBe(400);
+
+    // Wrong password for existing admin
+    const wrongPassRes = await request(app)
+      .post('/api/auth/admin/login')
+      .send({ email: 'admin@lane4swim.in', password: 'incorrectPassword' });
+    expect(wrongPassRes.status).toBe(401);
+    expect(wrongPassRes.body.error.code).toBe('INVALID_CREDENTIALS');
+  });
+
+  test('POST /api/auth/admin/login authenticates with correct password and allows GET /api/auth/admin/verify', async () => {
+    const loginRes = await request(app)
+      .post('/api/auth/admin/login')
+      .send({
+        email: 'admin@lane4swim.in',
+        password: 'AdminSecurePass2026!'
+      });
+
+    expect(loginRes.status).toBe(200);
+    expect(loginRes.body.success).toBe(true);
+    expect(loginRes.body.data.token).toBeDefined();
+    expect(loginRes.body.data.admin.email).toBe('admin@lane4swim.in');
+
+    const adminToken = loginRes.body.data.token;
+
+    // Verify valid admin token
+    const verifyRes = await request(app)
+      .get('/api/auth/admin/verify')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(verifyRes.status).toBe(200);
+    expect(verifyRes.body.success).toBe(true);
+    expect(verifyRes.body.data.valid).toBe(true);
+    expect(verifyRes.body.data.admin.email).toBe('admin@lane4swim.in');
+
+    // Verify rejection of invalid token
+    const badVerifyRes = await request(app)
+      .get('/api/auth/admin/verify')
+      .set('Authorization', 'Bearer invalid.token.payload');
+
+    expect(badVerifyRes.status).toBe(401);
+  });
 });
 

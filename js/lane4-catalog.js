@@ -10,9 +10,25 @@
 
     const isInSubfolder = /\/(product|category|blog|authors|utility-pages|category-blog)\//i.test(window.location.pathname);
     const catMatch = window.location.pathname.match(/\/category\/([a-zA-Z0-9-]+)(?:\.html)?/);
-    const currentCatSlug = catMatch ? catMatch[1] : (
-      window.location.pathname.includes('/category/') ? document.documentElement.getAttribute('data-wf-item-slug') : null
+    const queryCatSlug = new URLSearchParams(window.location.search).get('slug');
+    const currentCatSlug = (catMatch && catMatch[1] !== 'detail') ? catMatch[1] : (
+      queryCatSlug || (window.location.pathname.includes('/category/') ? document.documentElement.getAttribute('data-wf-item-slug') : null)
     );
+
+    if (currentCatSlug) {
+      try {
+        window.lane4ApiRequest(`/categories/${encodeURIComponent(currentCatSlug)}`).then(catRes => {
+          if (catRes && catRes.data) {
+            const cat = catRes.data;
+            const h1 = document.querySelector('h1, .heading-h1, .category-title');
+            if (h1 && cat.name) h1.textContent = cat.name;
+            const catDesc = document.querySelector('.paragraph-18px, .category-description');
+            if (catDesc && cat.description) catDesc.textContent = cat.description;
+            if (cat.name) document.title = `${cat.name} | The Lane4 Performance Store`;
+          }
+        }).catch(() => {});
+      } catch (_) {}
+    }
 
     try {
       const res = await window.lane4ApiRequest('/products');
@@ -42,8 +58,17 @@
           imgUrl = '../' + imgUrl;
         }
 
-        const priceVal = p.salePricePaise || p.regularPricePaise || 0;
-        const priceText = window.LANE4 ? `${window.LANE4.formatINR(priceVal)} INR` : `₹ ${(priceVal/100).toFixed(2)} INR`;
+        const regularPrice = p.regularPricePaise || 0;
+        const hasSale = p.salePricePaise && p.salePricePaise > 0 && p.salePricePaise < regularPrice;
+        let priceHtml = '';
+        if (hasSale) {
+          const saleFormatted = window.LANE4 ? `${window.LANE4.formatINR(p.salePricePaise)} INR` : `₹ ${(p.salePricePaise/100).toFixed(2)} INR`;
+          const regFormatted = window.LANE4 ? `${window.LANE4.formatINR(regularPrice)} INR` : `₹ ${(regularPrice/100).toFixed(2)} INR`;
+          priceHtml = `${saleFormatted} <span style="font-size:12px;text-decoration:line-through;color:#94a3b8;font-weight:normal;margin-left:6px;">${regFormatted}</span>`;
+        } else {
+          const primaryVal = regularPrice > 0 ? regularPrice : (p.salePricePaise || 0);
+          priceHtml = window.LANE4 ? `${window.LANE4.formatINR(primaryVal)} INR` : `₹ ${(primaryVal/100).toFixed(2)} INR`;
+        }
         const linkHref = isInSubfolder ? `../product/${p.slug}.html` : `product/${p.slug}.html`;
 
         const existingCardLink = productGrid.querySelector(`a[href*="product/${p.slug}"], a[href="${p.slug}.html"]`);
@@ -73,9 +98,9 @@
           const shortDescEl = productCard.querySelector('.sp-content .paragraph-13px.grey, .sp-content .paragraph-13px');
           if (shortDescEl) shortDescEl.textContent = p.shortDescription || 'Multiple options available';
 
-          // Update Price
+          // Update Price (Regular price by default, sale price + strikethrough if on sale)
           const priceEl = productCard.querySelector('.sp-content .paragraph-16px, [data-wf-sku-bindings*="f_price_"]');
-          if (priceEl) priceEl.textContent = priceText;
+          if (priceEl) priceEl.innerHTML = priceHtml;
 
           // Update Image
           const imgEl = productCard.querySelector('.sp-image-wrapper img');
@@ -98,7 +123,7 @@
               <div class="sp-content">
                 <p class="paragraph-14px">${p.name}</p>
                 <p class="paragraph-13px grey">${p.shortDescription || 'Pool-tested performance gear'}</p>
-                <p class="paragraph-16px">${priceText}</p>
+                <p class="paragraph-16px">${priceHtml}</p>
               </div>
             </div>
           `;

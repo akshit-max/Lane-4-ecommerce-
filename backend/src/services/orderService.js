@@ -16,17 +16,41 @@ function toMillis(d) {
   return isNaN(t) ? 0 : t;
 }
 
+const ORDER_STATUS_TRANSITIONS = {
+  pending_payment: ['payment_verification', 'confirmed', 'cancelled'],
+  payment_verification: ['confirmed', 'payment_rejected', 'pending_payment', 'cancelled'],
+  payment_rejected: ['payment_verification', 'cancelled'],
+  confirmed: ['processing', 'shipped', 'cancelled'],
+  processing: ['shipped', 'out_for_delivery', 'cancelled'],
+  shipped: ['out_for_delivery', 'delivered', 'returned'],
+  out_for_delivery: ['delivered', 'returned'],
+  delivered: ['returned'],
+  returned: ['refunded'],
+  cancelled: [],
+  refunded: []
+};
+
 function getEffectiveUnitPricePaise(product, variant) {
   if (!product) return 0;
+  // 1. Variant sale price: valid only if positive and strictly less than regular price
   if (variant && typeof variant.salePricePaise === 'number' && variant.salePricePaise > 0) {
-    return variant.salePricePaise;
+    const regular = variant.pricePaise || product.regularPricePaise || product.pricePaise;
+    if (!regular || variant.salePricePaise < regular) {
+      return variant.salePricePaise;
+    }
   }
+  // 2. Global product sale price: valid only if positive and strictly less than regular price
   if (typeof product.salePricePaise === 'number' && product.salePricePaise > 0) {
-    return product.salePricePaise;
+    const regular = (variant && variant.pricePaise) || product.regularPricePaise || product.pricePaise;
+    if (!regular || product.salePricePaise < regular) {
+      return product.salePricePaise;
+    }
   }
+  // 3. Variant regular price
   if (variant && typeof variant.pricePaise === 'number' && variant.pricePaise > 0) {
     return variant.pricePaise;
   }
+  // 4. Regular product price
   if (typeof product.regularPricePaise === 'number' && product.regularPricePaise > 0) {
     return product.regularPricePaise;
   }
@@ -146,6 +170,7 @@ class OrderService {
         couponDiscountPaise,
         couponDiscountFormatted: formatINR(couponDiscountPaise),
         shippingChargesPaise,
+        shippingPaise: shippingChargesPaise,
         shippingFormatted: shipping.shippingFormatted,
         isFreeShipping: shipping.isFreeShipping,
         taxChargesPaise,
@@ -166,11 +191,15 @@ class OrderService {
     const customerEmail = data.customerEmail || (customer ? customer.email : null);
     const customerPhone = data.customerPhone || '';
 
-    if (!customerEmail) {
-      throw new Error('Customer email is required.');
+    if (!customerEmail || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(customerEmail)) {
+      throw new Error('Please provide a valid standard email address.');
     }
-    if (!data.shippingAddress || !data.shippingAddress.addressLine1 || !data.shippingAddress.postalCode) {
-      throw new Error('Complete shipping address and PIN code are required.');
+    const cleanPin = (data.shippingAddress && data.shippingAddress.postalCode ? data.shippingAddress.postalCode.toString().trim() : '');
+    if (!/^[1-9][0-9]{5}$/.test(cleanPin)) {
+      throw new Error('Please provide a valid 6-digit Indian PIN / Postal code.');
+    }
+    if (!data.shippingAddress || !data.shippingAddress.addressLine1) {
+      throw new Error('Complete shipping address is required.');
     }
 
     // Server-side recalculation & validation
@@ -185,6 +214,12 @@ class OrderService {
     const orderId = orderRef.id;
     const orderNumber = await this._generateSequentialOrderNumber(db);
     const now = new Date();
+
+    const couponData = (quote.pricing && quote.pricing.couponCode) ? {
+      code: quote.pricing.couponCode,
+      discountPaise: quote.pricing.couponDiscountPaise,
+      discountFormatted: quote.pricing.couponDiscountFormatted
+    } : null;
 
     // Transaction to reserve inventory and persist immutable order snapshot
     await db.runTransaction(async (transaction) => {
@@ -223,6 +258,7 @@ class OrderService {
         paymentStatus: 'awaiting_payment',
         items: quote.items,
         pricing: quote.pricing,
+        coupon: couponData,
         shippingAddress: {
           addressee: data.shippingAddress.addressee || customerEmail,
           phone: data.shippingAddress.phone || customerPhone,
@@ -286,7 +322,8 @@ class OrderService {
       orderStatus: 'pending_payment',
       paymentStatus: 'awaiting_payment',
       pricing: quote.pricing,
-      items: quote.items
+      items: quote.items,
+      coupon: couponData
     };
   }
 
@@ -470,45 +507,92 @@ class OrderService {
     const orderData = orderDoc.data();
     const now = new Date();
 
-    const ALLOWED_STATUSES = [
-      'pending_payment',
-      'payment_verification',
-      'confirmed',
-      'processing',
-      'shipped',
-      'out_for_delivery',
-      'delivered',
-      'cancelled',
-      'returned',
-      'refunded'
-    ];
-
-    if (!ALLOWED_STATUSES.includes(newStatus)) {
-      throw new Error(`Invalid order status "${newStatus}".`);
+    const currentStatus = orderData.status || 'pending_payment';
+    if (currentStatus === newStatus) {
+      return {
+        orderId,
+        status: newStatus,
+        orderStatus: newStatus,
+        updatedAt: orderData.updatedAt || now
+      };
     }
 
-    // If order is cancelled, restore reserved inventory
-    if (newStatus === 'cancelled' && orderData.status !== 'cancelled') {
-      for (const item of orderData.items || []) {
-        const invRef = db.collection('inventory').doc(item.sku);
-        const invDoc = await invRef.get();
-        if (invDoc.exists) {
-          const inv = invDoc.data();
-          await invRef.update({
-            availableQuantity: (inv.availableQuantity || 0) + item.quantity,
-            reservedQuantity: Math.max(0, (inv.reservedQuantity || 0) - item.quantity),
-            isOutOfStock: false,
-            updatedAt: now
-          });
-        }
-      }
+    const validNextStatuses = ORDER_STATUS_TRANSITIONS[currentStatus] || [];
+    if (!validNextStatuses.includes(newStatus)) {
+      const err = new Error(`Invalid order status transition from "${currentStatus}" to "${newStatus}". Allowed next statuses: ${validNextStatuses.length ? validNextStatuses.join(', ') : 'None (terminal state)'}.`);
+      err.statusCode = 400;
+      throw err;
     }
 
-    await orderRef.update({
+    const orderUpdates = {
       status: newStatus,
       orderStatus: newStatus,
       updatedAt: now
-    });
+    };
+
+    // If order is cancelled, restore stock across inventory and product catalogs
+    if (newStatus === 'cancelled' && currentStatus !== 'cancelled') {
+      orderUpdates.cancelledAt = now;
+      orderUpdates.cancelledBy = adminUser.email || adminUser.uid;
+
+      // Track financial & refund state if already paid
+      if (orderData.paymentStatus === 'verified') {
+        orderUpdates.refundStatus = 'pending_refund';
+        orderUpdates.financialStatus = 'cancelled_refund_pending';
+      }
+
+      // Revert coupon redemption usage count
+      const couponCode = (orderData.coupon && orderData.coupon.code) || (orderData.pricing && orderData.pricing.couponCode);
+      if (couponCode) {
+        try {
+          await couponService.revertCouponRedemption(couponCode);
+        } catch (_) {}
+      }
+
+      for (const item of orderData.items || []) {
+        try {
+          // 1. Restore inventory collection
+          const invRef = db.collection('inventory').doc(item.sku);
+          const invDoc = await invRef.get();
+          if (invDoc.exists) {
+            const inv = invDoc.data();
+            await invRef.update({
+              availableQuantity: (inv.availableQuantity || 0) + item.quantity,
+              reservedQuantity: Math.max(0, (inv.reservedQuantity || 0) - item.quantity),
+              isOutOfStock: false,
+              updatedAt: now
+            });
+          }
+
+          // 2. Restore products collection variants & total stock
+          let pSnap = await db.collection('products').where('slug', '==', item.slug || item.productId).limit(1).get();
+          if (pSnap.empty && item.productId) {
+            const pDocDirect = await db.collection('products').doc(item.productId).get();
+            if (pDocDirect.exists) pSnap = { empty: false, docs: [pDocDirect] };
+          }
+          if (!pSnap.empty) {
+            const pDoc = pSnap.docs[0];
+            const pData = pDoc.data();
+            const variants = (pData.variants || []).map(v => {
+              if (v.sku === item.sku || v.variantId === item.variantId) {
+                return { ...v, stockQuantity: (v.stockQuantity || 0) + item.quantity };
+              }
+              return v;
+            });
+            const totalStock = variants.length > 0
+              ? variants.reduce((s, v) => s + (v.stockQuantity || 0), 0)
+              : (pData.stockQuantity || 0) + item.quantity;
+            await pDoc.ref.update({
+              variants,
+              stockQuantity: totalStock,
+              updatedAt: now
+            });
+          }
+        } catch (_) {}
+      }
+    }
+
+    await orderRef.update(orderUpdates);
 
     // Audit log
     await db.collection('adminActivityLogs').add({
@@ -545,7 +629,8 @@ class OrderService {
       orderId,
       status: newStatus,
       orderStatus: newStatus,
-      updatedAt: now
+      updatedAt: now,
+      ...orderUpdates
     };
   }
 
@@ -565,11 +650,24 @@ class OrderService {
     }
 
     const orderData = orderDoc.data();
+    if (['pending_payment', 'payment_verification', 'cancelled', 'refunded', 'payment_rejected'].includes(orderData.status)) {
+      const err = new Error(`Cannot dispatch order #${orderData.orderNumber || orderId} because payment has not been verified or order is cancelled (current status: "${orderData.status}").`);
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const cleanTracking = (trackingNumber || '').trim();
+    if (!cleanTracking || cleanTracking.length < 6 || cleanTracking.length > 35 || !/^[A-Za-z0-9\-_]+$/.test(cleanTracking) || /^(.)\1+$/.test(cleanTracking)) {
+      const err = new Error('Please provide a valid courier tracking / AWB consignment number (6-35 alphanumeric characters, not repeated dummy characters).');
+      err.statusCode = 400;
+      throw err;
+    }
+
     const now = new Date();
 
     const fulfillment = {
       courierName: courierName || 'DTDC / India Post',
-      trackingNumber: trackingNumber.trim(),
+      trackingNumber: cleanTracking,
       trackingUrl: trackingUrl ? trackingUrl.trim() : null,
       shippedAt: now
     };

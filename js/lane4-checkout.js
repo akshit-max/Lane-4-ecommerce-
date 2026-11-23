@@ -130,8 +130,9 @@
       }
     }
 
-    // 4. Setup State & City Dropdowns
+    // 4. Setup State & City Dropdowns and Saved Addresses
     setupStateAndCityDropdowns();
+    setupSavedAddressesDropdown();
 
     // 5. Calculate initial quote & render items and summary
     await recalculateQuote();
@@ -205,6 +206,112 @@
         if (customCityInput) customCityInput.style.display = 'none';
       }
     });
+  }
+
+  async function setupSavedAddressesDropdown() {
+    const user = window.LANE4.getUser();
+    if (!user) return;
+
+    // Look for shipping info container
+    const shippingSection = document.querySelector('.w-commerce-commercecheckoutshippingaddresswrapper') || document.querySelector('.w-commerce-commercecheckoutcustomerinfosummarywrapper') || document.querySelector('form');
+    if (!shippingSection) return;
+
+    // Check if phone field exists in shipping section, otherwise inject it
+    let phoneInput = document.getElementById('lane4-checkout-phone');
+    if (!phoneInput) {
+      const phoneWrapper = document.createElement('div');
+      phoneWrapper.id = 'lane4-checkout-phone-wrapper';
+      phoneWrapper.style.cssText = 'margin-bottom:14px;';
+      phoneWrapper.innerHTML = `
+        <label class="w-commerce-commercecheckoutlabel" style="font-size:12px;font-weight:600;color:#334155;margin-bottom:6px;display:block;">
+          Mobile Phone Number (for shipment updates) *
+        </label>
+        <input type="tel" id="lane4-checkout-phone" class="w-commerce-commercecheckoutshippingstreetaddress w-input" placeholder="+91 98765 43210" style="width:100%;font-size:14px;" value="${user.phoneNumber || ''}" />
+      `;
+      const nameInput = document.querySelector('input.w-commerce-commercecheckoutshippingfullname, input[name="name"]');
+      if (nameInput && nameInput.parentElement) {
+        nameInput.parentElement.parentElement.insertBefore(phoneWrapper, nameInput.parentElement.nextSibling);
+      } else {
+        shippingSection.insertBefore(phoneWrapper, shippingSection.firstChild);
+      }
+    }
+
+    try {
+      const res = await window.lane4ApiRequest('/customers/addresses');
+      const addresses = (res && res.data) || [];
+      if (addresses.length === 0) return;
+
+      let savedAddrWrapper = document.getElementById('lane4-saved-addresses-selector-wrapper');
+      if (!savedAddrWrapper) {
+        savedAddrWrapper = document.createElement('div');
+        savedAddrWrapper.id = 'lane4-saved-addresses-selector-wrapper';
+        savedAddrWrapper.style.cssText = 'margin-bottom:18px;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:8px;padding:12px 14px;';
+        savedAddrWrapper.innerHTML = `
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span style="font-size:12px;font-weight:600;color:#0f172a;text-transform:uppercase;letter-spacing:0.5px;">Deliver to Saved Address</span>
+          </div>
+          <select id="lane4-saved-addr-select" style="width:100%;padding:9px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;font-family:inherit;background:#ffffff;font-weight:600;color:#0f172a;">
+            <option value="">-- Choose a Saved Delivery Address (or fill below) --</option>
+            ${addresses.map((a, i) => `<option value="${i}">${a.addressee} — ${a.addressLine1}, ${a.city} (${a.postalCode})</option>`).join('')}
+          </select>
+        `;
+
+        const nameInput = document.querySelector('input.w-commerce-commercecheckoutshippingfullname, input[name="name"]');
+        if (nameInput && nameInput.closest('.w-commerce-commercecheckoutblockheader, .w-commerce-commercecheckoutshippingaddresswrapper')) {
+          const block = nameInput.closest('.w-commerce-commercecheckoutshippingaddresswrapper') || shippingSection;
+          block.insertBefore(savedAddrWrapper, block.firstChild);
+        } else {
+          shippingSection.insertBefore(savedAddrWrapper, shippingSection.firstChild);
+        }
+
+        const selectEl = document.getElementById('lane4-saved-addr-select');
+        selectEl.onchange = () => {
+          const idx = selectEl.value;
+          if (idx === '' || !addresses[idx]) return;
+          const a = addresses[idx];
+
+          const nameEl = document.querySelector('input.w-commerce-commercecheckoutshippingfullname, input[name="name"]');
+          if (nameEl) nameEl.value = a.addressee || '';
+
+          const phoneEl = document.getElementById('lane4-checkout-phone');
+          if (phoneEl) phoneEl.value = a.phone || '';
+
+          const line1El = document.querySelector('input.w-commerce-commercecheckoutshippingstreetaddress, input[name="address_line1"]');
+          if (line1El) line1El.value = a.addressLine1 || '';
+
+          const line2El = document.querySelector('input.w-commerce-commercecheckoutshippingstreetaddressoptional, input[name="address_line2"]');
+          if (line2El) line2El.value = a.addressLine2 || '';
+
+          const stateSelect = document.getElementById('lane4-checkout-state');
+          if (stateSelect && a.state) {
+            stateSelect.value = a.state;
+            stateSelect.dispatchEvent(new Event('change'));
+          }
+
+          setTimeout(() => {
+            const citySelect = document.getElementById('lane4-checkout-city-select');
+            if (citySelect && a.city) {
+              const hasCity = Array.from(citySelect.options).some(o => o.value.toLowerCase() === a.city.toLowerCase());
+              if (hasCity) {
+                citySelect.value = a.city;
+              } else {
+                citySelect.value = 'Other';
+                const customCityInput = document.getElementById('lane4-checkout-city-custom');
+                if (customCityInput) {
+                  customCityInput.style.display = 'block';
+                  customCityInput.value = a.city;
+                }
+              }
+              citySelect.dispatchEvent(new Event('change'));
+            }
+          }, 50);
+
+          const pinEl = document.querySelector('input.w-commerce-commercecheckoutshippingzippostalcode, #lane4-checkout-zip, input[name="address_zip"]');
+          if (pinEl) pinEl.value = a.postalCode || '';
+        };
+      }
+    } catch (_) {}
   }
 
   async function recalculateQuote(couponCode = null) {
@@ -448,7 +555,7 @@
         <label style="display:block;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;color:#0f172a;">
           12-Digit UPI Transaction / UTR Reference ID <span style="color:#ef4444;">*</span>
         </label>
-        <input type="text" id="lane4-utr-input" placeholder="e.g. 432109876543" maxlength="24" required style="width:100%;padding:12px 14px;border:1.5px solid #0f172a;border-radius:6px;font-size:15px;font-weight:800;letter-spacing:1px;box-sizing:border-box;" />
+        <input type="text" id="lane4-utr-input" placeholder="e.g. 432109876543" maxlength="12" pattern="[0-9]{12}" inputmode="numeric" required style="width:100%;padding:12px 14px;border:1.5px solid #0f172a;border-radius:6px;font-size:15px;font-weight:800;letter-spacing:1px;box-sizing:border-box;" />
         <div style="font-size:12px;color:#64748b;margin-top:4px;">Found in your GPay / PhonePe / Paytm payment receipt as UTR or UPI Ref No.</div>
       </div>
 
@@ -638,19 +745,26 @@
       }
 
       const postalCode = document.querySelector('input.w-commerce-commercecheckoutshippingzippostalcode, #lane4-checkout-zip, input[name="address_zip"]')?.value.trim();
+      const phone = document.getElementById('lane4-checkout-phone')?.value.trim() || '';
       const utr = document.getElementById('lane4-utr-input')?.value.trim();
       const fileInput = document.getElementById('lane4-screenshot-file');
       const screenshot = fileInput?.files[0];
 
       // Client Validations
-      if (!email || !email.includes('@')) {
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!email || !emailRegex.test(email)) {
         alert('Please enter a valid customer email address.');
         document.querySelector('input[name="email"], #wf-ecom-email')?.focus();
         return;
       }
-      if (!name) {
+      if (!name || name.length < 2) {
         alert('Please enter your full name for delivery.');
         document.querySelector('input[name="name"], .w-commerce-commercecheckoutshippingfullname')?.focus();
+        return;
+      }
+      if (!phone || (window.LANE4_VALIDATION ? !window.LANE4_VALIDATION.isValidIndianPhone(phone) : phone.length < 10)) {
+        alert('Please enter a valid 10-digit Indian mobile number for shipment delivery tracking.');
+        document.getElementById('lane4-checkout-phone')?.focus();
         return;
       }
       if (!line1) {
@@ -668,13 +782,14 @@
         (citySelect?.value === 'Other' ? customCityInput : citySelect)?.focus();
         return;
       }
-      if (!postalCode || postalCode.length < 5) {
-        alert('Please enter a valid 6-digit PIN / postal code.');
+      if (!postalCode || !/^[1-9][0-9]{5}$/.test(postalCode)) {
+        alert('Please enter a valid 6-digit Indian PIN / postal code.');
         document.querySelector('input[name="address_zip"], #lane4-checkout-zip')?.focus();
         return;
       }
-      if (!utr || utr.length < 6) {
-        alert('Please enter your 12-digit UPI Transaction / UTR Reference ID.');
+      const utrClean = (utr || '').replace(/\s+/g, '');
+      if (!utrClean || !/^\d{12}$/.test(utrClean)) {
+        alert('Please enter a valid 12-digit numeric UPI Reference / UTR Number.');
         document.getElementById('lane4-utr-input')?.focus();
         return;
       }
@@ -702,9 +817,10 @@
         // 1. Create order on backend
         const orderPayload = {
           customerEmail: email,
-          customerPhone: '',
+          customerPhone: phone,
           shippingAddress: {
             addressee: name,
+            phone: phone,
             addressLine1: line1,
             addressLine2: line2,
             city,

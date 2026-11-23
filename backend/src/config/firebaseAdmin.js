@@ -87,6 +87,7 @@ class MemoryQuery {
       size: items.length,
       docs: items.map(it => ({
         id: it.id,
+        ref: new MemoryDocRef(this.collectionName, it.id),
         exists: true,
         data: () => ({ ...it.data })
       }))
