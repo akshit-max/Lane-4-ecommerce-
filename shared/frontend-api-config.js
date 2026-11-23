@@ -61,9 +61,20 @@ window.LANE4_CONFIG = window.LANE4_CONFIG || {
   }
 })();
 
+// Universal Background Pre-Warming: Wakes up Render container immediately on page load
+(function prewarmBackend() {
+  if (typeof window === 'undefined' || !window.location) return;
+  try {
+    const baseUrl = (window.LANE4_CONFIG && window.LANE4_CONFIG.API_BASE_URL) || '/api';
+    const healthUrl = `${baseUrl}/health`;
+    fetch(healthUrl, { method: 'GET', keepalive: true, cache: 'no-store' }).catch(() => {});
+  } catch (_) {}
+})();
+
 /**
  * Universal API Request Function
  * Automatically attaches Firebase ID Token and Guest ID header.
+ * Features automated retry with exponential backoff for Render free-tier cold-start 502/503/504 errors.
  */
 async function lane4ApiRequest(endpoint, options = {}) {
   const baseUrl = window.LANE4_CONFIG.API_BASE_URL;
@@ -95,40 +106,83 @@ async function lane4ApiRequest(endpoint, options = {}) {
     headers['Content-Type'] = 'application/json';
   }
 
-  try {
-    const response = await fetch(url, {
-      ...options,
-      headers
-    });
+  const MAX_RETRIES = 3;
+  let lastError = null;
 
-    const data = await response.json().catch(() => ({}));
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers
+      });
 
-    if (!response.ok) {
-      // Handle session expiration cleanly without clobbering other sessions
-      if (response.status === 401) {
-        if (isAdminRequest) {
-          localStorage.removeItem('lane4_admin_token');
-          window.dispatchEvent(new CustomEvent('lane4:admin-auth-expired'));
-        } else if (userToken) {
-          localStorage.removeItem('lane4_auth_token');
-          localStorage.removeItem('lane4_user');
-          window.dispatchEvent(new CustomEvent('lane4:auth-expired'));
-        }
+      // Handle Render cold start 502, 503, 504 Bad Gateway / Gateway Timeout
+      if ((response.status === 502 || response.status === 503 || response.status === 504) && attempt < MAX_RETRIES) {
+        const waitSec = (attempt + 1) * 3;
+        console.warn(`[LANE4 API] Gateway status ${response.status} (backend cold-starting). Retrying in ${waitSec}s (attempt ${attempt + 1}/${MAX_RETRIES})...`);
+        window.dispatchEvent(new CustomEvent('lane4:server-waking-up', {
+          detail: { attempt: attempt + 1, maxRetries: MAX_RETRIES, waitSec }
+        }));
+        await new Promise(r => setTimeout(r, waitSec * 1000));
+        continue;
       }
 
-      const errorMsg = (data.error && data.error.message) || data.message || 'Network request failed';
-      const error = new Error(errorMsg);
-      error.code = (data.error && data.error.code) || 'API_ERROR';
-      error.status = response.status;
-      error.details = data.error ? data.error.details : null;
-      throw error;
-    }
+      const data = await response.json().catch(() => ({}));
 
-    return data;
-  } catch (err) {
-    console.error(`[LANE4 API ERROR] ${options.method || 'GET'} ${url}:`, err);
-    throw err;
+      if (!response.ok) {
+        // Handle session expiration cleanly without clobbering other sessions
+        if (response.status === 401) {
+          if (isAdminRequest) {
+            localStorage.removeItem('lane4_admin_token');
+            window.dispatchEvent(new CustomEvent('lane4:admin-auth-expired'));
+          } else if (userToken) {
+            localStorage.removeItem('lane4_auth_token');
+            localStorage.removeItem('lane4_user');
+            window.dispatchEvent(new CustomEvent('lane4:auth-expired'));
+          }
+        }
+
+        let errorMsg = (data.error && data.error.message) || data.message;
+        if (!errorMsg) {
+          if (response.status === 502 || response.status === 504) {
+            errorMsg = 'Backend server is waking up from standby. Please retry in a few moments.';
+          } else if (response.status === 503) {
+            errorMsg = 'Backend service is temporarily unavailable. Please retry in a moment.';
+          } else {
+            errorMsg = 'Network request failed';
+          }
+        }
+
+        const error = new Error(errorMsg);
+        error.code = (data.error && data.error.code) || `HTTP_${response.status}`;
+        error.status = response.status;
+        error.details = data.error ? data.error.details : null;
+        throw error;
+      }
+
+      return data;
+    } catch (err) {
+      lastError = err;
+      // Do not retry standard 4xx client errors (400, 401, 403, 404, etc.)
+      if (err.status && err.status < 500) {
+        throw err;
+      }
+      // If network fetch failed before receiving headers (e.g. connection timeout during Render container spin-up)
+      if (attempt < MAX_RETRIES && (!err.status || err.status >= 500)) {
+        const waitSec = (attempt + 1) * 3;
+        console.warn(`[LANE4 API] Connection error (${err.message}). Retrying in ${waitSec}s (attempt ${attempt + 1}/${MAX_RETRIES})...`);
+        window.dispatchEvent(new CustomEvent('lane4:server-waking-up', {
+          detail: { attempt: attempt + 1, maxRetries: MAX_RETRIES, waitSec }
+        }));
+        await new Promise(r => setTimeout(r, waitSec * 1000));
+        continue;
+      }
+      console.error(`[LANE4 API ERROR] ${options.method || 'GET'} ${url}:`, err);
+      throw err;
+    }
   }
+
+  throw lastError || new Error('Network request failed');
 }
 
 // Global exposure

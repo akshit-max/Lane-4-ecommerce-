@@ -353,8 +353,10 @@
       }
     } catch (err) {
       console.warn('Session verification rejected by server:', err);
-      localStorage.removeItem('lane4_admin_token');
-      localStorage.removeItem('lane4_admin_user');
+      if (err.status === 401 || err.status === 403) {
+        localStorage.removeItem('lane4_admin_token');
+        localStorage.removeItem('lane4_admin_user');
+      }
       document.documentElement.classList.remove('admin-authed');
       document.documentElement.classList.add('admin-unauthed');
       if (loginScreen) loginScreen.style.display = 'flex';
@@ -362,7 +364,11 @@
         alertEl.style.display = 'block';
         alertEl.style.background = '#fef2f2';
         alertEl.style.color = '#b91c1c';
-        alertEl.textContent = 'Administrator session expired or invalid. Please sign in with your credentials.';
+        if (err.status === 502 || err.status === 503 || err.status === 504) {
+          alertEl.textContent = 'Backend server is currently waking up from standby. Please enter credentials to sign in.';
+        } else {
+          alertEl.textContent = 'Administrator session expired or invalid. Please sign in with your credentials.';
+        }
       }
     }
   }
@@ -477,7 +483,11 @@
           alertEl.style.display = 'block';
           alertEl.style.background = '#fef2f2';
           alertEl.style.color = '#b91c1c';
-          alertEl.textContent = err.message || 'Access denied. Invalid administrator credentials.';
+          if (err.status === 502 || err.status === 503 || err.status === 504) {
+            alertEl.innerHTML = 'Backend server was waking up from standby (free-tier cold start). It is ready now — please click <strong>SIGN IN TO CONSOLE</strong> again.';
+          } else {
+            alertEl.textContent = err.message || 'Access denied. Invalid administrator credentials.';
+          }
         }
       } finally {
         if (submitBtn) submitBtn.disabled = false;
@@ -541,6 +551,17 @@
     if (closeBtn) closeBtn.onclick = closeDrawer;
     if (backdrop) backdrop.onclick = closeDrawer;
   }
+
+  window.addEventListener('lane4:server-waking-up', (e) => {
+    const alertEl = document.getElementById('admin-login-alert');
+    if (alertEl) {
+      alertEl.style.display = 'block';
+      alertEl.style.background = '#fef3c7';
+      alertEl.style.color = '#92400e';
+      const detail = e.detail || {};
+      alertEl.innerHTML = `Connecting to server (waking up from standby, attempt ${detail.attempt || 1} of ${detail.maxRetries || 3})...`;
+    }
+  });
 
   window.addEventListener('lane4:admin-auth-expired', () => {
     localStorage.removeItem('lane4_admin_token');
