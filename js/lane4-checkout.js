@@ -153,40 +153,46 @@
 
     if (!stateSelect || !citySelect) return;
 
-    // Populate states
+    // Populate states without pre-selecting any default
     const states = Object.keys(INDIAN_STATES_AND_CITIES).sort();
-    stateSelect.innerHTML = '<option value="">Select State / UT *</option>' +
-      states.map(st => `<option value="${st}" ${st === 'Maharashtra' ? 'selected' : ''}>${st}</option>`).join('');
+    stateSelect.innerHTML = '<option value="" disabled selected>-- Select State / UT * --</option>' +
+      states.map(st => `<option value="${st}">${st}</option>`).join('');
+
+    // City starts disabled with placeholder until state is chosen
+    citySelect.innerHTML = '<option value="" disabled selected>-- Select State First --</option>';
+    citySelect.disabled = true;
 
     function updateCities(selectedState, preserveCity = null) {
+      if (!selectedState) {
+        citySelect.innerHTML = '<option value="" disabled selected>-- Select State First --</option>';
+        citySelect.disabled = true;
+        if (customCityInput) customCityInput.style.display = 'none';
+        return;
+      }
+      citySelect.disabled = false;
       const cities = INDIAN_STATES_AND_CITIES[selectedState] || ["Other"];
-      citySelect.innerHTML = '<option value="">Select City *</option>' +
+      citySelect.innerHTML = '<option value="" disabled selected>-- Select City * --</option>' +
         cities.map(ct => `<option value="${ct}">${ct}</option>`).join('');
 
       if (preserveCity && cities.includes(preserveCity)) {
         citySelect.value = preserveCity;
         if (customCityInput) customCityInput.style.display = 'none';
-      } else if (cities.length > 0 && cities[0] !== 'Other') {
-        citySelect.value = cities[0];
-        if (customCityInput) customCityInput.style.display = 'none';
       } else {
-        citySelect.value = 'Other';
-        if (customCityInput) customCityInput.style.display = 'block';
+        citySelect.value = '';
+        if (customCityInput) customCityInput.style.display = 'none';
       }
     }
-
-    // Initial population for default state (Maharashtra)
-    updateCities('Maharashtra', 'Nagpur');
 
     stateSelect.addEventListener('change', () => {
       const st = stateSelect.value;
       if (st) {
         updateCities(st);
+        recalculateQuote();
       } else {
-        citySelect.innerHTML = '<option value="">Select State First</option>';
+        citySelect.innerHTML = '<option value="" disabled selected>-- Select State First --</option>';
+        citySelect.disabled = true;
         if (customCityInput) customCityInput.style.display = 'none';
       }
-      recalculateQuote();
     });
 
     citySelect.addEventListener('change', () => {
@@ -618,7 +624,7 @@
       const line2 = document.querySelector('input.w-commerce-commercecheckoutshippingstreetaddressoptional, input[name="address_line2"]')?.value.trim() || '';
 
       const stateSelect = document.getElementById('lane4-checkout-state');
-      const state = stateSelect ? stateSelect.value.trim() : (document.querySelector('input[name="address_state"]')?.value.trim() || 'Maharashtra');
+      const state = stateSelect ? stateSelect.value.trim() : (document.querySelector('input[name="address_state"]')?.value.trim() || '');
 
       const citySelect = document.getElementById('lane4-checkout-city-select');
       const customCityInput = document.getElementById('lane4-checkout-city-custom');
@@ -822,20 +828,15 @@
           </div>
         </div>
 
-        <!-- Verification Notice & Tracking Instructions -->
+        <!-- Verification Notice -->
         <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px;font-size:13px;color:#1e40af;line-height:1.6;margin-bottom:28px;text-align:left;">
-          <strong>How do I track my order?</strong><br />
-          Please save your Order Reference Number: <strong>#${order.orderNumber || order.orderId}</strong>.<br />
-          You can track the progress of this order at any time without signing in: click <strong>Account &rarr; Track Order</strong> in the top navigation or use the Track Order button below. Once verified, courier partner and AWB dispatch tracking will be visible.
+          <strong>Order Reference:</strong> #${order.orderNumber || order.orderId}<br />
+          Our team verifies payment transfers promptly during business hours. Once verified, order status updates in your Swimmer Account and delivery dispatch details will be sent directly to your email.
         </div>
 
         <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-          <button type="button" onclick="if(window.openAuthModal){window.openAuthModal('track');}else{window.location.href='index.htm';}" style="background:#0f172a;color:#ffffff;padding:14px 24px;border:none;border-radius:8px;font-weight:800;letter-spacing:1px;font-size:13.5px;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <span>TRACK THIS ORDER</span>
-          </button>
-          <a href="shop.html" style="background:#ffffff;color:#0f172a;padding:14px 24px;text-decoration:none;border-radius:8px;font-weight:800;letter-spacing:1px;font-size:13.5px;border:1.5px solid #cbd5e1;text-transform:uppercase;">CONTINUE SHOPPING</a>
-          <a href="index.htm" style="background:#f1f5f9;color:#0f172a;padding:14px 24px;text-decoration:none;border-radius:8px;font-weight:800;letter-spacing:1px;font-size:13.5px;border:1px solid #cbd5e1;text-transform:uppercase;">RETURN HOME</a>
+          <a href="shop.html" style="background:#0f172a;color:#ffffff;padding:14px 28px;text-decoration:none;border-radius:8px;font-weight:800;letter-spacing:1px;font-size:13.5px;text-transform:uppercase;">CONTINUE SHOPPING</a>
+          <a href="index.htm" style="background:#f1f5f9;color:#0f172a;padding:14px 28px;text-decoration:none;border-radius:8px;font-weight:800;letter-spacing:1px;font-size:13.5px;border:1px solid #cbd5e1;text-transform:uppercase;">RETURN HOME</a>
         </div>
       </div>
     `;

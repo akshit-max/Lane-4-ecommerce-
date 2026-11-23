@@ -31,6 +31,25 @@ async function authenticate(req, res, next) {
     return next();
   }
 
+  // 1b. Customer Session Token
+  if (token.startsWith('cust_token_')) {
+    try {
+      const b64 = token.replace('cust_token_', '');
+      const parsed = JSON.parse(Buffer.from(b64, 'base64').toString('utf8'));
+      if (parsed && parsed.uid && parsed.email) {
+        req.user = {
+          uid: parsed.uid,
+          email: parsed.email,
+          role: 'customer',
+          permissions: [],
+          emailVerified: true,
+          token: parsed
+        };
+        return next();
+      }
+    } catch (_) {}
+  }
+
   // 2. Fall back to Firebase Admin SDK ID token verification
   try {
     const auth = getAuth();

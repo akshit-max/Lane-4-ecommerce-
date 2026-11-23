@@ -6,37 +6,50 @@ const { logger } = require('../utils/logger');
 
 function generateProductHtmlPage(product) {
   try {
+    const outputPath = path.resolve(__dirname, `../../../product/${product.slug}.html`);
     const templatePath = path.resolve(__dirname, '../../../product/swim-training-fins.html');
-    if (!fs.existsSync(templatePath)) return;
-    let html = fs.readFileSync(templatePath, 'utf8');
+
+    // If existing product HTML exists, use it as base to preserve custom structure and variants
+    const fileToRead = fs.existsSync(outputPath) ? outputPath : templatePath;
+    if (!fs.existsSync(fileToRead)) return;
+    let html = fs.readFileSync(fileToRead, 'utf8');
 
     const primaryImg = (product.images && product.images[0] && product.images[0].url)
       ? (product.images[0].url.startsWith('http') || product.images[0].url.startsWith('/') ? product.images[0].url : `../${product.images[0].url}`)
       : '../6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg';
 
-    const priceFormatted = formatINR(product.salePricePaise || product.regularPricePaise);
+    const hasDiscount = product.salePricePaise && product.salePricePaise > 0 && product.salePricePaise < product.regularPricePaise;
+    const priceFormatted = hasDiscount
+      ? `<span style="text-decoration:line-through;color:#94a3b8;font-size:0.85em;margin-right:6px;">${formatINR(product.regularPricePaise)}</span> <span style="color:#16a34a;">${formatINR(product.salePricePaise)}</span>`
+      : formatINR(product.regularPricePaise || product.salePricePaise || 0);
 
     // Replace Slug attribute
     html = html.replace(/data-wf-item-slug="[^"]*"/, `data-wf-item-slug="${product.slug}"`);
     // Replace Title
     html = html.replace(/<title>.*?<\/title>/, `<title>${product.name} | The Lane4 Performance Store</title>`);
-    // Replace Breadcrumb
-    html = html.replace(/<a href="swim-training-fins\.html"[^>]*><div class="paragraph-14px">Swim Training Fins<\/div><\/a>/, `<a href="${product.slug}.html" aria-current="page" class="w-inline-block w--current"><div class="paragraph-14px">${product.name}</div></a>`);
-    // Replace pd-heading
-    html = html.replace(
-      /<div class="pd-heading"><h4 class="title-h4">.*?<\/h4><div class="paragraph-18px">.*?<\/div><h6[^>]*class="title-h6">.*?<\/h6><\/div>/,
-      `<div class="pd-heading"><h4 class="title-h4">${product.name}</h4><div class="paragraph-18px">${product.shortDescription || 'Pool-tested performance'}</div><h6 class="title-h6">${priceFormatted}</h6></div>`
-    );
-    // Replace primary product images
-    html = html.replace(/src="\.\.\/6424266ea05809dff501d86e\/lane4-6dbhNuWa5oI-640x640\.jpg"/g, `src="${primaryImg}"`);
-    html = html.replace(/srcset="[^"]*lane4-6dbhNuWa5oI[^"]*"/g, `srcset="${primaryImg} 640w"`);
 
-    // Replace product description if present
-    if (product.description) {
-      html = html.replace(/Short-blade silicone training fins that build leg strength and improve kick technique without changing your natural stroke\./, product.description);
+    // Replace pd-heading (product title, tagline/shortDescription, price)
+    if (html.includes('class="pd-heading"')) {
+      html = html.replace(
+        /<div class="pd-heading"><h4 class="title-h4">.*?<\/h4><div class="paragraph-18px">.*?<\/div><h6[^>]*class="title-h6">.*?<\/h6><\/div>/,
+        `<div class="pd-heading"><h4 class="title-h4">${product.name}</h4><div class="paragraph-18px">${product.shortDescription || 'Pool-tested performance'}</div><h6 class="title-h6">${priceFormatted}</h6></div>`
+      );
     }
 
-    const outputPath = path.resolve(__dirname, `../../../product/${product.slug}.html`);
+    // Replace primary product images only if using template
+    if (fileToRead === templatePath) {
+      html = html.replace(/src="\.\.\/6424266ea05809dff501d86e\/lane4-6dbhNuWa5oI-640x640\.jpg"/g, `src="${primaryImg}"`);
+      html = html.replace(/srcset="[^"]*lane4-6dbhNuWa5oI[^"]*"/g, `srcset="${primaryImg} 640w"`);
+    }
+
+    // Replace product description if present
+    if (product.description && html.includes('class="pd-description"')) {
+      html = html.replace(
+        /(<div class="pd-description">[\s\S]*?<div class="paragraph-20px">)[\s\S]*?(<\/div>)/,
+        `$1${product.description}$2`
+      );
+    }
+
     fs.writeFileSync(outputPath, html, 'utf8');
     logger.info(`Generated product storefront page: product/${product.slug}.html`);
   } catch (err) {
@@ -408,6 +421,7 @@ class ProductService {
 
     const regularPricePaise = data.regularPricePaise || rupeesToPaise(data.regularPrice || 0);
     const salePricePaise = data.salePricePaise !== undefined ? data.salePricePaise : (data.salePrice ? rupeesToPaise(data.salePrice) : null);
+    const effectivePricePaise = salePricePaise || regularPricePaise;
     const variants = (data.variants && data.variants.length > 0)
       ? data.variants.map((v, i) => ({
           variantId: v.variantId || `var_${i + 1}`,
@@ -415,7 +429,8 @@ class ProductService {
           size: v.size || '',
           color: v.color || '',
           colorHex: v.colorHex || '',
-          pricePaise: v.pricePaise || (v.price ? rupeesToPaise(v.price) : null),
+          pricePaise: v.pricePaise || (v.price ? rupeesToPaise(v.price) : effectivePricePaise),
+          salePricePaise: v.salePricePaise !== undefined ? (v.salePricePaise ? rupeesToPaise(v.salePricePaise) : null) : (salePricePaise || null),
           stockQuantity: parseInt(v.stockQuantity, 10) || 0,
           lowStockThreshold: parseInt(v.lowStockThreshold, 10) || 5,
           isActive: v.isActive !== false
@@ -426,7 +441,8 @@ class ProductService {
           size: 'Standard',
           color: 'Default',
           colorHex: '',
-          pricePaise: regularPricePaise,
+          pricePaise: effectivePricePaise,
+          salePricePaise: salePricePaise || null,
           stockQuantity: parseInt(data.stockQuantity, 10) || 50,
           lowStockThreshold: 5,
           isActive: true
@@ -493,10 +509,22 @@ class ProductService {
       throw new Error('Product not found');
     }
 
+    const existingData = doc.data();
     const updates = {
       ...data,
       updatedAt: new Date()
     };
+
+    if (data.imageUrl) {
+      updates.images = [{
+        url: data.imageUrl,
+        alt: updates.name || existingData.name || 'Product Image',
+        order: 0
+      }];
+      delete updates.imageUrl;
+    } else if (data.images && Array.isArray(data.images)) {
+      updates.images = data.images;
+    }
 
     if (data.regularPrice !== undefined) {
       updates.regularPricePaise = rupeesToPaise(data.regularPrice);
@@ -505,6 +533,26 @@ class ProductService {
     if (data.salePrice !== undefined) {
       updates.salePricePaise = data.salePrice ? rupeesToPaise(data.salePrice) : null;
       delete updates.salePrice;
+    }
+
+    // Determine the effective selling price after updates
+    const resolvedSale = updates.salePricePaise !== undefined ? updates.salePricePaise : existingData.salePricePaise;
+    const resolvedRegular = updates.regularPricePaise !== undefined ? updates.regularPricePaise : existingData.regularPricePaise;
+    const effectiveSellingPrice = (typeof resolvedSale === 'number' && resolvedSale > 0) ? resolvedSale : resolvedRegular;
+
+    // Keep variants pricing synchronized with updated product prices
+    if (!updates.variants && existingData.variants && existingData.variants.length > 0) {
+      updates.variants = existingData.variants.map(v => ({
+        ...v,
+        pricePaise: effectiveSellingPrice,
+        salePricePaise: resolvedSale || null
+      }));
+    } else if (updates.variants && updates.variants.length > 0) {
+      updates.variants = updates.variants.map(v => ({
+        ...v,
+        pricePaise: v.pricePaise || (v.price ? rupeesToPaise(v.price) : effectiveSellingPrice),
+        salePricePaise: v.salePricePaise !== undefined ? v.salePricePaise : (resolvedSale || null)
+      }));
     }
 
     await docRef.update(updates);

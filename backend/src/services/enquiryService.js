@@ -6,18 +6,22 @@ class EnquiryService {
     const db = getDb();
     if (!db) throw new Error('Database unavailable');
 
-    if (!name || !email || !message) {
-      throw new Error('Name, email, and message are required.');
+    const cleanEmail = email ? email.toLowerCase().trim() : '';
+    const cleanMsg = message ? message.trim() : '';
+    const cleanName = (name && name.trim()) ? name.trim() : (cleanEmail ? cleanEmail.split('@')[0] : 'Swimmer');
+
+    if (!cleanEmail || !cleanMsg) {
+      throw new Error('Valid email and message are required.');
     }
 
     const docRef = db.collection('enquiries').doc();
     const newEnquiry = {
       enquiryId: docRef.id,
       type: type || 'general',
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
-      phone: phone.trim(),
-      message: message.trim(),
+      name: cleanName,
+      email: cleanEmail,
+      phone: (phone || '').trim(),
+      message: cleanMsg,
       status: 'new',
       createdAt: new Date()
     };

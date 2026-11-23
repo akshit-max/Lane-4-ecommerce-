@@ -31,10 +31,8 @@
         ? products.filter(p => (p.categorySlug === currentCatSlug || p.category === currentCatSlug || (p.category && p.category.toLowerCase().replace(/[^a-z0-9]+/g, '-') === currentCatSlug)))
         : products;
 
-      // Append any newly added products from DB
+      // Real-time synchronization of visible products (both existing cards and newly created products)
       visibleProducts.forEach(p => {
-        if (!p.isPublished || p.isDeleted) return;
-
         let rawImg = (p.images && p.images[0] && p.images[0].url) || '6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg';
         let imgUrl = rawImg;
         if (window.LANE4 && window.LANE4.resolveAssetUrl) {
@@ -44,10 +42,50 @@
           imgUrl = '../' + imgUrl;
         }
 
-        const priceText = window.LANE4 ? `${window.LANE4.formatINR(p.salePricePaise || p.regularPricePaise)} INR` : '₹ 1,999.00 INR';
+        const priceVal = p.salePricePaise || p.regularPricePaise || 0;
+        const priceText = window.LANE4 ? `${window.LANE4.formatINR(priceVal)} INR` : `₹ ${(priceVal/100).toFixed(2)} INR`;
         const linkHref = isInSubfolder ? `../product/${p.slug}.html` : `product/${p.slug}.html`;
 
-        if (!existingSlugs.has(p.slug)) {
+        const existingCardLink = productGrid.querySelector(`a[href*="product/${p.slug}"], a[href="${p.slug}.html"]`);
+
+        // If product is unpublished or soft-deleted:
+        if (p.isPublished === false || p.isDeleted === true) {
+          if (existingCardLink) {
+            const wrapper = existingCardLink.closest('.collection-item') || existingCardLink.closest('.w-dyn-item') || existingCardLink.closest('.shop-product');
+            if (wrapper) wrapper.style.display = 'none';
+          }
+          return;
+        }
+
+        if (existingCardLink) {
+          // Dynamic live update of existing DOM card
+          const wrapper = existingCardLink.closest('.collection-item') || existingCardLink.closest('.w-dyn-item') || existingCardLink.closest('.shop-product');
+          if (wrapper) wrapper.style.display = '';
+
+          const productCard = existingCardLink.closest('.shop-product') || existingCardLink;
+          if (productCard) productCard.style.opacity = '1';
+
+          // Update Title
+          const titleEl = productCard.querySelector('.sp-content .paragraph-14px');
+          if (titleEl && p.name) titleEl.textContent = p.name;
+
+          // Update Short Description / Tagline
+          const shortDescEl = productCard.querySelector('.sp-content .paragraph-13px.grey, .sp-content .paragraph-13px');
+          if (shortDescEl) shortDescEl.textContent = p.shortDescription || 'Multiple options available';
+
+          // Update Price
+          const priceEl = productCard.querySelector('.sp-content .paragraph-16px, [data-wf-sku-bindings*="f_price_"]');
+          if (priceEl) priceEl.textContent = priceText;
+
+          // Update Image
+          const imgEl = productCard.querySelector('.sp-image-wrapper img');
+          if (imgEl && imgUrl) {
+            imgEl.src = imgUrl;
+            imgEl.alt = p.name;
+            if (imgEl.hasAttribute('srcset')) imgEl.removeAttribute('srcset');
+          }
+        } else {
+          // Append newly added product from DB
           const itemEl = document.createElement('div');
           itemEl.setAttribute('role', 'listitem');
           itemEl.className = 'collection-item w-dyn-item';
@@ -65,14 +103,6 @@
             </div>
           `;
           productGrid.appendChild(itemEl);
-          existingSlugs.add(p.slug);
-        } else {
-          // Ensure existing cards have full opacity in case Webflow animation stalled
-          const card = productGrid.querySelector(`a[href*="${p.slug}"]`);
-          if (card) {
-            const productCard = card.closest('.shop-product');
-            if (productCard) productCard.style.opacity = '1';
-          }
         }
       });
 

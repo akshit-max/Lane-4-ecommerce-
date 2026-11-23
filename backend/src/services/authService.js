@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const { getDb, getAuth } = require('../config/firebaseAdmin');
 const { sendMail, wrapBrandedTemplate } = require('../config/email');
 const { logger } = require('../utils/logger');
@@ -46,12 +47,15 @@ class AuthService {
       // non-blocking
     }
 
+    const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+
     // 2. Create customer profile document in Firestore `users` collection
     const userProfile = {
       uid: userRecord.uid,
       email: cleanEmail,
       displayName: displayName.trim(),
       phoneNumber: phone.trim(),
+      passwordHash,
       emailVerified: false,
       role: 'customer',
       status: 'active',

@@ -3,6 +3,27 @@ const productService = require('./productService');
 const { formatINR } = require('../utils/currency');
 const { logger } = require('../utils/logger');
 
+function getEffectiveUnitPricePaise(product, variant) {
+  if (!product) return 0;
+  // 1. Explicit sale price on variant
+  if (variant && typeof variant.salePricePaise === 'number' && variant.salePricePaise > 0) {
+    return variant.salePricePaise;
+  }
+  // 2. Global product sale price
+  if (typeof product.salePricePaise === 'number' && product.salePricePaise > 0) {
+    return product.salePricePaise;
+  }
+  // 3. Variant price
+  if (variant && typeof variant.pricePaise === 'number' && variant.pricePaise > 0) {
+    return variant.pricePaise;
+  }
+  // 4. Regular product price
+  if (typeof product.regularPricePaise === 'number' && product.regularPricePaise > 0) {
+    return product.regularPricePaise;
+  }
+  return product.pricePaise || 0;
+}
+
 class CartService {
   _getCartKey(customerId, guestId) {
     if (customerId) return `user_${customerId}`;
@@ -30,6 +51,50 @@ class CartService {
     }
 
     const data = cartDoc.data();
+    let items = data.items || [];
+    let hasChanges = false;
+
+    // Live catalog synchronization: ensure prices match current sale / catalog price
+    if (items.length > 0) {
+      for (const it of items) {
+        try {
+          let product = await productService.getProductById(it.productId);
+          if (!product) {
+            product = await productService.getProductBySlug(it.productId);
+          }
+          if (product) {
+            const variant = (product.variants || []).find(v => v.variantId === it.variantId || v.sku === it.variantId) || (product.variants && product.variants[0]);
+            const liveUnitPrice = getEffectiveUnitPricePaise(product, variant);
+            if (it.pricePaise !== liveUnitPrice) {
+              it.pricePaise = liveUnitPrice;
+              hasChanges = true;
+            }
+            if (it.name !== product.name) {
+              it.name = product.name;
+              hasChanges = true;
+            }
+            if (product.images && product.images[0] && product.images[0].url && it.imageUrl !== product.images[0].url) {
+              it.imageUrl = product.images[0].url;
+              hasChanges = true;
+            }
+          }
+        } catch (_) {}
+      }
+
+      const recalculatedSubtotal = items.reduce((sum, it) => sum + (it.pricePaise * it.quantity), 0);
+      const recalculatedCount = items.reduce((sum, it) => sum + it.quantity, 0);
+
+      if (hasChanges || data.subtotalPaise !== recalculatedSubtotal || data.totalItemsCount !== recalculatedCount) {
+        data.subtotalPaise = recalculatedSubtotal;
+        data.totalItemsCount = recalculatedCount;
+        data.items = items;
+        data.updatedAt = new Date();
+        try {
+          await db.collection('carts').doc(cartKey).set(data, { merge: true });
+        } catch (_) {}
+      }
+    }
+
     return {
       ...data,
       subtotalFormatted: formatINR(data.subtotalPaise || 0)
@@ -66,7 +131,7 @@ class CartService {
       throw new Error(`Item "${product.name}" is currently out of stock.`);
     }
 
-    const unitPricePaise = (variant && variant.pricePaise) || product.salePricePaise || product.regularPricePaise;
+    const unitPricePaise = getEffectiveUnitPricePaise(product, variant);
     const variantLabel = variant ? `${variant.size || ''} ${variant.color || ''}`.trim() : '';
     const itemSku = variant ? variant.sku : product.sku;
     const imageUrl = (product.images && product.images[0] && product.images[0].url) || '';
@@ -161,6 +226,7 @@ class CartService {
         if (qty > availableStock) {
           throw new Error(`Requested quantity (${qty}) exceeds available stock (${availableStock}).`);
         }
+        item.pricePaise = getEffectiveUnitPricePaise(product, variant);
       }
       items[itemIndex].quantity = qty;
     }

@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>LANE4 Admin Portal | The Lane4 Performance Store</title>
   <link rel="icon" type="image/svg+xml" href="../6424266ea05809dff501d86e/lane4-favicon.svg">
   <!-- Lane4 Brand & System Typography (matching main storefront) -->
@@ -799,6 +802,18 @@
           <span class="nav-text">Support Enquiries</span>
         </span>
       </div>
+      <div class="nav-item" data-view="reviews">
+        <span class="nav-item-inner">
+          <svg class="nav-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span class="nav-text">Product Reviews</span>
+        </span>
+      </div>
+      <div class="nav-item" data-view="returns">
+        <span class="nav-item-inner">
+          <svg class="nav-icon" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          <span class="nav-text">Returns &amp; Refunds</span>
+        </span>
+      </div>
       <div class="nav-item" data-view="settings">
         <span class="nav-item-inner">
           <svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -843,6 +858,8 @@
     <div id="view-coupons" class="admin-view" style="display:none;"></div>
     <div id="view-customers" class="admin-view" style="display:none;"></div>
     <div id="view-enquiries" class="admin-view" style="display:none;"></div>
+    <div id="view-reviews" class="admin-view" style="display:none;"></div>
+    <div id="view-returns" class="admin-view" style="display:none;"></div>
     <div id="view-settings" class="admin-view" style="display:none;"></div>
     <div id="view-logs" class="admin-view" style="display:none;"></div>
   </main>
@@ -857,9 +874,9 @@
     </div>
   </div>
 
-  <script src="../shared/frontend-api-config.js?v=4.2"></script>
-  <script src="../js/lane4-api.js?v=4.2"></script>
-  <script src="js/admin.js?v=4.2"></script>
+  <script src="../shared/frontend-api-config.js?v=5.0"></script>
+  <script src="../js/lane4-api.js?v=5.0"></script>
+  <script src="js/admin.js?v=5.0"></script>
 </body>
 </html>
 

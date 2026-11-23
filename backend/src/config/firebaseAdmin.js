@@ -265,38 +265,68 @@ const memoryAuth = {
     }
     // In memory/test mode, tokens can be mock signed or formatted
     if (token.startsWith('test_token_')) {
-      const uid = token.replace('test_token_', '');
-      const user = this.users.get(uid) || this.users.get(uid.replace(/_/g, '@')) || { uid, email: uid.includes('@') ? uid : `${uid}@lane4swim.in` };
-      const storedClaims = this.customClaims.get(uid) || this.customClaims.get(user.uid) || {};
-      const isAdminUid = uid.includes('admin') || user.email.includes('admin');
-      const defaultAdminClaims = isAdminUid ? {
+      const raw = token.replace('test_token_', '');
+      let decoded = raw;
+      try {
+        decoded = decodeURIComponent(raw);
+      } catch (_) {}
+
+      // Bootstrap administrator token
+      if (raw === 'admin_lane4swim_in' || decoded === 'admin@lane4swim.in') {
+        return {
+          uid: 'admin_lane4swim_in',
+          email: 'admin@lane4swim.in',
+          email_verified: true,
+          role: 'super_admin',
+          permissions: [
+            'dashboard:read',
+            'orders:read',
+            'orders:write',
+            'payments:read',
+            'payments:verify',
+            'products:read',
+            'products:write',
+            'products:delete',
+            'inventory:read',
+            'inventory:write',
+            'categories:write',
+            'coupons:write',
+            'customers:read',
+            'settings:write',
+            'reviews:write',
+            'enquiries:read',
+            'super_admin'
+          ]
+        };
+      }
+
+      // Check registered in-memory users map
+      let user = this.users.get(raw) || this.users.get(decoded);
+      if (!user) {
+        for (const u of this.users.values()) {
+          if (u.email && (u.email.toLowerCase() === decoded.toLowerCase() || u.email.toLowerCase() === raw.toLowerCase())) {
+            user = u;
+            break;
+          }
+        }
+      }
+
+      // Resolve real exact email without synthetic domain suffixes
+      const cleanEmail = (user && user.email) || (decoded.includes('@') ? decoded : (raw.includes('@') ? raw : ''));
+      const uid = (user && user.uid) || (cleanEmail ? cleanEmail.replace(/[^a-zA-Z0-9]/g, '_') : raw);
+
+      const storedClaims = this.customClaims.get(uid) || (user && this.customClaims.get(user.uid)) || {};
+      const isAdminUid = (cleanEmail && cleanEmail.includes('admin')) || uid.includes('admin');
+      const defaultClaims = isAdminUid ? {
         role: 'super_admin',
-        permissions: [
-          'dashboard:read',
-          'orders:read',
-          'orders:write',
-          'payments:read',
-          'payments:verify',
-          'products:read',
-          'products:write',
-          'products:delete',
-          'inventory:read',
-          'inventory:write',
-          'categories:write',
-          'coupons:write',
-          'customers:read',
-          'settings:write',
-          'reviews:write',
-          'enquiries:read',
-          'super_admin'
-        ]
+        permissions: ['super_admin']
       } : { role: 'customer' };
 
       return {
-        uid: user.uid || uid,
-        email: user.email,
+        uid,
+        email: cleanEmail || raw,
         email_verified: true,
-        ...defaultAdminClaims,
+        ...defaultClaims,
         ...storedClaims
       };
     }

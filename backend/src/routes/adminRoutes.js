@@ -75,6 +75,7 @@ router.patch('/enquiries/:id', adminController.updateEnquiry);
 // Reviews
 router.get('/reviews', adminController.listReviews);
 router.patch('/reviews/:id/status', adminController.moderateReview);
+router.delete('/reviews/:id', adminController.deleteReview);
 
 // Returns
 router.get('/returns', adminController.listReturns);

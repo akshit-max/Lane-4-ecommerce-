@@ -173,10 +173,12 @@ if (config.env === 'production' && process.env.SERVE_FRONTEND !== 'true') {
   app.use(['/product', '/category', '/blog', '/authors', '/utility-pages', '/category-blog', '/admin'], express.static(frontendRoot, staticOpts));
 
   app.get('/', (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(frontendRoot, 'index.htm'));
   });
 
   app.get(['/admin', '/admin/'], (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(frontendRoot, 'admin/index.html'));
   });
 }

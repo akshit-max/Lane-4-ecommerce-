@@ -16,11 +16,57 @@ function toMillis(d) {
   return isNaN(t) ? 0 : t;
 }
 
+function getEffectiveUnitPricePaise(product, variant) {
+  if (!product) return 0;
+  if (variant && typeof variant.salePricePaise === 'number' && variant.salePricePaise > 0) {
+    return variant.salePricePaise;
+  }
+  if (typeof product.salePricePaise === 'number' && product.salePricePaise > 0) {
+    return product.salePricePaise;
+  }
+  if (variant && typeof variant.pricePaise === 'number' && variant.pricePaise > 0) {
+    return variant.pricePaise;
+  }
+  if (typeof product.regularPricePaise === 'number' && product.regularPricePaise > 0) {
+    return product.regularPricePaise;
+  }
+  return product.pricePaise || 0;
+}
+
 class OrderService {
   _generateOrderNumber() {
     const year = new Date().getFullYear().toString().slice(-2);
-    const random = Math.floor(1000 + Math.random() * 9000);
-    return `L4-${year}-${random}`;
+    this._memSeq = (this._memSeq || 1000) + 1;
+    return `L4-${year}-${this._memSeq}`;
+  }
+
+  async _generateSequentialOrderNumber(db) {
+    const year = new Date().getFullYear().toString().slice(-2);
+    if (!db) {
+      return this._generateOrderNumber();
+    }
+    try {
+      const counterRef = db.collection('counters').doc('orders');
+      let orderNum;
+      await db.runTransaction(async (transaction) => {
+        const doc = await transaction.get(counterRef);
+        let seq = 1001;
+        if (doc && doc.exists && typeof doc.data().currentSequence === 'number') {
+          seq = doc.data().currentSequence + 1;
+        }
+        transaction.set(counterRef, { currentSequence: seq, updatedAt: new Date() }, { merge: true });
+        orderNum = `L4-${year}-${seq}`;
+      });
+      return orderNum;
+    } catch (e) {
+      try {
+        const snap = await db.collection('orders').get();
+        const count = snap && snap.docs ? snap.docs.length : 0;
+        return `L4-${year}-${1001 + count}`;
+      } catch (_) {
+        return this._generateOrderNumber();
+      }
+    }
   }
 
   async calculateQuote({ items, couponCode = null, guestId = null, customerId = null }) {
@@ -42,7 +88,7 @@ class OrderService {
         variant = product.variants[0];
       }
 
-      const unitPricePaise = (variant && variant.pricePaise) || product.salePricePaise || product.regularPricePaise;
+      const unitPricePaise = getEffectiveUnitPricePaise(product, variant);
       const qty = Math.max(1, parseInt(item.quantity, 10) || 1);
       const lineTotalPaise = unitPricePaise * qty;
 
@@ -137,7 +183,7 @@ class OrderService {
 
     const orderRef = db.collection('orders').doc();
     const orderId = orderRef.id;
-    const orderNumber = this._generateOrderNumber();
+    const orderNumber = await this._generateSequentialOrderNumber(db);
     const now = new Date();
 
     // Transaction to reserve inventory and persist immutable order snapshot

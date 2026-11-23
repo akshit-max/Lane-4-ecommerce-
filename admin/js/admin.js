@@ -164,12 +164,6 @@
             <span style="background:#f1f5f9;color:#0f172a;padding:2px 8px;border-radius:4px;font-family:monospace;font-size:12px;font-weight:700;border:1px solid #e2e8f0;">
               AWB: ${escapeHtml(d.trackingNumber || '—')}
             </span>
-            ${d.trackingUrl ? `
-              <a href="${escapeHtml(d.trackingUrl)}" target="_blank" rel="noopener noreferrer" style="color:#0284c7;font-weight:700;font-size:11px;text-decoration:none;display:inline-flex;align-items:center;gap:3px;background:#f0f9ff;border:1px solid #bae6fd;padding:2px 8px;border-radius:4px;">
-                <span>Track Package</span>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-              </a>
-            ` : ''}
           </div>
         </div>
       `;
@@ -1787,12 +1781,6 @@
                               <div style="font-size:12px;line-height:1.4;">
                                 <strong style="color:#0f172a;">${escapeHtml(o.fulfillment.courierName || 'Courier')}</strong><br />
                                 <code style="font-size:11.5px;background:#e2e8f0;padding:2px 6px;border-radius:4px;">${escapeHtml(o.fulfillment.trackingNumber)}</code>
-                                <div style="margin-top:4px;">
-                                  <a href="${o.fulfillment.trackingUrl || `https://www.google.com/search?q=${encodeURIComponent((o.fulfillment.courierName || '') + ' ' + o.fulfillment.trackingNumber)}`}" target="_blank" style="font-size:11px;font-weight:700;color:#2563eb;text-decoration:none;display:inline-flex;align-items:center;gap:3px;">
-                                    <span>Track Package</span>
-                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                                  </a>
-                                </div>
                               </div>
                             ` : `
                               ${isConfirmed ? `
@@ -2336,6 +2324,12 @@
         </div>
 
         <div class="form-group">
+          <label class="form-label">Product Tagline / Short Description</label>
+          <input type="text" id="edit-prod-short-desc" class="form-input" value="${escapeHtml(p.shortDescription || '')}" placeholder="e.g. Pool-tested performance" />
+          <div style="font-size:11px;color:#64748b;margin-top:3px;">Displayed directly below the product title on product detail and catalog pages</div>
+        </div>
+
+        <div class="form-group">
           <label class="form-label">Product Description</label>
           <textarea id="edit-prod-desc" class="form-textarea" rows="3">${escapeHtml(p.description || '')}</textarea>
         </div>
@@ -2367,6 +2361,7 @@
         const name = document.getElementById('edit-prod-name').value.trim();
         const category = document.getElementById('edit-prod-cat').value;
         const isPublished = document.getElementById('edit-prod-status').value === 'published';
+        const shortDescription = document.getElementById('edit-prod-short-desc').value.trim();
         const description = document.getElementById('edit-prod-desc').value.trim();
 
         try {
@@ -2379,6 +2374,7 @@
               salePrice,
               stockQuantity,
               isPublished,
+              shortDescription,
               description
             })
           });
@@ -3062,14 +3058,28 @@
       const custs = res.data || [];
       c.innerHTML = `
         <div class="card">
-          <div class="card-header"><div class="card-title">Registered Swimmers (${custs.length})</div></div>
+          <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="card-title">Registered Swimmers (${custs.length})</div>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.loadCustomers ? window.loadCustomers() : loadCustomers()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+              <span>Refresh</span>
+            </button>
+          </div>
           <div class="card-body" style="padding:0;">
             <div class="table-responsive">
               <table>
-                <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Status</th></tr></thead>
+                <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Status</th><th>Joined</th></tr></thead>
                 <tbody>
-                  ${custs.length === 0 ? '<tr><td colspan="4" style="text-align:center;padding:24px;color:#888;">No customers registered yet.</td></tr>' :
-                    custs.map(cu => `<tr><td><strong>${cu.displayName || 'Swimmer'}</strong></td><td>${cu.email}</td><td>${cu.phoneNumber || '—'}</td><td><span class="badge badge-active">${cu.status || 'Active'}</span></td></tr>`).join('')}
+                  ${custs.length === 0 ? '<tr><td colspan="5" style="text-align:center;padding:24px;color:#888;">No customers registered yet.</td></tr>' :
+                    custs.map(cu => `
+                      <tr>
+                        <td><strong>${escapeHtml(cu.displayName || 'Swimmer')}</strong></td>
+                        <td>${escapeHtml(cu.email || '—')}</td>
+                        <td>${escapeHtml(cu.phoneNumber || '—')}</td>
+                        <td><span class="badge badge-active">${escapeHtml(cu.status || 'Active')}</span></td>
+                        <td style="color:#64748b;font-size:12px;">${formatDateTime(cu.createdAt, true)}</td>
+                      </tr>
+                    `).join('')}
                 </tbody>
               </table>
             </div>
@@ -3082,6 +3092,7 @@
       hideTopLoader();
     }
   }
+  window.loadCustomers = loadCustomers;
 
   // --- ENQUIRIES ---
   async function loadEnquiries() {

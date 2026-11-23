@@ -64,6 +64,12 @@ class ReviewService {
     });
     return { reviewId, status };
   }
+
+  async deleteReview(reviewId) {
+    const db = getDb();
+    await db.collection('reviews').doc(reviewId).delete();
+    return { reviewId, deleted: true };
+  }
 }
 
 module.exports = new ReviewService();

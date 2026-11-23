@@ -18,24 +18,108 @@ class AuthController {
 
   async login(req, res, next) {
     try {
-      const { idToken } = req.body;
-      if (!idToken) {
-        return sendError(res, 'TOKEN_REQUIRED', 'Firebase ID token is required.', null, 400);
-      }
-
+      const { idToken, email, password } = req.body;
       const auth = getAuth();
       const db = getDb();
+
+      // 1. Password-based Customer Sign-In
+      if (email && password) {
+        const cleanEmail = email.toLowerCase().trim();
+        const bootstrapAdmin = (config.adminBootstrap && config.adminBootstrap.email ? config.adminBootstrap.email : 'admin@lane4swim.in').toLowerCase().trim();
+
+        if (cleanEmail === bootstrapAdmin || cleanEmail.startsWith('admin_') || cleanEmail.startsWith('admin@')) {
+          return sendError(
+            res,
+            'ADMIN_ACCESS_RESTRICTED',
+            'Administrator accounts cannot sign in to the customer storefront. Please access the Admin Portal at /admin/.',
+            null,
+            403
+          );
+        }
+
+        if (db) {
+          const adminSnap = await db.collection('adminUsers').where('email', '==', cleanEmail).limit(1).get();
+          if (!adminSnap.empty) {
+            return sendError(
+              res,
+              'ADMIN_ACCESS_RESTRICTED',
+              'Administrator accounts cannot sign in to the customer storefront. Please access the Admin Portal at /admin/.',
+              null,
+              403
+            );
+          }
+
+          const userSnap = await db.collection('users').where('email', '==', cleanEmail).limit(1).get();
+          if (userSnap.empty) {
+            return sendError(res, 'USER_NOT_FOUND', 'No customer account found with this email. Please create an account.', null, 401);
+          }
+
+          const userDoc = userSnap.docs[0];
+          const userData = userDoc.data();
+
+          if (userData.status === 'suspended' || userData.status === 'deactivated') {
+            return sendError(res, 'ACCOUNT_DEACTIVATED', 'Your account has been deactivated. Please contact support.', null, 403);
+          }
+
+          const inputHash = crypto.createHash('sha256').update(password).digest('hex');
+          if (userData.passwordHash && userData.passwordHash !== inputHash) {
+            return sendError(res, 'INVALID_CREDENTIALS', 'Invalid email address or password. Please try again.', null, 401);
+          }
+
+          const custToken = 'cust_token_' + Buffer.from(JSON.stringify({ uid: userDoc.id, email: cleanEmail, time: Date.now() })).toString('base64');
+          return sendSuccess(res, {
+            token: custToken,
+            user: {
+              uid: userDoc.id,
+              email: cleanEmail,
+              displayName: userData.displayName || '',
+              phoneNumber: userData.phoneNumber || '',
+              role: 'customer'
+            }
+          }, 'Signed in successfully.');
+        }
+      }
+
+      if (!idToken) {
+        return sendError(res, 'TOKEN_REQUIRED', 'Email/password or Firebase ID token is required.', null, 400);
+      }
+
       const decoded = await auth.verifyIdToken(idToken);
-      const profile = await authService.getCustomerProfile(decoded.uid);
+      const userEmail = (decoded.email || email || '').toLowerCase().trim();
+      let profile = await authService.getCustomerProfile(decoded.uid);
+      if (!profile && db && userEmail) {
+        // Try looking up by email in users collection
+        const existingSnap = await db.collection('users').where('email', '==', userEmail).limit(1).get();
+        if (!existingSnap.empty) {
+          profile = existingSnap.docs[0].data();
+        }
+      }
+
+      // If user document does not exist yet in users collection, create it immediately
+      if (!profile && db && userEmail) {
+        profile = {
+          uid: decoded.uid,
+          email: userEmail,
+          displayName: decoded.name || decoded.displayName || (userEmail.split('@')[0] ? userEmail.split('@')[0].charAt(0).toUpperCase() + userEmail.split('@')[0].slice(1) : 'Swimmer'),
+          phoneNumber: decoded.phoneNumber || '',
+          emailVerified: Boolean(decoded.email_verified),
+          role: 'customer',
+          status: 'active',
+          totalOrdersCount: 0,
+          totalSpendPaise: 0,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        await db.collection('users').doc(decoded.uid).set(profile, { merge: true });
+      }
 
       const role = decoded.role || (profile && profile.role) || 'customer';
-      const email = (decoded.email || '').toLowerCase().trim();
       const bootstrapAdmin = (config.adminBootstrap && config.adminBootstrap.email ? config.adminBootstrap.email : 'admin@lane4swim.in').toLowerCase().trim();
 
       // Check if user is an administrator
-      let isAdminAccount = role === 'admin' || role === 'super_admin' || role === 'order_manager' || role === 'product_manager' || role === 'inventory_manager' || email.startsWith('admin_') || email === bootstrapAdmin;
-      if (!isAdminAccount && db && email) {
-        const adminSnap = await db.collection('adminUsers').where('email', '==', email).limit(1).get();
+      let isAdminAccount = role === 'admin' || role === 'super_admin' || role === 'order_manager' || role === 'product_manager' || role === 'inventory_manager' || userEmail.startsWith('admin_') || userEmail === bootstrapAdmin;
+      if (!isAdminAccount && db && userEmail) {
+        const adminSnap = await db.collection('adminUsers').where('email', '==', userEmail).limit(1).get();
         if (!adminSnap.empty) {
           isAdminAccount = true;
         }

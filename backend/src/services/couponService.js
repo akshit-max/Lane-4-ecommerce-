@@ -103,6 +103,9 @@ class CouponService {
       discountPaise = Math.min(coupon.discountValue, subtotalPaise);
     }
 
+    // Absolute cap: discount cannot exceed subtotal
+    discountPaise = Math.min(discountPaise, subtotalPaise);
+
     return {
       isValid: true,
       code: cleanCode,

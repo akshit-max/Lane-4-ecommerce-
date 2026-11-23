@@ -369,12 +369,33 @@ class AdminController {
     try {
       const db = getDb();
       const snap = await db.collection('users').get();
-      let customers = snap.docs.map(d => d.data());
+      let customers = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+
+      // Filter out administrator accounts
+      customers = customers.filter(c => {
+        const email = (c.email || '').toLowerCase();
+        return !email.startsWith('admin_') && !email.startsWith('admin@') && c.role !== 'admin' && c.role !== 'super_admin';
+      });
+
+      // Sort newest customers at the top
+      customers.sort((a, b) => {
+        const getT = (doc) => {
+          if (!doc || !doc.createdAt) return 0;
+          if (typeof doc.createdAt.toMillis === 'function') return doc.createdAt.toMillis();
+          if (doc.createdAt._seconds !== undefined) return doc.createdAt._seconds * 1000;
+          if (doc.createdAt.seconds !== undefined) return doc.createdAt.seconds * 1000;
+          const t = new Date(doc.createdAt).getTime();
+          return isNaN(t) ? 0 : t;
+        };
+        return getT(b) - getT(a);
+      });
+
       if (req.query.search) {
         const s = req.query.search.toLowerCase().trim();
         customers = customers.filter(c =>
           (c.email && c.email.toLowerCase().includes(s)) ||
-          (c.displayName && c.displayName.toLowerCase().includes(s))
+          (c.displayName && c.displayName.toLowerCase().includes(s)) ||
+          (c.phoneNumber && c.phoneNumber.includes(s))
         );
       }
       return sendSuccess(res, customers);
@@ -417,6 +438,15 @@ class AdminController {
       const { status } = req.body;
       const result = await reviewService.moderateReview(req.params.id, status, req.user);
       return sendSuccess(res, result, `Review ${status}.`);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async deleteReview(req, res, next) {
+    try {
+      const result = await reviewService.deleteReview(req.params.id);
+      return sendSuccess(res, result, 'Review deleted successfully.');
     } catch (err) {
       next(err);
     }

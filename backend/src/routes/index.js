@@ -30,6 +30,7 @@ router.use('/payments', paymentRoutes);
 router.use('/payment-settings', paymentRoutes);
 router.use('/coupons', couponRoutes);
 router.use('/shipping', shippingRoutes);
+router.use('/customer', customerRoutes);
 router.use('/customers', customerRoutes);
 router.use('/enquiries', enquiryRoutes);
 router.use('/newsletter', newsletterRoutes);

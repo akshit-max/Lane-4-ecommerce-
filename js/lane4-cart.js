@@ -626,6 +626,15 @@
     const form = document.querySelector('form.w-commerce-commerceaddtocartform, [data-node-type="commerce-add-to-cart-form"]');
     if (!form) return;
 
+    // Permanently disable Webflow legacy error banner
+    if (!document.getElementById('lane4-cart-error-override')) {
+      const s = document.createElement('style');
+      s.id = 'lane4-cart-error-override';
+      s.textContent = '.w-commerce-commerceaddtocarterror, [data-node-type="commerce-add-to-cart-error"] { display: none !important; }';
+      document.head.appendChild(s);
+    }
+    document.querySelectorAll('.w-commerce-commerceaddtocarterror, [data-node-type="commerce-add-to-cart-error"]').forEach(el => el.remove());
+
     const path = window.location.pathname;
     const match = path.match(/\/product\/([a-zA-Z0-9-]+)(?:\.html)?/);
     const slug = match ? match[1] : null;
@@ -636,6 +645,36 @@
       const res = await window.lane4ApiRequest(`/products/${encodeURIComponent(slug)}`);
       const product = res.data;
       if (!product) return;
+
+      // Real-time product details hydration
+      const nameEl = document.querySelector('.pd-heading .title-h4');
+      if (nameEl && product.name) nameEl.textContent = product.name;
+
+      const shortDescEl = document.querySelector('.pd-heading .paragraph-18px');
+      if (shortDescEl && product.shortDescription) shortDescEl.textContent = product.shortDescription;
+
+      const pricePaise = product.salePricePaise || product.regularPricePaise;
+      const priceText = window.LANE4 ? `${window.LANE4.formatINR(pricePaise)} INR` : `₹ ${(pricePaise/100).toFixed(2)} INR`;
+      const priceEl = document.querySelector('.pd-heading .title-h6, .pd-heading h6, h6[data-wf-sku-bindings]');
+      if (priceEl) priceEl.textContent = priceText;
+
+      const descEl = document.querySelector('.pd-description .paragraph-20px');
+      if (descEl && product.description) descEl.textContent = product.description;
+
+      const breadcrumbEl = document.querySelector('.product-breadcrumbs a[aria-current] .paragraph-14px');
+      if (breadcrumbEl && product.name) breadcrumbEl.textContent = product.name;
+      if (product.name) document.title = `${product.name} | The Lane4 Performance Store`;
+
+      // Update primary product images if available
+      if (product.images && product.images[0] && product.images[0].url) {
+        let imgUrl = product.images[0].url;
+        if (window.LANE4 && window.LANE4.resolveAssetUrl) imgUrl = window.LANE4.resolveAssetUrl(imgUrl);
+        if (!imgUrl.startsWith('http') && !imgUrl.startsWith('/') && !imgUrl.startsWith('../')) imgUrl = '../' + imgUrl;
+        document.querySelectorAll('.image-gallery .product-img, .product-img').forEach(img => {
+          img.src = imgUrl;
+          if (img.hasAttribute('srcset')) img.removeAttribute('srcset');
+        });
+      }
 
       // Dynamic variants dropdown
       if (product.variants && product.variants.length > 0) {
@@ -686,10 +725,11 @@
           return;
         }
 
-        const submitBtn = form.querySelector('input[type="submit"], button[type="submit"]');
-        const origVal = submitBtn ? submitBtn.value : 'Buy Now Online';
+        const submitBtn = form.querySelector('button, input[type="submit"], input[type="button"]');
+        const origVal = submitBtn ? (submitBtn.textContent || submitBtn.value) : 'Buy Now Online';
         if (submitBtn) {
-          submitBtn.value = 'Adding to cart...';
+          if (submitBtn.tagName === 'INPUT') submitBtn.value = 'Adding to cart...';
+          else submitBtn.textContent = 'Adding to cart...';
           submitBtn.disabled = true;
         }
 
@@ -716,22 +756,48 @@
           alert(err.message || 'Unable to add product to cart.');
         } finally {
           if (submitBtn) {
-            submitBtn.value = origVal;
+            if (submitBtn.tagName === 'INPUT') submitBtn.value = origVal;
+            else submitBtn.textContent = origVal;
             submitBtn.disabled = false;
           }
         }
       };
 
-      form.addEventListener('submit', handleAddToCart, true);
+      // Convert submit button to type="button" to prevent Webflow submit hijacking
+      const submitInput = form.querySelector('input[type="submit"]');
+      let buyBtn;
+      if (submitInput) {
+        buyBtn = document.createElement('button');
+        buyBtn.type = 'button';
+        buyBtn.className = submitInput.className;
+        buyBtn.id = 'lane4-buy-now-btn';
+        buyBtn.textContent = submitInput.value || 'Buy Now Online';
+        buyBtn.style.cursor = 'pointer';
+        submitInput.parentNode.replaceChild(buyBtn, submitInput);
+      } else {
+        buyBtn = form.querySelector('button, [data-node-type="commerce-add-to-cart-button"]');
+        if (buyBtn) buyBtn.type = 'button';
+      }
+
+      form.removeAttribute('data-node-type');
+      form.onsubmit = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleAddToCart(e);
+        return false;
+      };
+
+      if (buyBtn) {
+        buyBtn.addEventListener('click', handleAddToCart);
+      }
       form.addEventListener('click', (e) => {
-        const clickedBuy = e.target.closest('.buy-now-wrapper, .w-commerce-commerceaddtocartbutton, [data-node-type="commerce-add-to-cart-button"], input[type="submit"]');
+        const clickedBuy = e.target.closest('.buy-now-wrapper, .w-commerce-commerceaddtocartbutton, #lane4-buy-now-btn');
         if (clickedBuy) {
           e.preventDefault();
           e.stopPropagation();
-          e.stopImmediatePropagation();
           handleAddToCart(e);
         }
-      }, true);
+      });
     } catch (err) {
       console.warn('Could not load dynamic product variants:', err);
     }
