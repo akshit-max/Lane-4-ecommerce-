@@ -220,6 +220,39 @@ window.INDIAN_STATES = [
         outline: none;
         box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
       }
+      .lane4-auth-password-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+        width: 100%;
+      }
+      .lane4-auth-password-wrap .lane4-auth-input {
+        padding-right: 44px;
+      }
+      .lane4-auth-pass-toggle {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: transparent;
+        border: none;
+        padding: 6px;
+        cursor: pointer;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        transition: color 0.15s, background-color 0.15s;
+      }
+      .lane4-auth-pass-toggle:hover {
+        color: #0f172a;
+        background-color: #f1f5f9;
+      }
+      .lane4-auth-pass-toggle:focus {
+        outline: none;
+        color: #0f172a;
+      }
       .lane4-auth-submit-btn {
         width: 100%;
         background: #000000;
@@ -342,7 +375,19 @@ window.INDIAN_STATES = [
               <label class="lane4-auth-label" style="margin-bottom:0;">Password</label>
               <a id="lane4-forgot-link" class="lane4-auth-link" style="font-size:12px;">Forgot password?</a>
             </div>
-            <input type="password" name="password" required class="lane4-auth-input" placeholder="••••••••" autocomplete="current-password" />
+            <div class="lane4-auth-password-wrap">
+              <input type="password" name="password" required class="lane4-auth-input" placeholder="••••••••" autocomplete="current-password" />
+              <button type="button" class="lane4-auth-pass-toggle" aria-label="Show password" title="Show password">
+                <svg class="eye-show" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg class="eye-hide" style="display:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
           </div>
           <button type="submit" class="lane4-auth-submit-btn">
             <span>SIGN IN</span>
@@ -366,7 +411,19 @@ window.INDIAN_STATES = [
           </div>
           <div class="lane4-auth-form-group">
             <label class="lane4-auth-label">Create Password</label>
-            <input type="password" name="password" required minlength="6" class="lane4-auth-input" placeholder="Minimum 6 characters" autocomplete="new-password" />
+            <div class="lane4-auth-password-wrap">
+              <input type="password" name="password" required minlength="6" class="lane4-auth-input" placeholder="Minimum 6 characters" autocomplete="new-password" />
+              <button type="button" class="lane4-auth-pass-toggle" aria-label="Show password" title="Show password">
+                <svg class="eye-show" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg class="eye-hide" style="display:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
           </div>
           <button type="submit" class="lane4-auth-submit-btn">
             <span>CREATE ACCOUNT</span>
@@ -589,9 +646,51 @@ window.INDIAN_STATES = [
       document.getElementById('lane4-account-panel').style.display = 'block';
     };
 
+    // Password visibility toggles
+    function resetPasswordFields(scope = wrapper) {
+      if (!scope) return;
+      scope.querySelectorAll('.lane4-auth-password-wrap').forEach(wrap => {
+        const input = wrap.querySelector('input');
+        const showIcon = wrap.querySelector('.eye-show');
+        const hideIcon = wrap.querySelector('.eye-hide');
+        const btn = wrap.querySelector('.lane4-auth-pass-toggle');
+        if (input) input.type = 'password';
+        if (showIcon) showIcon.style.display = 'block';
+        if (hideIcon) hideIcon.style.display = 'none';
+        if (btn) {
+          btn.setAttribute('aria-label', 'Show password');
+          btn.setAttribute('title', 'Show password');
+        }
+      });
+    }
+
+    wrapper.querySelectorAll('.lane4-auth-pass-toggle').forEach(btn => {
+      btn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const wrap = btn.closest('.lane4-auth-password-wrap');
+        const input = wrap ? wrap.querySelector('input') : null;
+        if (!input) return;
+
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+
+        const showIcon = btn.querySelector('.eye-show');
+        const hideIcon = btn.querySelector('.eye-hide');
+        if (showIcon && hideIcon) {
+          showIcon.style.display = isPassword ? 'none' : 'block';
+          hideIcon.style.display = isPassword ? 'block' : 'none';
+        }
+        const newLabel = isPassword ? 'Hide password' : 'Show password';
+        btn.setAttribute('aria-label', newLabel);
+        btn.setAttribute('title', newLabel);
+      };
+    });
+
     // Tab switching
     wrapper.querySelectorAll('.lane4-auth-tab-btn').forEach(btn => {
       btn.onclick = () => {
+        resetPasswordFields(wrapper);
         wrapper.querySelectorAll('.lane4-auth-tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         const tab = btn.getAttribute('data-tab');
@@ -748,7 +847,7 @@ window.INDIAN_STATES = [
 
       // Client-side guard against admin logins in customer portal
       if (email.startsWith('admin_') || email.startsWith('admin@') || email.includes('admin@lane4swim.in')) {
-        showAlert('Administrator accounts cannot sign in to the customer storefront. Please access the Admin Portal at /admin/.', 'error');
+        showAlert('Administrator accounts cannot sign in to the customer storefront.', 'error');
         return;
       }
 
@@ -815,7 +914,7 @@ window.INDIAN_STATES = [
       const phone = form.phone.value.trim();
 
       if (email.startsWith('admin_') || email.startsWith('admin@') || email.includes('admin@lane4swim.in')) {
-        showAlert('Administrator accounts cannot be registered on customer storefront. Please access the Admin Portal at /admin/.', 'error');
+        showAlert('Administrator accounts cannot be registered on the customer storefront.', 'error');
         return;
       }
 
@@ -911,6 +1010,21 @@ window.INDIAN_STATES = [
     wrapper.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
+
+    // Ensure password inputs are securely masked when modal opens
+    wrapper.querySelectorAll('.lane4-auth-password-wrap').forEach(wrap => {
+      const input = wrap.querySelector('input');
+      const showIcon = wrap.querySelector('.eye-show');
+      const hideIcon = wrap.querySelector('.eye-hide');
+      const btn = wrap.querySelector('.lane4-auth-pass-toggle');
+      if (input) input.type = 'password';
+      if (showIcon) showIcon.style.display = 'block';
+      if (hideIcon) hideIcon.style.display = 'none';
+      if (btn) {
+        btn.setAttribute('aria-label', 'Show password');
+        btn.setAttribute('title', 'Show password');
+      }
+    });
 
     const user = window.LANE4.getUser();
     const tabs = document.getElementById('lane4-auth-tabs');
@@ -1604,7 +1718,23 @@ window.INDIAN_STATES = [
 
   function closeAuthModal() {
     const wrapper = document.getElementById('lane4-auth-modal-wrapper');
-    if (wrapper) wrapper.style.display = 'none';
+    if (wrapper) {
+      wrapper.style.display = 'none';
+      // Reset password visibility on close
+      wrapper.querySelectorAll('.lane4-auth-password-wrap').forEach(wrap => {
+        const input = wrap.querySelector('input');
+        const showIcon = wrap.querySelector('.eye-show');
+        const hideIcon = wrap.querySelector('.eye-hide');
+        const btn = wrap.querySelector('.lane4-auth-pass-toggle');
+        if (input) input.type = 'password';
+        if (showIcon) showIcon.style.display = 'block';
+        if (hideIcon) hideIcon.style.display = 'none';
+        if (btn) {
+          btn.setAttribute('aria-label', 'Show password');
+          btn.setAttribute('title', 'Show password');
+        }
+      });
+    }
     document.body.style.overflow = '';
     document.documentElement.style.overflow = '';
   }

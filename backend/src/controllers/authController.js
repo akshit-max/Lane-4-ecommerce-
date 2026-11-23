@@ -31,7 +31,7 @@ class AuthController {
           return sendError(
             res,
             'ADMIN_ACCESS_RESTRICTED',
-            'Administrator accounts cannot sign in to the customer storefront. Please access the Admin Portal at /admin/.',
+            'Administrator accounts cannot sign in to the customer storefront.',
             null,
             403
           );
@@ -43,7 +43,7 @@ class AuthController {
             return sendError(
               res,
               'ADMIN_ACCESS_RESTRICTED',
-              'Administrator accounts cannot sign in to the customer storefront. Please access the Admin Portal at /admin/.',
+              'Administrator accounts cannot sign in to the customer storefront.',
               null,
               403
             );
@@ -130,7 +130,7 @@ class AuthController {
         return sendError(
           res,
           'ADMIN_ACCESS_RESTRICTED',
-          'Administrator accounts cannot sign in to the customer storefront. Please access the Admin Portal at /admin/.',
+          'Administrator accounts cannot sign in to the customer storefront.',
           null,
           403
         );

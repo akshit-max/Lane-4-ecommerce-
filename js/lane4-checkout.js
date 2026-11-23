@@ -57,15 +57,15 @@
     try {
       cartRes = await window.lane4ApiRequest(`/cart?guestId=${encodeURIComponent(guestId)}`);
     } catch (e) {
-      alert('Unable to load your cart. Please return to the shop.');
-      window.location.href = 'shop.html';
+      console.warn('Unable to load cart:', e);
+      window.location.replace('index.htm');
       return;
     }
 
     const cart = cartRes.data || { items: [] };
     if (!cart.items || cart.items.length === 0) {
-      alert('Your cart is empty! Please add products before checking out.');
-      window.location.href = 'shop.html';
+      // Cart is empty (or on refresh after placing order) -> redirect smoothly to home page
+      window.location.replace('index.htm');
       return;
     }
 
@@ -130,9 +130,10 @@
       }
     }
 
-    // 4. Setup State & City Dropdowns and Saved Addresses
+    // 4. Setup State & City Dropdowns, Saved Addresses and strict input restrictions
     setupStateAndCityDropdowns();
     setupSavedAddressesDropdown();
+    setupInputRestrictions();
 
     // 5. Calculate initial quote & render items and summary
     await recalculateQuote();
@@ -156,23 +157,23 @@
 
     // Populate states without pre-selecting any default
     const states = Object.keys(INDIAN_STATES_AND_CITIES).sort();
-    stateSelect.innerHTML = '<option value="" disabled selected>-- Select State / UT * --</option>' +
+    stateSelect.innerHTML = '<option value="" disabled selected>Select State / UT</option>' +
       states.map(st => `<option value="${st}">${st}</option>`).join('');
 
     // City starts disabled with placeholder until state is chosen
-    citySelect.innerHTML = '<option value="" disabled selected>-- Select State First --</option>';
+    citySelect.innerHTML = '<option value="" disabled selected>Select State first</option>';
     citySelect.disabled = true;
 
     function updateCities(selectedState, preserveCity = null) {
       if (!selectedState) {
-        citySelect.innerHTML = '<option value="" disabled selected>-- Select State First --</option>';
+        citySelect.innerHTML = '<option value="" disabled selected>Select State first</option>';
         citySelect.disabled = true;
         if (customCityInput) customCityInput.style.display = 'none';
         return;
       }
       citySelect.disabled = false;
       const cities = INDIAN_STATES_AND_CITIES[selectedState] || ["Other"];
-      citySelect.innerHTML = '<option value="" disabled selected>-- Select City * --</option>' +
+      citySelect.innerHTML = '<option value="" disabled selected>Select City</option>' +
         cities.map(ct => `<option value="${ct}">${ct}</option>`).join('');
 
       if (preserveCity && cities.includes(preserveCity)) {
@@ -190,7 +191,7 @@
         updateCities(st);
         recalculateQuote();
       } else {
-        citySelect.innerHTML = '<option value="" disabled selected>-- Select State First --</option>';
+        citySelect.innerHTML = '<option value="" disabled selected>Select State first</option>';
         citySelect.disabled = true;
         if (customCityInput) customCityInput.style.display = 'none';
       }
@@ -251,8 +252,8 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             <span style="font-size:12px;font-weight:600;color:#0f172a;text-transform:uppercase;letter-spacing:0.5px;">Deliver to Saved Address</span>
           </div>
-          <select id="lane4-saved-addr-select" style="width:100%;padding:9px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;font-family:inherit;background:#ffffff;font-weight:600;color:#0f172a;">
-            <option value="">-- Choose a Saved Delivery Address (or fill below) --</option>
+          <select id="lane4-saved-addr-select" class="lane4-checkout-select" style="margin-top:6px;">
+            <option value="">Choose a Saved Delivery Address (or fill below)</option>
             ${addresses.map((a, i) => `<option value="${i}">${a.addressee} — ${a.addressLine1}, ${a.city} (${a.postalCode})</option>`).join('')}
           </select>
         `;
@@ -702,6 +703,151 @@
     }
   }
 
+  function clearFieldError(inputEl) {
+    if (!inputEl) return;
+    inputEl.classList.remove('lane4-input-has-error');
+    inputEl.style.borderColor = '#cbd5e1';
+    inputEl.style.backgroundColor = '';
+    const parent = inputEl.parentElement;
+    if (parent) {
+      const errEl = parent.querySelector('.lane4-field-inline-error');
+      if (errEl) errEl.remove();
+    }
+  }
+
+  function clearAllFieldErrors() {
+    document.querySelectorAll('.lane4-field-inline-error').forEach(e => e.remove());
+    document.querySelectorAll('#lane4-checkout-form-alert').forEach(e => e.remove());
+    document.querySelectorAll('.lane4-input-has-error').forEach(el => {
+      el.classList.remove('lane4-input-has-error');
+      el.style.borderColor = '#cbd5e1';
+      el.style.backgroundColor = '';
+    });
+  }
+
+  function setFieldError(inputEl, message) {
+    if (!inputEl) return;
+    inputEl.classList.add('lane4-input-has-error');
+    inputEl.style.borderColor = '#ef4444';
+    inputEl.style.backgroundColor = '#fff5f5';
+
+    const parent = inputEl.parentElement;
+    if (parent) {
+      let errEl = parent.querySelector('.lane4-field-inline-error');
+      if (!errEl) {
+        errEl = document.createElement('div');
+        errEl.className = 'lane4-field-inline-error';
+        errEl.style.cssText = 'color:#dc2626;font-size:12px;font-weight:600;margin-top:4px;display:flex;align-items:center;gap:4px;';
+        parent.appendChild(errEl);
+      }
+      errEl.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> <span>${message}</span>`;
+    }
+
+    inputEl.addEventListener('input', () => clearFieldError(inputEl), { once: true });
+    inputEl.addEventListener('change', () => clearFieldError(inputEl), { once: true });
+  }
+
+  function showCheckoutErrorBanner(title, messages, focusEl = null) {
+    let alertBox = document.getElementById('lane4-checkout-form-alert');
+    const placeOrderBtn = document.getElementById('lane4-place-order-btn') || document.querySelector('.w-commerce-commercecheckoutplaceorderbutton, .submit-order');
+    const targetParent = placeOrderBtn ? placeOrderBtn.parentElement : document.querySelector('form');
+
+    if (!alertBox && targetParent) {
+      alertBox = document.createElement('div');
+      alertBox.id = 'lane4-checkout-form-alert';
+      alertBox.style.cssText = 'background:#fef2f2;border:1.5px solid #f87171;border-radius:8px;padding:14px 18px;margin-bottom:18px;color:#991b1b;box-shadow:0 2px 8px rgba(220,38,38,0.06);font-family:inherit;';
+      targetParent.insertBefore(alertBox, placeOrderBtn || targetParent.firstChild);
+    }
+
+    if (alertBox) {
+      alertBox.style.display = 'block';
+      const listHtml = Array.isArray(messages)
+        ? `<ul style="margin:6px 0 0 16px;padding:0;font-size:12.5px;color:#b91c1c;line-height:1.5;">${messages.map(m => `<li>${m}</li>`).join('')}</ul>`
+        : `<div style="font-size:13px;color:#b91c1c;margin-top:4px;">${messages}</div>`;
+
+      alertBox.innerHTML = `
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.2" style="flex-shrink:0;margin-top:2px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          <div style="flex:1;">
+            <div style="font-weight:700;font-size:13.5px;color:#991b1b;">${title}</div>
+            ${listHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    if (focusEl) {
+      try {
+        focusEl.focus();
+        focusEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } catch (_) {}
+    } else if (alertBox) {
+      alertBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
+  function setupInputRestrictions() {
+    const pinInputs = document.querySelectorAll('input.w-commerce-commercecheckoutshippingzippostalcode, #lane4-checkout-zip, input[name="address_zip"]');
+    pinInputs.forEach(pinEl => {
+      pinEl.setAttribute('maxlength', '6');
+      pinEl.setAttribute('minlength', '6');
+      pinEl.setAttribute('inputmode', 'numeric');
+      pinEl.setAttribute('pattern', '[0-9]{6}');
+      pinEl.setAttribute('autocomplete', 'postal-code');
+
+      pinEl.addEventListener('input', (e) => {
+        const cleaned = e.target.value.replace(/\D/g, '').slice(0, 6);
+        if (e.target.value !== cleaned) e.target.value = cleaned;
+        clearFieldError(pinEl);
+      });
+      pinEl.addEventListener('keydown', (e) => {
+        if (['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter', 'Home', 'End'].includes(e.key) ||
+            e.ctrlKey || e.metaKey) return;
+        if (!/^[0-9]$/.test(e.key)) {
+          e.preventDefault();
+        }
+      });
+      pinEl.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text');
+        pinEl.value = text.replace(/\D/g, '').slice(0, 6);
+        clearFieldError(pinEl);
+      });
+    });
+
+    const utrEl = document.getElementById('lane4-utr-input');
+    if (utrEl) {
+      utrEl.setAttribute('maxlength', '12');
+      utrEl.setAttribute('inputmode', 'numeric');
+      utrEl.addEventListener('input', (e) => {
+        const cleaned = e.target.value.replace(/\D/g, '').slice(0, 12);
+        if (e.target.value !== cleaned) e.target.value = cleaned;
+        clearFieldError(utrEl);
+      });
+      utrEl.addEventListener('keydown', (e) => {
+        if (['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'].includes(e.key) || e.ctrlKey || e.metaKey) return;
+        if (!/^[0-9]$/.test(e.key)) e.preventDefault();
+      });
+      utrEl.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text');
+        utrEl.value = text.replace(/\D/g, '').slice(0, 12);
+        clearFieldError(utrEl);
+      });
+    }
+
+    const phoneEl = document.getElementById('lane4-checkout-phone');
+    if (phoneEl) {
+      phoneEl.setAttribute('maxlength', '10');
+      phoneEl.setAttribute('inputmode', 'numeric');
+      phoneEl.addEventListener('input', (e) => {
+        const cleaned = e.target.value.replace(/\D/g, '').slice(0, 10);
+        if (e.target.value !== cleaned) e.target.value = cleaned;
+        clearFieldError(phoneEl);
+      });
+    }
+  }
+
   function setupPlaceOrderButton() {
     const placeOrderBtn = document.getElementById('lane4-place-order-btn') || document.querySelector('.w-commerce-commercecheckoutplaceorderbutton, .submit-order');
     if (!placeOrderBtn) return;
@@ -710,6 +856,8 @@
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
+
+      clearAllFieldErrors();
 
       // Enforce customer authentication before placing order
       const user = window.LANE4.getUser();
@@ -720,82 +868,85 @@
             window.LANE4_AUTH.showAlert('Please sign in or create an account to complete checkout and place your order.', 'error');
           }
         }
-        alert('Please sign in or create an account to complete checkout and place your order.');
+        showCheckoutErrorBanner(
+          'Sign In Required',
+          'Please sign in or create a swimmer account to complete checkout and submit payment.'
+        );
         return;
       }
 
-      // Gather form values
-      const email = document.querySelector('input[name="email"], #wf-ecom-email')?.value.trim();
-      const name = document.querySelector('input.w-commerce-commercecheckoutshippingfullname, input[name="name"]')?.value.trim();
-      const line1 = document.querySelector('input.w-commerce-commercecheckoutshippingstreetaddress, input[name="address_line1"]')?.value.trim();
-      const line2 = document.querySelector('input.w-commerce-commercecheckoutshippingstreetaddressoptional, input[name="address_line2"]')?.value.trim() || '';
-
+      // Gather form inputs & elements
+      const emailEl = document.querySelector('input[name="email"], #wf-ecom-email');
+      const nameEl = document.querySelector('input.w-commerce-commercecheckoutshippingfullname, input[name="name"]');
+      const line1El = document.querySelector('input.w-commerce-commercecheckoutshippingstreetaddress, input[name="address_line1"]');
+      const line2El = document.querySelector('input.w-commerce-commercecheckoutshippingstreetaddressoptional, input[name="address_line2"]');
       const stateSelect = document.getElementById('lane4-checkout-state');
-      const state = stateSelect ? stateSelect.value.trim() : (document.querySelector('input[name="address_state"]')?.value.trim() || '');
-
       const citySelect = document.getElementById('lane4-checkout-city-select');
       const customCityInput = document.getElementById('lane4-checkout-city-custom');
+      const pinEl = document.querySelector('input.w-commerce-commercecheckoutshippingzippostalcode, #lane4-checkout-zip, input[name="address_zip"]');
+      const phoneEl = document.getElementById('lane4-checkout-phone');
+      const utrEl = document.getElementById('lane4-utr-input');
+      const fileInput = document.getElementById('lane4-screenshot-file');
+
+      const email = emailEl?.value.trim() || '';
+      const name = nameEl?.value.trim() || '';
+      const line1 = line1El?.value.trim() || '';
+      const line2 = line2El?.value.trim() || '';
+      const state = stateSelect ? stateSelect.value.trim() : (document.querySelector('input[name="address_state"]')?.value.trim() || '');
       let city = '';
       if (citySelect && citySelect.value === 'Other' && customCityInput) {
         city = customCityInput.value.trim();
       } else if (citySelect) {
         city = citySelect.value.trim();
       } else {
-        city = document.querySelector('input[name="address_city"]')?.value.trim();
+        city = document.querySelector('input[name="address_city"]')?.value.trim() || '';
       }
+      const postalCode = pinEl?.value.trim() || '';
+      const phone = phoneEl?.value.trim() || '';
+      const utr = utrEl?.value.trim() || '';
+      const screenshot = fileInput?.files ? fileInput.files[0] : null;
 
-      const postalCode = document.querySelector('input.w-commerce-commercecheckoutshippingzippostalcode, #lane4-checkout-zip, input[name="address_zip"]')?.value.trim();
-      const phone = document.getElementById('lane4-checkout-phone')?.value.trim() || '';
-      const utr = document.getElementById('lane4-utr-input')?.value.trim();
-      const fileInput = document.getElementById('lane4-screenshot-file');
-      const screenshot = fileInput?.files[0];
-
-      // Client Validations
+      // In-form Client Validations
+      const errors = [];
       const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
       if (!email || !emailRegex.test(email)) {
-        alert('Please enter a valid customer email address.');
-        document.querySelector('input[name="email"], #wf-ecom-email')?.focus();
-        return;
+        errors.push({ el: emailEl, name: 'Email Address', msg: 'Please enter a valid customer email address.' });
       }
       if (!name || name.length < 2) {
-        alert('Please enter your full name for delivery.');
-        document.querySelector('input[name="name"], .w-commerce-commercecheckoutshippingfullname')?.focus();
-        return;
+        errors.push({ el: nameEl, name: 'Full Name', msg: 'Please enter your full delivery name.' });
       }
-      if (!phone || (window.LANE4_VALIDATION ? !window.LANE4_VALIDATION.isValidIndianPhone(phone) : phone.length < 10)) {
-        alert('Please enter a valid 10-digit Indian mobile number for shipment delivery tracking.');
-        document.getElementById('lane4-checkout-phone')?.focus();
-        return;
+      if (!phone || (window.LANE4_VALIDATION ? !window.LANE4_VALIDATION.isValidIndianPhone(phone) : phone.length !== 10)) {
+        errors.push({ el: phoneEl, name: 'Mobile Phone', msg: 'Please enter a valid 10-digit Indian mobile number.' });
       }
       if (!line1) {
-        alert('Please enter your complete street address.');
-        document.querySelector('input[name="address_line1"], .w-commerce-commercecheckoutshippingstreetaddress')?.focus();
-        return;
+        errors.push({ el: line1El, name: 'Street Address', msg: 'Please enter your complete street address.' });
       }
       if (!state) {
-        alert('Please select your delivery state.');
-        stateSelect?.focus();
-        return;
+        errors.push({ el: stateSelect, name: 'State / UT', msg: 'Please select your delivery state.' });
       }
       if (!city) {
-        alert('Please select or enter your delivery city.');
-        (citySelect?.value === 'Other' ? customCityInput : citySelect)?.focus();
-        return;
+        errors.push({ el: citySelect?.value === 'Other' ? customCityInput : citySelect, name: 'City', msg: 'Please select or enter your delivery city.' });
       }
       if (!postalCode || !/^[1-9][0-9]{5}$/.test(postalCode)) {
-        alert('Please enter a valid 6-digit Indian PIN / postal code.');
-        document.querySelector('input[name="address_zip"], #lane4-checkout-zip')?.focus();
-        return;
+        errors.push({ el: pinEl, name: 'PIN / Postal Code', msg: 'PIN code must be exactly 6 digits (numbers only, e.g. 440001).' });
       }
       const utrClean = (utr || '').replace(/\s+/g, '');
       if (!utrClean || !/^\d{12}$/.test(utrClean)) {
-        alert('Please enter a valid 12-digit numeric UPI Reference / UTR Number.');
-        document.getElementById('lane4-utr-input')?.focus();
-        return;
+        errors.push({ el: utrEl, name: '12-Digit UTR Number', msg: 'Please enter a valid 12-digit numeric UPI Reference / UTR Number.' });
       }
       if (!screenshot) {
-        alert('Please upload your payment confirmation screenshot before placing order.');
-        fileInput?.focus();
+        errors.push({ el: fileInput, name: 'Payment Screenshot', msg: 'Please upload your payment confirmation screenshot before placing order.' });
+      }
+
+      if (errors.length > 0) {
+        errors.forEach(err => {
+          if (err.el) setFieldError(err.el, err.msg);
+        });
+        showCheckoutErrorBanner(
+          'Please correct the following fields before submitting:',
+          errors.map(e => `<strong>${e.name}:</strong> ${e.msg}`),
+          errors[0].el
+        );
         return;
       }
 
@@ -856,13 +1007,69 @@
         }
         renderOrderSuccess(createdOrder, utr);
       } catch (err) {
-        alert(err.message || 'Error processing order. Please check inputs and try again.');
         placeOrderBtn.disabled = false;
         placeOrderBtn.style.pointerEvents = 'auto';
         placeOrderBtn.innerHTML = `
           <span>PLACE ORDER &amp; SUBMIT PAYMENT</span>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
         `;
+
+        clearAllFieldErrors();
+
+        // Check for duplicate UTR error specifically
+        const errMsg = err.message || '';
+        if (errMsg.toLowerCase().includes('already been submitted') || errMsg.toLowerCase().includes('duplicate') || errMsg.toLowerCase().includes('utr')) {
+          setFieldError(utrEl, 'This UTR Number has already been submitted or verified for another order.');
+          showCheckoutErrorBanner(
+            'Duplicate Payment Reference',
+            'This UPI Reference / UTR Number has already been submitted or verified for another order. Please check your transaction history in Google Pay, PhonePe, or Paytm and enter the unique 12-digit reference for this order.',
+            utrEl
+          );
+          return;
+        }
+
+        // Check for specific backend validation details
+        if (err.details && Array.isArray(err.details) && err.details.length > 0) {
+          const fieldMap = {
+            'shippingAddress.postalCode': { el: pinEl, label: 'PIN / Postal Code' },
+            'shippingAddress.phone': { el: phoneEl, label: 'Mobile Phone' },
+            'customerPhone': { el: phoneEl, label: 'Mobile Phone' },
+            'shippingAddress.addressee': { el: nameEl, label: 'Full Name' },
+            'shippingAddress.addressLine1': { el: line1El, label: 'Street Address' },
+            'shippingAddress.city': { el: citySelect, label: 'City' },
+            'shippingAddress.state': { el: stateSelect, label: 'State' },
+            'customerEmail': { el: emailEl, label: 'Email Address' },
+            'upiReferenceNumber': { el: utrEl, label: 'UPI Reference / UTR' },
+            'screenshot': { el: fileInput, label: 'Payment Screenshot' }
+          };
+
+          const messages = [];
+          let firstFocus = null;
+
+          err.details.forEach(d => {
+            const mapping = fieldMap[d.field];
+            if (mapping && mapping.el) {
+              setFieldError(mapping.el, d.message);
+              messages.push(`<strong>${mapping.label}:</strong> ${d.message}`);
+              if (!firstFocus) firstFocus = mapping.el;
+            } else {
+              messages.push(d.message || d.field);
+            }
+          });
+
+          showCheckoutErrorBanner(
+            'Please correct the following fields:',
+            messages,
+            firstFocus
+          );
+          return;
+        }
+
+        // Generic fallback error message (still displayed in-form, no browser alert!)
+        showCheckoutErrorBanner(
+          'Order Submission Error',
+          errMsg || 'Unable to submit order. Please check all details and try again.'
+        );
       }
     }, true);
   }

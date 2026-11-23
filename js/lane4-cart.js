@@ -967,8 +967,6 @@
       <div id="lane4-approved-reviews-list">Loading verified reviews...</div>
     `;
 
-    targetParent.appendChild(reviewSection);
-
     // Star selection interactive hover/click
     let selectedRating = 5;
     const stars = reviewSection.querySelectorAll('#lane4-star-selector span');
@@ -1017,12 +1015,20 @@
       const comment = document.getElementById('lane4-review-comment').value.trim();
 
       if (!authorName) {
-        alert('Please provide your name.');
+        reviewAlert.style.display = 'block';
+        reviewAlert.style.background = '#fef2f2';
+        reviewAlert.style.color = '#b91c1c';
+        reviewAlert.style.border = '1px solid #fecaca';
+        reviewAlert.textContent = 'Please provide your full name or nickname.';
         authorInput.focus();
         return;
       }
       if (!comment) {
-        alert('Please write a review comment.');
+        reviewAlert.style.display = 'block';
+        reviewAlert.style.background = '#fef2f2';
+        reviewAlert.style.color = '#b91c1c';
+        reviewAlert.style.border = '1px solid #fecaca';
+        reviewAlert.textContent = 'Please write a brief comment describing your experience.';
         document.getElementById('lane4-review-comment').focus();
         return;
       }
@@ -1036,15 +1042,36 @@
           body: JSON.stringify({ rating, authorName, title, comment })
         });
 
-        reviewAlert.style.display = 'block';
-        reviewAlert.style.background = '#f0fdf4';
-        reviewAlert.style.color = '#15803d';
-        reviewAlert.style.border = '1px solid #bbf7d0';
-        reviewAlert.textContent = 'Thank you! Your review has been submitted for moderation and will appear here shortly.';
+        // Hide form container immediately and show prominent persistent confirmation banner
+        container.style.display = 'none';
         reviewForm.reset();
-        setTimeout(() => {
-          container.style.display = 'none';
-        }, 3500);
+
+        let successBanner = reviewSection.querySelector('#lane4-review-submitted-success');
+        if (!successBanner) {
+          successBanner = document.createElement('div');
+          successBanner.id = 'lane4-review-submitted-success';
+          const listContainer = reviewSection.querySelector('#lane4-approved-reviews-list');
+          listContainer.parentNode.insertBefore(successBanner, listContainer);
+        }
+        successBanner.style.cssText = 'background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:20px 24px;margin-bottom:28px;box-shadow:0 4px 14px rgba(22,101,52,0.08);';
+        successBanner.innerHTML = `
+          <div style="display:flex;align-items:flex-start;gap:14px;">
+            <div style="width:36px;height:36px;border-radius:50%;background:#dcfce7;color:#166534;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:15px;font-weight:700;color:#166534;margin-bottom:4px;">Review Submitted Successfully!</div>
+              <div style="font-size:13px;color:#15803d;line-height:1.5;">
+                Thank you, <strong>${authorName}</strong>! Your review (${'★'.repeat(rating)}) has been recorded and submitted for store verification. Once approved, it will be published below.
+              </div>
+              <div style="margin-top:8px;display:inline-flex;align-items:center;gap:6px;background:#dcfce7;color:#166534;padding:3px 10px;border-radius:4px;font-size:11.5px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">
+                <span>●</span> Review Status: Pending Verification
+              </div>
+            </div>
+          </div>
+        `;
+        successBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        toggleBtn.textContent = 'Write Another Review';
       } catch (err) {
         reviewAlert.style.display = 'block';
         reviewAlert.style.background = '#fef2f2';
@@ -1105,6 +1132,19 @@
       }).join('');
     } catch (err) {
       console.warn('Could not load product reviews:', err);
+      const listContainer = reviewSection.querySelector('#lane4-approved-reviews-list');
+      const countLabel = reviewSection.querySelector('#lane4-review-count-label');
+      if (countLabel) countLabel.textContent = 'No reviews yet';
+      const quickRatingText = document.getElementById('lane4-quick-rating-text');
+      if (quickRatingText) quickRatingText.textContent = 'No reviews yet';
+      if (listContainer) {
+        listContainer.innerHTML = `
+          <div style="padding:24px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;text-align:center;">
+            <div style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:4px;">Be the first swimmer to review!</div>
+            <div style="font-size:12.5px;color:#64748b;">Share your training or race-day experience with fellow swimmers.</div>
+          </div>
+        `;
+      }
     }
   }
 

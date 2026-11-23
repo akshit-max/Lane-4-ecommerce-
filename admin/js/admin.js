@@ -318,17 +318,26 @@
       return;
     }
 
-    // Keep Operations Console guarded while verifying credentials with the backend
-    document.documentElement.classList.remove('admin-authed');
-    document.documentElement.classList.add('admin-unauthed');
-    if (loginScreen) loginScreen.style.display = 'flex';
+    // Token exists: render console smoothly without any login screen glitch
+    document.documentElement.classList.remove('admin-unauthed');
+    document.documentElement.classList.add('admin-authed');
+    if (loginScreen) loginScreen.style.display = 'none';
     if (alertEl) {
-      alertEl.style.display = 'block';
-      alertEl.style.background = '#eff6ff';
-      alertEl.style.color = '#1d4ed8';
-      alertEl.textContent = 'Verifying administrator session with database...';
+      alertEl.style.display = 'none';
+      alertEl.textContent = '';
     }
 
+    try {
+      const cachedAdmin = localStorage.getItem('lane4_admin_user');
+      if (cachedAdmin) {
+        activeAdmin = JSON.parse(cachedAdmin);
+        updateAdminUserDisplay(activeAdmin);
+      }
+    } catch (e) {}
+
+    initAdminPanel();
+
+    // Verify session asynchronously in background with backend
     try {
       const res = await window.lane4ApiRequest('/auth/admin/verify', {
         headers: { Authorization: `Bearer ${adminToken}` }
@@ -337,17 +346,7 @@
       if (res && res.data && res.data.valid && res.data.admin) {
         activeAdmin = res.data.admin;
         localStorage.setItem('lane4_admin_user', JSON.stringify(res.data.admin));
-
-        if (alertEl) {
-          alertEl.style.display = 'none';
-          alertEl.textContent = '';
-        }
-        document.documentElement.classList.remove('admin-unauthed');
-        document.documentElement.classList.add('admin-authed');
-        if (loginScreen) loginScreen.style.display = 'none';
-
         updateAdminUserDisplay(activeAdmin);
-        initAdminPanel();
       } else {
         throw new Error('Administrator session verification failed.');
       }
@@ -356,17 +355,13 @@
       if (err.status === 401 || err.status === 403) {
         localStorage.removeItem('lane4_admin_token');
         localStorage.removeItem('lane4_admin_user');
-      }
-      document.documentElement.classList.remove('admin-authed');
-      document.documentElement.classList.add('admin-unauthed');
-      if (loginScreen) loginScreen.style.display = 'flex';
-      if (alertEl) {
-        alertEl.style.display = 'block';
-        alertEl.style.background = '#fef2f2';
-        alertEl.style.color = '#b91c1c';
-        if (err.status === 502 || err.status === 503 || err.status === 504) {
-          alertEl.textContent = 'Backend server is currently waking up from standby. Please enter credentials to sign in.';
-        } else {
+        document.documentElement.classList.remove('admin-authed');
+        document.documentElement.classList.add('admin-unauthed');
+        if (loginScreen) loginScreen.style.display = 'flex';
+        if (alertEl) {
+          alertEl.style.display = 'block';
+          alertEl.style.background = '#fef2f2';
+          alertEl.style.color = '#b91c1c';
           alertEl.textContent = 'Administrator session expired or invalid. Please sign in with your credentials.';
         }
       }
@@ -418,7 +413,17 @@
       togglePassBtn.onclick = () => {
         const isPass = passInput.type === 'password';
         passInput.type = isPass ? 'text' : 'password';
-        togglePassBtn.textContent = isPass ? 'Hide' : 'Show';
+        const showIcon = togglePassBtn.querySelector('.admin-eye-show');
+        const hideIcon = togglePassBtn.querySelector('.admin-eye-hide');
+        if (showIcon && hideIcon) {
+          showIcon.style.display = isPass ? 'none' : 'block';
+          hideIcon.style.display = isPass ? 'block' : 'none';
+        } else {
+          togglePassBtn.textContent = isPass ? 'Hide' : 'Show';
+        }
+        const label = isPass ? 'Hide password' : 'Show password';
+        togglePassBtn.setAttribute('aria-label', label);
+        togglePassBtn.setAttribute('title', label);
       };
     }
 
@@ -499,6 +504,8 @@
     const logoutBtn = document.getElementById('admin-logout-btn');
     if (logoutBtn) {
       logoutBtn.onclick = () => {
+        stopPaymentPolling();
+        isAdminPanelInitialized = false;
         localStorage.removeItem('lane4_admin_token');
         localStorage.removeItem('lane4_admin_user');
         localStorage.removeItem('lane4_auth_token');
@@ -513,7 +520,11 @@
     }
   }
 
+  let isAdminPanelInitialized = false;
   function initAdminPanel() {
+    if (isAdminPanelInitialized) return;
+    isAdminPanelInitialized = true;
+
     setupMobileDrawer();
     setupNavigation();
     setupLogout();
@@ -528,6 +539,9 @@
     // Open directly to the active view from URL hash or previous tab
     const initialView = getInitialView();
     switchView(initialView, true);
+
+    // Initial background sync and real-time polling for pending payments
+    startPaymentPolling();
   }
 
   // --- MOBILE DRAWER NAVIGATION ---
@@ -998,15 +1012,106 @@
       window._lane4ToastTimeout = setTimeout(hideToast, 2200);
     };
 
+    // Clicking toast opens relevant management view
+    toast.style.cursor = 'pointer';
+    toast.onclick = (e) => {
+      if (e.target.closest('button')) return;
+      if (typeof switchView === 'function') {
+        switchView('payments', true);
+      }
+    };
+
     void toast.offsetWidth;
     toast.style.opacity = '1';
     toast.style.transform = 'translateY(0)';
 
-    window._lane4ToastTimeout = setTimeout(hideToast, 3500);
+    window._lane4ToastTimeout = setTimeout(hideToast, 4500);
   }
   window.showToast = showToast;
   window.hideToast = hideToast;
   window.showThemedConfirm = showThemedConfirm;
+
+  // --- REAL-TIME PAYMENT VERIFICATION POLLING & BADGE COUNT ---
+  let lastPendingPaymentCount = -1;
+  let paymentPollingTimer = null;
+  let isCheckingPayments = false;
+
+  function updatePendingPaymentsBadge(count) {
+    const badge = document.getElementById('badge-pending-payments');
+    if (!badge) return;
+    const num = Math.max(0, parseInt(count, 10) || 0);
+    if (num > 0) {
+      badge.style.display = 'inline-block';
+      badge.textContent = num;
+    } else {
+      badge.style.display = 'none';
+      badge.textContent = '0';
+    }
+  }
+
+  async function checkPendingPaymentsRealtime(allowToast = true) {
+    const adminToken = localStorage.getItem('lane4_admin_token');
+    if (!adminToken) return;
+    if (isCheckingPayments) return;
+    isCheckingPayments = true;
+
+    try {
+      const res = await window.lane4ApiRequest('/admin/payments');
+      const payments = (res && res.data) || [];
+      const pendingList = payments.filter(p => {
+        const s = (p.status || '').toLowerCase();
+        return s === 'verification_pending' || s === 'submitted' || s === 'pending';
+      });
+      const pendingCount = pendingList.length;
+
+      updatePendingPaymentsBadge(pendingCount);
+
+      if (allowToast) {
+        if (lastPendingPaymentCount !== -1 && pendingCount > lastPendingPaymentCount) {
+          const diff = pendingCount - lastPendingPaymentCount;
+          const latest = pendingList[0];
+          const latestOrder = (latest && (latest.orderNumber || latest.orderId)) ? ` (#${latest.orderNumber || latest.orderId})` : '';
+          showToast(
+            `${diff} customer payment proof ${diff === 1 ? 'is' : 'are'} awaiting verification${latestOrder}. Click here to inspect.`,
+            'info',
+            'PAYMENT TO BE VERIFIED'
+          );
+        } else if (lastPendingPaymentCount === -1 && pendingCount > 0) {
+          const latest = pendingList[0];
+          const latestOrder = (latest && (latest.orderNumber || latest.orderId)) ? ` (#${latest.orderNumber || latest.orderId})` : '';
+          showToast(
+            `A payment${latestOrder} is awaiting verification. Click to inspect.`,
+            'info',
+            'PAYMENT TO BE VERIFIED'
+          );
+        }
+      }
+
+      lastPendingPaymentCount = pendingCount;
+    } catch (_) {
+      // Background check failure is non-blocking
+    } finally {
+      isCheckingPayments = false;
+    }
+  }
+
+  function startPaymentPolling() {
+    if (paymentPollingTimer) clearInterval(paymentPollingTimer);
+    checkPendingPaymentsRealtime(true);
+    paymentPollingTimer = setInterval(() => {
+      checkPendingPaymentsRealtime(true);
+    }, 5000);
+  }
+
+  function stopPaymentPolling() {
+    if (paymentPollingTimer) {
+      clearInterval(paymentPollingTimer);
+      paymentPollingTimer = null;
+    }
+    lastPendingPaymentCount = -1;
+  }
+  window.updatePendingPaymentsBadge = updatePendingPaymentsBadge;
+  window.checkPendingPaymentsRealtime = checkPendingPaymentsRealtime;
 
   function previewQrModal(imgSrc) {
     let existing = document.getElementById('lane4-admin-qr-modal');
@@ -1069,6 +1174,11 @@
   }
   window.previewQrModal = previewQrModal;
 
+  async function refreshPendingPaymentsBadge() {
+    await checkPendingPaymentsRealtime(false);
+  }
+  window.refreshPendingPaymentsBadge = refreshPendingPaymentsBadge;
+
   // --- DASHBOARD ---
   async function loadDashboard() {
     const container = document.getElementById('view-dashboard');
@@ -1082,15 +1192,7 @@
       const res = await window.lane4ApiRequest('/admin/dashboard');
       const m = res.data;
 
-      const badge = document.getElementById('badge-pending-payments');
-      if (badge) {
-        if (m.pendingPaymentsCount > 0) {
-          badge.style.display = 'inline-block';
-          badge.textContent = m.pendingPaymentsCount;
-        } else {
-          badge.style.display = 'none';
-        }
-      }
+      updatePendingPaymentsBadge(m.pendingPaymentsCount);
 
       container.innerHTML = `
         <div class="stats-grid">
@@ -1219,6 +1321,12 @@
       const res = await window.lane4ApiRequest('/admin/payments');
       const payments = res.data || [];
       window.currentPayments = payments;
+      const pendingCount = payments.filter(p => {
+        const s = (p.status || '').toLowerCase();
+        return s === 'verification_pending' || s === 'submitted' || s === 'pending';
+      }).length;
+      updatePendingPaymentsBadge(pendingCount);
+      lastPendingPaymentCount = pendingCount;
 
       container.innerHTML = `
         <div class="card">
@@ -1552,6 +1660,7 @@
           hideModal();
           showToast(`Payment verified for #${verifiedOrderNum}! Order is now CONFIRMED.`, 'success', 'PAYMENT RECEIVED');
           loadPayments();
+          checkPendingPaymentsRealtime(false);
 
           // Surface Next Operational Step Modal immediately
           showNextStepModal(verifiedOrderId, verifiedOrderNum);
@@ -1971,7 +2080,7 @@
 
           <div class="form-group" style="margin-bottom:12px;">
             <label for="tracking-num-input" class="form-label">Tracking / AWB Number <span style="color:#dc2626;">*</span></label>
-            <input type="text" id="tracking-num-input" class="form-input" placeholder="e.g. D68492041 or 1234567890" required />
+            <input type="text" id="tracking-num-input" class="form-input" placeholder="e.g. D68492041, BLUD8921102" required />
             <div id="tracking-err-msg" style="display:none;color:#dc2626;font-size:12px;font-weight:600;margin-top:4px;">Please enter the tracking / AWB number.</div>
           </div>
 

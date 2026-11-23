@@ -14,12 +14,12 @@ class AuthService {
     // Prevent administrator accounts from being registered as customer storefront accounts
     const bootstrapAdmin = 'admin@lane4swim.in';
     if (cleanEmail === bootstrapAdmin || cleanEmail.startsWith('admin_') || cleanEmail.startsWith('admin@')) {
-      throw new Error('Administrator accounts cannot be registered as customer accounts. Please access the Admin Portal at /admin/.');
+      throw new Error('Administrator accounts cannot be registered as customer accounts.');
     }
     if (db) {
       const adminSnap = await db.collection('adminUsers').where('email', '==', cleanEmail).limit(1).get();
       if (!adminSnap.empty) {
-        throw new Error('Administrator accounts cannot be registered as customer accounts. Please access the Admin Portal at /admin/.');
+        throw new Error('Administrator accounts cannot be registered as customer accounts.');
       }
     }
 

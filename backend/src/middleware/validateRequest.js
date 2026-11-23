@@ -7,11 +7,13 @@ const { sendError } = require('../utils/response');
 function validateRequest(req, res, next) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    const errorDetails = errors.array().map(err => ({ field: err.path || err.param, message: err.msg }));
+    const specificMessage = errorDetails.map(e => e.message).filter(Boolean).join('. ') || 'One or more input fields failed validation.';
     return sendError(
       res,
       'VALIDATION_FAILED',
-      'One or more input fields failed validation.',
-      errors.array().map(err => ({ field: err.path || err.param, message: err.msg })),
+      specificMessage,
+      errorDetails,
       400
     );
   }

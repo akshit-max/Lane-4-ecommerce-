@@ -8,6 +8,17 @@
   <meta http-equiv="Expires" content="0" />
   <title>LANE4 Admin Portal | The Lane4 Performance Store</title>
   <link rel="icon" type="image/svg+xml" href="../6424266ea05809dff501d86e/lane4-favicon.svg">
+  <script>
+    (function() {
+      try {
+        if (localStorage.getItem('lane4_admin_token')) {
+          document.documentElement.classList.add('admin-authed');
+        } else {
+          document.documentElement.classList.add('admin-unauthed');
+        }
+      } catch(e) {}
+    })();
+  </script>
   <!-- Lane4 Brand & System Typography (matching main storefront) -->
   <style>
     @font-face {
@@ -166,7 +177,7 @@
       backdrop-filter: blur(8px); 
       -webkit-backdrop-filter: blur(8px);
       z-index: 99999; 
-      display: flex; 
+      display: none; 
       align-items: center; 
       justify-content: center; 
       padding: 24px; 
@@ -691,7 +702,10 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
             </span>
             <input type="password" id="admin-pass" placeholder="Enter secure password" required value="" autocomplete="current-password" />
-            <button type="button" id="toggle-admin-pass" class="login-pass-toggle">Show</button>
+            <button type="button" id="toggle-admin-pass" class="login-pass-toggle" aria-label="Show password" title="Show password">
+              <svg class="admin-eye-show" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              <svg class="admin-eye-hide" style="display:none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+            </button>
           </div>
         </div>
         
@@ -855,7 +869,7 @@
 
   <script src="../shared/frontend-api-config.js?v=5.2"></script>
   <script src="../js/lane4-api.js?v=5.2"></script>
-  <script src="js/admin.js?v=5.2"></script>
+  <script src="js/admin.js?v=5.5"></script>
 </body>
 </html>
 
