@@ -557,7 +557,7 @@ window.INDIAN_STATES = [
               </div>
               <div class="lane4-auth-form-group" style="margin-bottom:12px;">
                 <label class="lane4-auth-label">PIN / Postal Code (6 Digits) *</label>
-                <input type="text" id="lane4-addr-pin" maxlength="6" required class="lane4-auth-input" placeholder="440010" style="padding:8px 10px;font-size:13px;" />
+                <input type="text" id="lane4-addr-pin" maxlength="6" minlength="6" inputmode="numeric" pattern="[0-9]{6}" autocomplete="postal-code" required class="lane4-auth-input" placeholder="440010" style="padding:8px 10px;font-size:13px;" />
               </div>
               <div style="display:flex;gap:8px;">
                 <button type="submit" class="lane4-auth-submit-btn" style="flex:1;padding:10px;font-size:12px;margin-top:0;">Save Address</button>
@@ -1552,6 +1552,44 @@ window.INDIAN_STATES = [
     const newForm = document.getElementById('lane4-new-address-form');
     const cancelBtn = document.getElementById('lane4-cancel-addr-btn');
     if (!toggleBtn || !newForm) return;
+
+    const pinInput = document.getElementById('lane4-addr-pin');
+    if (pinInput) {
+      pinInput.setAttribute('inputmode', 'numeric');
+      pinInput.setAttribute('pattern', '[0-9]{6}');
+      pinInput.addEventListener('keydown', (e) => {
+        if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+        if ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x'].includes(e.key.toLowerCase())) return;
+        if (!/^[0-9]$/.test(e.key)) e.preventDefault();
+      });
+      pinInput.addEventListener('input', () => {
+        pinInput.value = pinInput.value.replace(/\D/g, '').slice(0, 6);
+      });
+      pinInput.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text') || '';
+        pinInput.value = text.replace(/\D/g, '').slice(0, 6);
+      });
+    }
+
+    const phoneInput = document.getElementById('lane4-addr-phone');
+    if (phoneInput) {
+      phoneInput.setAttribute('inputmode', 'tel');
+      phoneInput.setAttribute('maxlength', '10');
+      phoneInput.addEventListener('keydown', (e) => {
+        if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+        if ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x'].includes(e.key.toLowerCase())) return;
+        if (!/^[0-9]$/.test(e.key)) e.preventDefault();
+      });
+      phoneInput.addEventListener('input', () => {
+        phoneInput.value = phoneInput.value.replace(/\D/g, '').slice(0, 10);
+      });
+      phoneInput.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text') || '';
+        phoneInput.value = text.replace(/\D/g, '').slice(0, 10);
+      });
+    }
 
     toggleBtn.onclick = () => {
       newForm.style.display = newForm.style.display === 'none' ? 'block' : 'none';
