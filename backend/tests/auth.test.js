@@ -156,6 +156,8 @@ describe('Authentication & Authorization Test Suite', () => {
     expect(loginRes.status).toBe(200);
     expect(loginRes.body.success).toBe(true);
     expect(loginRes.body.data.token).toBeDefined();
+    expect(loginRes.body.data.expiresIn).toBe(7200);
+    expect(loginRes.body.data.expiresAt).toBeDefined();
     expect(loginRes.body.data.admin.email).toBe('admin@lane4swim.in');
 
     const adminToken = loginRes.body.data.token;
@@ -176,6 +178,22 @@ describe('Authentication & Authorization Test Suite', () => {
       .set('Authorization', 'Bearer invalid.token.payload');
 
     expect(badVerifyRes.status).toBe(401);
+
+    // Verify rejection of expired admin token
+    const { generateAdminJwt } = require('../src/utils/adminToken');
+    const expiredToken = generateAdminJwt({
+      uid: 'admin_test_expired',
+      email: 'admin@lane4swim.in',
+      role: 'super_admin',
+      permissions: ['*']
+    }, -60); // Expired 60 seconds ago
+
+    const expiredVerifyRes = await request(app)
+      .get('/api/auth/admin/verify')
+      .set('Authorization', `Bearer ${expiredToken}`);
+
+    expect(expiredVerifyRes.status).toBe(401);
+    expect(expiredVerifyRes.body.success).toBe(false);
   });
 });
 

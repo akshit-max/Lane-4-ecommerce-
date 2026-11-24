@@ -266,16 +266,19 @@ class AuthController {
         return sendError(res, 'CREDENTIALS_REQUIRED', 'Administrator credentials required.', null, 400);
       }
 
-      // Generate secure signed JWT token (valid for 7 days)
+      // Generate secure signed JWT token (valid for appropriate interval: 2 hours default)
+      const expirySeconds = parseInt(process.env.ADMIN_JWT_EXPIRY_SECONDS, 10) || 7200;
       const sessionToken = generateAdminJwt({
         uid: adminData.uid,
         email: adminData.email,
         role: adminData.role || 'super_admin',
         permissions: adminData.permissions || []
-      }, 7 * 86400);
+      }, expirySeconds);
 
       return sendSuccess(res, {
         token: sessionToken,
+        expiresIn: expirySeconds,
+        expiresAt: new Date(Date.now() + expirySeconds * 1000).toISOString(),
         admin: {
           uid: adminData.uid,
           email: adminData.email,

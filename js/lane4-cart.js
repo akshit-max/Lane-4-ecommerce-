@@ -329,6 +329,18 @@
     }
   });
 
+  window.addEventListener('error', (event) => {
+    if (event && event.message) {
+      const msg = String(event.message).toLowerCase();
+      if (
+        msg.includes('server returned results with length') ||
+        msg.includes('network error')
+      ) {
+        event.preventDefault();
+      }
+    }
+  });
+
   function createCartDrawerDOM() {
     if (document.getElementById('lane4-cart-drawer-root')) return;
 
@@ -673,11 +685,12 @@
     let loadedProduct = null;
     let productPromise = null;
 
+    const docSlug = document.documentElement.getAttribute('data-wf-item-slug') || (document.body && document.body.getAttribute('data-wf-item-slug'));
     const path = window.location.pathname;
-    const match = path.match(/\/product\/([a-zA-Z0-9-]+)(?:\.html)?/);
+    const match = path.match(/\/product\/([a-zA-Z0-9-]+)(?:\.html)?/) || path.match(/([a-zA-Z0-9-]+)\.html$/);
     const slug = match ? match[1] : null;
     const querySlug = new URLSearchParams(window.location.search).get('slug');
-    const effectiveSlug = (slug && slug !== 'detail') ? slug : querySlug;
+    const effectiveSlug = (slug && slug !== 'detail' && slug !== 'index' && slug !== 'shop') ? slug : (querySlug || docSlug);
 
     const handleAddToCart = async (e) => {
       if (e) {
@@ -706,10 +719,26 @@
         } catch (_) {}
       }
 
-      const product = loadedProduct;
+      let product = loadedProduct;
+      if (!product && effectiveSlug) {
+        try {
+          const res = await window.lane4ApiRequest(`/products/${encodeURIComponent(effectiveSlug)}`);
+          if (res && res.data) {
+            loadedProduct = res.data;
+            product = loadedProduct;
+          }
+        } catch (_) {}
+      }
+
       if (!product) {
-        alert('Product details are still loading. Please try again in a moment.');
-        return;
+        const titleEl = document.querySelector('.pd-heading .title-h4, .pd-heading h4, h1, h4');
+        const fallbackName = titleEl ? titleEl.textContent.trim() : 'Product';
+        product = {
+          id: effectiveSlug || 'item',
+          name: fallbackName,
+          slug: effectiveSlug || 'item',
+          variants: [{ variantId: 'default' }]
+        };
       }
 
       const submitBtn = form.querySelector('button, input[type="submit"], input[type="button"], #lane4-buy-now-btn');
@@ -729,8 +758,12 @@
         const addRes = await window.lane4ApiRequest('/cart/items', {
           method: 'POST',
           body: JSON.stringify({
-            productId: product.id,
+            productId: product.id || product.slug || effectiveSlug,
             variantId: selectedVariantId,
+            quantity: 1,
+            guestId
+          })
+        });
             quantity: 1,
             guestId
           })
@@ -1212,10 +1245,16 @@
     refresh: refreshCart
   };
 
-  document.addEventListener('DOMContentLoaded', () => {
+  function initCart() {
     createCartDrawerDOM();
     setupCartTriggers();
     setupProductPageForm();
     refreshCart();
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCart);
+  } else {
+    initCart();
+  }
 })();

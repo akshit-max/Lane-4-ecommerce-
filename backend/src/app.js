@@ -129,10 +129,11 @@ const handleWfGraphql = (req, res) => {
     return res.json(responses);
   }
 
-  return res.json({
-    ...buildItem(body),
-    token: 'mock-csrf-token'
-  });
+  // If single operation or unparsed batch, provide an array matching Apollo batch expectations
+  return res.json([
+    buildItem(body),
+    buildItem(body)
+  ]);
 };
 
 app.use(['/.wf_graphql', '/lane4/.wf_graphql'], handleWfGraphql);

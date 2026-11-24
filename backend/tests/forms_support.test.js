@@ -29,6 +29,74 @@ describe('Forms, Enquiries, Newsletter & Reviews Test Suite', () => {
     }
   });
 
+  test('POST /api/enquiries strictly rejects numbers in name', async () => {
+    const res = await request(app)
+      .post('/api/enquiries')
+      .send({
+        type: 'general',
+        name: 'John123 Doe',
+        email: 'john@example.com',
+        phone: '9876543210',
+        message: 'This is a test message regarding swimming gear.'
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    const msg = typeof res.body.error === 'string' ? res.body.error : (res.body.error && res.body.error.message) || res.body.message;
+    expect(msg).toMatch(/number/i);
+  });
+
+  test('POST /api/enquiries strictly rejects text/letters in phone number', async () => {
+    const res = await request(app)
+      .post('/api/enquiries')
+      .send({
+        type: 'general',
+        name: 'John Doe',
+        email: 'john@example.com',
+        phone: '98765abcde',
+        message: 'This is a test message regarding swimming gear.'
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    const msg = typeof res.body.error === 'string' ? res.body.error : (res.body.error && res.body.error.message) || res.body.message;
+    expect(msg).toMatch(/phone|number|letter/i);
+  });
+
+  test('POST /api/enquiries strictly rejects invalid email address', async () => {
+    const res = await request(app)
+      .post('/api/enquiries')
+      .send({
+        type: 'general',
+        name: 'John Doe',
+        email: 'not-an-email',
+        phone: '9876543210',
+        message: 'This is a test message regarding swimming gear.'
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    const msg = typeof res.body.error === 'string' ? res.body.error : (res.body.error && res.body.error.message) || res.body.message;
+    expect(msg).toMatch(/email/i);
+  });
+
+  test('POST /api/enquiries rejects message that is too short', async () => {
+    const res = await request(app)
+      .post('/api/enquiries')
+      .send({
+        type: 'general',
+        name: 'John Doe',
+        email: 'john@example.com',
+        phone: '9876543210',
+        message: 'Hi'
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    const msg = typeof res.body.error === 'string' ? res.body.error : (res.body.error && res.body.error.message) || res.body.message;
+    expect(msg).toMatch(/message|characters/i);
+  });
+
   test('POST /api/newsletter/subscribe records subscription and deduplicates safely', async () => {
     const email = `news_${Date.now()}@example.com`;
 

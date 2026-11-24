@@ -4,6 +4,9 @@
   "rewrites": [
     { "source": "/api/(.*)", "destination": "https://lane4-backend.onrender.com/api/$1" },
     { "source": "/api", "destination": "https://lane4-backend.onrender.com/api" },
+    { "source": "/.wf_graphql/(.*)", "destination": "https://lane4-backend.onrender.com/.wf_graphql/$1" },
+    { "source": "/.wf_graphql", "destination": "https://lane4-backend.onrender.com/.wf_graphql" },
+    { "source": "/graphql", "destination": "https://lane4-backend.onrender.com/graphql" },
     { "source": "/admin", "destination": "/admin/index.html" },
     { "source": "/admin/", "destination": "/admin/index.html" },
     { "source": "/product/:slug.html", "destination": "/product/detail.html?slug=:slug" },

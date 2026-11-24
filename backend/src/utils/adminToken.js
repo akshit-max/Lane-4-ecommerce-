@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const { config } = require('../config/environment');
 
 const JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'lane4-admin-super-secure-key-2026-athletic-secret';
+const DEFAULT_EXPIRY_SECONDS = parseInt(process.env.ADMIN_JWT_EXPIRY_SECONDS, 10) || (2 * 3600); // 2 hours default
 
 function base64UrlEncode(str) {
   return Buffer.from(str)
@@ -17,7 +18,7 @@ function base64UrlDecode(str) {
   return Buffer.from(str, 'base64').toString('utf8');
 }
 
-function generateAdminJwt(payload, expiresInSeconds = 7 * 86400) {
+function generateAdminJwt(payload, expiresInSeconds = DEFAULT_EXPIRY_SECONDS) {
   const header = { alg: 'HS256', typ: 'JWT' };
   const now = Math.floor(Date.now() / 1000);
   const fullPayload = {
@@ -75,6 +76,7 @@ function verifyAdminJwt(token) {
 
 module.exports = {
   generateAdminJwt,
-  verifyAdminJwt
+  verifyAdminJwt,
+  DEFAULT_EXPIRY_SECONDS
 };
 

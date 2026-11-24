@@ -8,10 +8,33 @@ class EnquiryService {
 
     const cleanEmail = email ? email.toLowerCase().trim() : '';
     const cleanMsg = message ? message.trim() : '';
-    const cleanName = (name && name.trim()) ? name.trim() : (cleanEmail ? cleanEmail.split('@')[0] : 'Swimmer');
+    const cleanName = (name && name.trim()) ? name.trim() : '';
+    const cleanPhone = (phone || '').trim();
 
-    if (!cleanEmail || !cleanMsg) {
-      throw new Error('Valid email and message are required.');
+    if (!cleanName || cleanName.length < 2) {
+      throw new Error('Full name is required (at least 2 characters).');
+    }
+    if (/\d/.test(cleanName)) {
+      throw new Error('Name must not contain any numbers.');
+    }
+    if (!/^[a-zA-Z\s\.\'\-]+$/.test(cleanName)) {
+      throw new Error('Name must contain only alphabets and spaces.');
+    }
+    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(cleanEmail)) {
+      throw new Error('Please enter a valid email address.');
+    }
+    if (!cleanPhone) {
+      throw new Error('Phone number is required.');
+    }
+    if (/[a-zA-Z]/.test(cleanPhone)) {
+      throw new Error('Phone number must not contain any text.');
+    }
+    const rawDigits = cleanPhone.replace(/[\s\-\(\)\+]/g, '');
+    if (!/^(?:91)?[6-9]\d{9}$/.test(rawDigits)) {
+      throw new Error('Please enter a valid 10-digit Indian mobile number.');
+    }
+    if (!cleanMsg || cleanMsg.length < 5) {
+      throw new Error('Message must be at least 5 characters long.');
     }
 
     const docRef = db.collection('enquiries').doc();
@@ -20,7 +43,7 @@ class EnquiryService {
       type: type || 'general',
       name: cleanName,
       email: cleanEmail,
-      phone: (phone || '').trim(),
+      phone: cleanPhone,
       message: cleanMsg,
       status: 'new',
       createdAt: new Date()
@@ -32,7 +55,7 @@ class EnquiryService {
     await db.collection('notifications').add({
       type: 'new_enquiry',
       title: `New ${type.toUpperCase()} Enquiry Received`,
-      message: `${name.trim()} (${email.trim()}): ${message.slice(0, 80)}...`,
+      message: `${cleanName} (${cleanEmail}): ${cleanMsg.slice(0, 80)}...`,
       referenceId: docRef.id,
       isRead: false,
       createdAt: new Date()

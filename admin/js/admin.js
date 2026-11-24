@@ -297,6 +297,109 @@ var formatDateString = window.formatDateString || formatDateTime;
     }
   }
 
+  const ADMIN_INACTIVITY_LIMIT_MS = 15 * 60 * 1000; // 15 minutes idle timeout
+  const ADMIN_MAX_SESSION_MS = 2 * 60 * 60 * 1000;   // 2 hours maximum session length
+  let sessionTimeoutInterval = null;
+  let activityThrottleTimer = null;
+
+  function lockAdminSession(reason = 'Administrator session expired. Please sign in with your credentials.', isSuccess = false) {
+    stopPaymentPolling();
+    if (sessionTimeoutInterval) {
+      clearInterval(sessionTimeoutInterval);
+      sessionTimeoutInterval = null;
+    }
+    isAdminPanelInitialized = false;
+
+    // Clear all admin session credentials & activity state
+    localStorage.removeItem('lane4_admin_token');
+    localStorage.removeItem('lane4_admin_user');
+    localStorage.removeItem('lane4_admin_login_time');
+    localStorage.removeItem('lane4_admin_last_activity');
+    localStorage.removeItem('lane4_admin_token_expiry');
+    localStorage.removeItem('lane4_admin_active_view');
+    window.location.hash = '';
+
+    document.documentElement.classList.remove('admin-authed');
+    document.documentElement.classList.add('admin-unauthed');
+
+    const loginScreen = document.getElementById('admin-login-screen');
+    if (loginScreen) loginScreen.style.display = 'flex';
+
+    const alertEl = document.getElementById('admin-login-alert');
+    if (alertEl) {
+      alertEl.style.display = 'block';
+      alertEl.style.background = isSuccess ? '#f0fdf4' : '#fef2f2';
+      alertEl.style.color = isSuccess ? '#15803d' : '#b91c1c';
+      alertEl.textContent = reason;
+    }
+
+    const passInput = document.getElementById('admin-pass');
+    if (passInput) {
+      passInput.value = '';
+      try { passInput.focus(); } catch (_) {}
+    }
+    setupLoginForm();
+  }
+
+  function recordAdminActivity() {
+    if (activityThrottleTimer) return;
+    activityThrottleTimer = setTimeout(() => {
+      activityThrottleTimer = null;
+      if (localStorage.getItem('lane4_admin_token')) {
+        localStorage.setItem('lane4_admin_last_activity', Date.now().toString());
+      }
+    }, 5000);
+  }
+
+  function startInactivityWatchers() {
+    ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'].forEach(evt => {
+      window.addEventListener(evt, recordAdminActivity, { passive: true });
+    });
+
+    if (sessionTimeoutInterval) clearInterval(sessionTimeoutInterval);
+    sessionTimeoutInterval = setInterval(evaluateSessionValidity, 15000);
+  }
+
+  function evaluateSessionValidity() {
+    const adminToken = localStorage.getItem('lane4_admin_token');
+    if (!adminToken) return;
+
+    const now = Date.now();
+    const lastActive = parseInt(localStorage.getItem('lane4_admin_last_activity') || '0', 10);
+    const loginTime = parseInt(localStorage.getItem('lane4_admin_login_time') || '0', 10);
+    const tokenExpiry = parseInt(localStorage.getItem('lane4_admin_token_expiry') || '0', 10);
+
+    // 1. Idle Inactivity Check (15 minutes)
+    if (lastActive && (now - lastActive > ADMIN_INACTIVITY_LIMIT_MS)) {
+      lockAdminSession('Administrator session timed out due to 15 minutes of inactivity. Please re-enter your credentials to continue.');
+      return;
+    }
+
+    // 2. Max Session Duration (2 hours)
+    if (loginTime && (now - loginTime > ADMIN_MAX_SESSION_MS)) {
+      lockAdminSession('Administrator session reached its 2-hour maximum security duration. Please re-enter your credentials to continue.');
+      return;
+    }
+
+    // 3. Absolute token expiry from server
+    if (tokenExpiry && now >= tokenExpiry) {
+      lockAdminSession('Administrator access token has expired. Please re-enter your credentials.');
+      return;
+    }
+
+    // 4. JWT client-side expiry check
+    try {
+      const parts = adminToken.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+        if (payload && payload.exp && (payload.exp * 1000 <= now)) {
+          lockAdminSession('Administrator access token has expired. Please sign in again.');
+          return;
+        }
+      }
+    } catch (_) {}
+  }
+
   function updateAdminUserDisplay(admin) {
     const userDisplay = document.getElementById('admin-user-display');
     if (!userDisplay) return;
@@ -304,6 +407,10 @@ var formatDateString = window.formatDateString || formatDateTime;
     userDisplay.innerHTML = `
       <div style="font-weight:700;color:#f8fafc;font-size:12px;line-height:1.2;">Staff: Chief Admin</div>
       <div style="font-size:11px;color:#94a3b8;line-height:1.2;margin-top:2px;">${escapeHtml(email)}</div>
+      <div style="font-size:10px;color:#64748b;margin-top:4px;display:flex;align-items:center;gap:4px;">
+        <span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#22c55e;"></span>
+        <span>Secure Session (15m auto-lock)</span>
+      </div>
     `;
   }
 
@@ -322,7 +429,38 @@ var formatDateString = window.formatDateString || formatDateTime;
       return;
     }
 
-    // Token exists: render console smoothly without any login screen glitch
+    const now = Date.now();
+    const lastActive = parseInt(localStorage.getItem('lane4_admin_last_activity') || '0', 10);
+    const loginTime = parseInt(localStorage.getItem('lane4_admin_login_time') || '0', 10);
+    const tokenExpiry = parseInt(localStorage.getItem('lane4_admin_token_expiry') || '0', 10);
+
+    // Prompt for credentials if inactive for > 15 minutes or session expired
+    if (lastActive && (now - lastActive > ADMIN_INACTIVITY_LIMIT_MS)) {
+      lockAdminSession('Administrator session timed out due to inactivity. Please re-enter your credentials to access the console.');
+      return;
+    }
+    if (loginTime && (now - loginTime > ADMIN_MAX_SESSION_MS)) {
+      lockAdminSession('Administrator session reached its 2-hour maximum duration. Please re-enter your credentials.');
+      return;
+    }
+    if (tokenExpiry && now >= tokenExpiry) {
+      lockAdminSession('Administrator access token has expired. Please sign in again.');
+      return;
+    }
+
+    // Check token payload exp directly
+    try {
+      const parts = adminToken.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+        if (payload && payload.exp && (payload.exp * 1000 <= now)) {
+          lockAdminSession('Administrator session token has expired. Please sign in again.');
+          return;
+        }
+      }
+    } catch (_) {}
+
+    // Token exists and is locally fresh: render console smoothly without any login screen glitch
     document.documentElement.classList.remove('admin-unauthed');
     document.documentElement.classList.add('admin-authed');
     if (loginScreen) loginScreen.style.display = 'none';
@@ -340,6 +478,7 @@ var formatDateString = window.formatDateString || formatDateTime;
     } catch (e) {}
 
     initAdminPanel();
+    startInactivityWatchers();
 
     // Verify session asynchronously in background with backend
     try {
@@ -350,6 +489,7 @@ var formatDateString = window.formatDateString || formatDateTime;
       if (res && res.data && res.data.valid && res.data.admin) {
         activeAdmin = res.data.admin;
         localStorage.setItem('lane4_admin_user', JSON.stringify(res.data.admin));
+        localStorage.setItem('lane4_admin_last_activity', Date.now().toString());
         updateAdminUserDisplay(activeAdmin);
       } else {
         throw new Error('Administrator session verification failed.');
@@ -357,17 +497,7 @@ var formatDateString = window.formatDateString || formatDateTime;
     } catch (err) {
       console.warn('Session verification rejected by server:', err);
       if (err.status === 401 || err.status === 403) {
-        localStorage.removeItem('lane4_admin_token');
-        localStorage.removeItem('lane4_admin_user');
-        document.documentElement.classList.remove('admin-authed');
-        document.documentElement.classList.add('admin-unauthed');
-        if (loginScreen) loginScreen.style.display = 'flex';
-        if (alertEl) {
-          alertEl.style.display = 'block';
-          alertEl.style.background = '#fef2f2';
-          alertEl.style.color = '#b91c1c';
-          alertEl.textContent = 'Administrator session expired or invalid. Please sign in with your credentials.';
-        }
+        lockAdminSession('Administrator session expired or invalid. Please sign in with your credentials.');
       }
     }
   }
@@ -385,22 +515,7 @@ var formatDateString = window.formatDateString || formatDateTime;
     } catch (err) {
       if (err.status === 401 || err.status === 403) {
         console.warn('Session verification rejected by server:', err);
-        localStorage.removeItem('lane4_admin_token');
-        localStorage.removeItem('lane4_admin_user');
-        document.documentElement.classList.remove('admin-authed');
-        document.documentElement.classList.add('admin-unauthed');
-        const loginScreen = document.getElementById('admin-login-screen');
-        if (loginScreen) {
-          loginScreen.style.display = 'flex';
-          const alertEl = document.getElementById('admin-login-alert');
-          if (alertEl) {
-            alertEl.style.display = 'block';
-            alertEl.style.background = '#fef2f2';
-            alertEl.style.color = '#b91c1c';
-            alertEl.textContent = 'Session invalid. Please sign in to continue.';
-          }
-        }
-        setupLoginForm();
+        lockAdminSession('Session invalid. Please sign in to continue.');
       }
     }
   }
@@ -467,7 +582,13 @@ var formatDateString = window.formatDateString || formatDateTime;
         }
 
         const token = res.data.token;
+        const now = Date.now();
         localStorage.setItem('lane4_admin_token', token);
+        localStorage.setItem('lane4_admin_login_time', now.toString());
+        localStorage.setItem('lane4_admin_last_activity', now.toString());
+        if (res.data.expiresIn) {
+          localStorage.setItem('lane4_admin_token_expiry', (now + res.data.expiresIn * 1000).toString());
+        }
         if (res.data.admin) {
           localStorage.setItem('lane4_admin_user', JSON.stringify(res.data.admin));
           activeAdmin = res.data.admin;
@@ -486,6 +607,7 @@ var formatDateString = window.formatDateString || formatDateTime;
           if (loginScreen) loginScreen.style.display = 'none';
           updateAdminUserDisplay(activeAdmin);
           initAdminPanel();
+          startInactivityWatchers();
         }, 150);
       } catch (err) {
         if (alertEl) {
@@ -508,18 +630,7 @@ var formatDateString = window.formatDateString || formatDateTime;
     const logoutBtn = document.getElementById('admin-logout-btn');
     if (logoutBtn) {
       logoutBtn.onclick = () => {
-        stopPaymentPolling();
-        isAdminPanelInitialized = false;
-        localStorage.removeItem('lane4_admin_token');
-        localStorage.removeItem('lane4_admin_user');
-        localStorage.removeItem('lane4_auth_token');
-        localStorage.removeItem('lane4_admin_active_view');
-        window.location.hash = '';
-        document.documentElement.classList.remove('admin-authed');
-        document.documentElement.classList.add('admin-unauthed');
-        const loginScreen = document.getElementById('admin-login-screen');
-        if (loginScreen) loginScreen.style.display = 'flex';
-        setupLoginForm();
+        lockAdminSession('You have logged out securely from the Operations Console.', true);
       };
     }
   }
@@ -582,22 +693,7 @@ var formatDateString = window.formatDateString || formatDateTime;
   });
 
   window.addEventListener('lane4:admin-auth-expired', () => {
-    localStorage.removeItem('lane4_admin_token');
-    localStorage.removeItem('lane4_admin_user');
-    document.documentElement.classList.remove('admin-authed');
-    document.documentElement.classList.add('admin-unauthed');
-    const loginScreen = document.getElementById('admin-login-screen');
-    if (loginScreen) {
-      loginScreen.style.display = 'flex';
-      const alertEl = document.getElementById('admin-login-alert');
-      if (alertEl) {
-        alertEl.style.display = 'block';
-        alertEl.style.background = '#fef2f2';
-        alertEl.style.color = '#b91c1c';
-        alertEl.textContent = 'Administrator session expired. Please log in again.';
-      }
-    }
-    setupLoginForm();
+    lockAdminSession('Administrator session expired or revoked by server. Please sign in with your credentials.');
   });
 
   function setupNavigation() {
