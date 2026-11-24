@@ -161,3 +161,116 @@ body, button, input, select, textarea {
   display: block !important;
 }
 
+/* Product Image Gallery Grid Consistency & Non-disorganizing Layout */
+.product-hero {
+  align-items: flex-start;
+}
+
+.image-gallery {
+  width: 60%;
+  position: -webkit-sticky;
+  position: sticky;
+  top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.image-gallery-row {
+  width: 100%;
+  display: flex;
+  gap: 24px;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+}
+
+.image-gallery-row.single-image {
+  justify-content: center;
+}
+
+.image-gallery-row.single-image .lightbox-link,
+.image-gallery-row.single-image .product-img {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: 600px !important;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.image-gallery-row:not(.single-image) .lightbox-link,
+.image-gallery-row:not(.single-image) .product-img {
+  flex: 1 1 calc(50% - 12px);
+  max-width: calc(50% - 12px);
+  height: 480px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.image-gallery .product-img {
+  opacity: 1 !important;
+  display: block;
+  width: 100%;
+  background: #f8fafc;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  border: 1px solid #f1f5f9;
+}
+
+.image-gallery .lightbox-link {
+  display: block;
+  overflow: hidden;
+  border-radius: 8px;
+  position: relative;
+  text-decoration: none;
+}
+
+.image-gallery .lightbox-link:hover .product-img {
+  transform: scale(1.02);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+}
+
+@media screen and (max-width: 991px) {
+  .image-gallery {
+    width: 100%;
+    position: static;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .image-gallery-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .image-gallery-row .lightbox-link,
+  .image-gallery-row .product-img,
+  .image-gallery-row:not(.single-image) .lightbox-link,
+  .image-gallery-row:not(.single-image) .product-img {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 400 / 496;
+  }
+}
+
+
+/* Permanently suppress Webflow commerce legacy error banner */
+.w-commerce-commerceaddtocarterror, [data-node-type="commerce-add-to-cart-error"], [data-node-type="commerce-cart-error"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Ensure product gallery images are always visible and never hidden at opacity 0 */
+.product-img,
+.image-gallery .product-img,
+.product-hero .image-gallery-row img,
+.collection-list-multi-images img {
+  opacity: 1 !important;
+  display: block;
+}
+
+

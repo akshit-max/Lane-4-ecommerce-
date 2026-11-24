@@ -10,9 +10,23 @@ function generateProductHtmlPage(product) {
     if (!fs.existsSync(templatePath)) return;
     let html = fs.readFileSync(templatePath, 'utf8');
 
-    const primaryImg = (product.images && product.images[0] && product.images[0].url)
-      ? (product.images[0].url.startsWith('http') || product.images[0].url.startsWith('/') ? product.images[0].url : `../${product.images[0].url}`)
-      : '../6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg';
+    const rawImages = (product.images && Array.isArray(product.images) && product.images.length > 0)
+      ? product.images
+      : (product.imageUrl ? [{ url: product.imageUrl, alt: product.name, order: 0, isPrimary: true }] : []);
+
+    const resolvedImages = rawImages.map((img, idx) => {
+      let u = typeof img === 'string' ? img : (img.url || '');
+      if (u && !u.startsWith('http') && !u.startsWith('/') && !u.startsWith('../')) {
+        u = `../${u}`;
+      }
+      return {
+        url: u,
+        alt: (typeof img === 'object' && img.alt) || product.name || 'Product Image',
+        order: typeof img.order === 'number' ? img.order : idx
+      };
+    }).sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    const primaryImg = resolvedImages[0]?.url || '../6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg';
 
     const hasDiscount = product.salePricePaise && product.salePricePaise > 0 && product.salePricePaise < product.regularPricePaise;
     const priceFormatted = hasDiscount
@@ -30,17 +44,40 @@ function generateProductHtmlPage(product) {
       /<div class="pd-heading"><h4 class="title-h4">.*?<\/h4><div class="paragraph-18px">.*?<\/div><h6[^>]*class="title-h6">.*?<\/h6><\/div>/,
       `<div class="pd-heading"><h4 class="title-h4">${product.name}</h4><div class="paragraph-18px">${product.shortDescription || 'Pool-tested performance'}</div><h6 class="title-h6">${priceFormatted}</h6></div>`
     );
-    // Replace primary and secondary gallery product images so no template fins bleed through
-    html = html.replace(/src="\.\.\/6424266ea05809dff501d86e\/lane4-6dbhNuWa5oI-640x640\.jpg"/g, `src="${primaryImg}"`);
-    html = html.replace(/srcset="[^"]*lane4-6dbhNuWa5oI[^"]*"/g, `srcset="${primaryImg} 640w"`);
-    html = html.replace(/src="\.\.\/6424266ea05809dff501d86e\/lane4-X8RgOcqugtQ-640x960\.jpg"/g, `src="${primaryImg}"`);
-    html = html.replace(/srcset="[^"]*lane4-X8RgOcqugtQ[^"]*"/g, `srcset="${primaryImg} 640w"`);
-    html = html.replace(/src="\.\.\/6424266ea05809dff501d86e\/lane4-fCM6ZvTgD9A-1080x1080\.jpg"/g, `src="${primaryImg}"`);
-    html = html.replace(/srcset="[^"]*lane4-fCM6ZvTgD9A[^"]*"/g, `srcset="${primaryImg} 640w"`);
-    html = html.replace(/"url":\s*"\.\.\/6424266ea05809dff501d86e\/lane4-fCM6ZvTgD9A-1600\.jpg"/g, `"url": "${primaryImg}"`);
-    html = html.replace(/src="\.\.\/6424266ea05809dff501d86e\/lane4-FfUSN9pawTU-1080x1620\.jpg"/g, `src="${primaryImg}"`);
-    html = html.replace(/srcset="[^"]*lane4-FfUSN9pawTU[^"]*"/g, `srcset="${primaryImg} 640w"`);
-    html = html.replace(/"url":\s*"\.\.\/6424266ea05809dff501d86e\/lane4-FfUSN9pawTU-1600\.jpg"/g, `"url": "${primaryImg}"`);
+
+    // Build structured gallery HTML based on actual product images in exact order
+    let galleryInnerHtml = '';
+    if (resolvedImages.length <= 1) {
+      const singleUrl = resolvedImages[0]?.url || primaryImg;
+      const singleAlt = resolvedImages[0]?.alt || product.name || 'Product Image';
+      galleryInnerHtml = `
+        <div class="image-gallery-row single-image">
+          <a href="${singleUrl}" class="lightbox-link w-inline-block w-lightbox" style="width:100%;">
+            <img class="product-img" src="${singleUrl}" alt="${singleAlt}" style="width:100%;height:auto;max-height:640px;object-fit:cover;border-radius:6px;display:block;">
+            <script type="application/json" class="w-json">{"items":[{"url":"${singleUrl}","type":"image"}],"group":"product-gallery"}</script>
+          </a>
+        </div>`;
+    } else {
+      for (let i = 0; i < resolvedImages.length; i += 2) {
+        const img1 = resolvedImages[i];
+        const img2 = resolvedImages[i + 1];
+        galleryInnerHtml += `
+          <div class="image-gallery-row">
+            <a href="${img1.url}" class="lightbox-link w-inline-block w-lightbox">
+              <img class="product-img" src="${img1.url}" alt="${img1.alt}">
+              <script type="application/json" class="w-json">{"items":[{"url":"${img1.url}","type":"image"}],"group":"product-gallery"}</script>
+            </a>
+            ${img2 ? `
+            <a href="${img2.url}" class="lightbox-link w-inline-block w-lightbox">
+              <img class="product-img" src="${img2.url}" alt="${img2.alt}">
+              <script type="application/json" class="w-json">{"items":[{"url":"${img2.url}","type":"image"}],"group":"product-gallery"}</script>
+            </a>` : ''}
+          </div>`;
+      }
+    }
+
+    // Replace the entire gallery element with the cleanly structured gallery
+    html = html.replace(/<div class="image-gallery">[\s\S]*?<\/div>(?=\s*<div[^>]*class="product-details")/i, `<div class="image-gallery">${galleryInnerHtml}</div>`);
 
     // Replace product description if present
     if (product.description) {
@@ -535,6 +572,18 @@ class ProductService {
     const isPublished = isExplicitlyPublished || (data.isPublished !== false && canBePublished);
     const status = isPublished ? 'published' : (data.status || 'draft');
 
+    const rawImages = (data.images && Array.isArray(data.images) && data.images.length > 0)
+      ? data.images
+      : (data.imageUrl ? [{ url: data.imageUrl, alt: data.name, order: 0, isPrimary: true }] : []);
+
+    const formattedImages = rawImages.map((img, idx) => ({
+      url: typeof img === 'string' ? img : img.url,
+      alt: (typeof img === 'object' && img.alt) || data.name || 'Product Image',
+      order: typeof (img.order) === 'number' ? img.order : idx,
+      isPrimary: (typeof (img.order) === 'number' ? img.order : idx) === 0
+    })).sort((a, b) => (a.order || 0) - (b.order || 0))
+      .map((img, idx) => ({ ...img, order: idx, isPrimary: idx === 0 }));
+
     const newProduct = {
       id: productId,
       name: data.name,
@@ -552,7 +601,7 @@ class ProductService {
       hasVariants: Boolean(data.hasVariants && data.variants && data.variants.length),
       variants,
       specifications: data.specifications || {},
-      images: data.images || [],
+      images: formattedImages,
       isFeatured: Boolean(data.isFeatured),
       isBestseller: Boolean(data.isBestseller),
       isNewArrival: Boolean(data.isNewArrival),
@@ -605,15 +654,23 @@ class ProductService {
       updatedAt: new Date()
     };
 
-    if (data.imageUrl) {
+    if (data.images && Array.isArray(data.images)) {
+      updates.images = data.images.map((img, idx) => ({
+        url: typeof img === 'string' ? img : img.url,
+        alt: (typeof img === 'object' && img.alt) || updates.name || existingData.name || 'Product Image',
+        order: typeof img.order === 'number' ? img.order : idx,
+        isPrimary: (typeof img.order === 'number' ? img.order : idx) === 0
+      })).sort((a, b) => (a.order || 0) - (b.order || 0))
+        .map((img, idx) => ({ ...img, order: idx, isPrimary: idx === 0 }));
+      delete updates.imageUrl;
+    } else if (data.imageUrl) {
       updates.images = [{
         url: data.imageUrl,
         alt: updates.name || existingData.name || 'Product Image',
-        order: 0
+        order: 0,
+        isPrimary: true
       }];
       delete updates.imageUrl;
-    } else if (data.images && Array.isArray(data.images)) {
-      updates.images = data.images;
     }
 
     if (data.regularPrice !== undefined) {

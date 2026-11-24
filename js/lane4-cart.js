@@ -616,6 +616,19 @@
   }
 
   function setupCartTriggers() {
+    // Intercept and prevent legacy Webflow commerce form submission at root capture phase
+    document.addEventListener('submit', (e) => {
+      const targetForm = e.target;
+      if (targetForm && (
+        targetForm.matches('form.w-commerce-commerceaddtocartform, [data-node-type="commerce-add-to-cart-form"], form.lane4-add-to-cart-form') ||
+        targetForm.querySelector('[data-node-type="commerce-add-to-cart-button"], #lane4-buy-now-btn, .buy-now-wrapper')
+      )) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+      }
+    }, true);
+
     // Intercept clicks on ALL cart buttons across the entire website
     document.addEventListener('click', (e) => {
       const openBtn = e.target.closest(
@@ -764,10 +777,6 @@
             guestId
           })
         });
-            quantity: 1,
-            guestId
-          })
-        });
 
         activeCart = addRes.data;
         updateCartBadge();
@@ -851,31 +860,73 @@
         if (breadcrumbEl && product.name) breadcrumbEl.textContent = product.name;
         if (product.name) document.title = `${product.name} | The Lane4 Performance Store`;
 
-        // Update primary product images if available
-        if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-          const galleryImgs = document.querySelectorAll('.image-gallery-row img, .image-gallery img.product-img, .image-gallery img.product-image, .image-gallery .multi-images img, .product-hero .product-img');
-          galleryImgs.forEach((imgEl, idx) => {
-            const imgObj = product.images[idx] || product.images[0];
-            if (imgObj && imgObj.url) {
-              let imgUrl = imgObj.url;
-              if (window.LANE4 && window.LANE4.resolveAssetUrl) imgUrl = window.LANE4.resolveAssetUrl(imgUrl);
-              if (!imgUrl.startsWith('http') && !imgUrl.startsWith('/') && !imgUrl.startsWith('../')) imgUrl = '../' + imgUrl;
-              imgEl.src = imgUrl;
-              if (imgEl.hasAttribute('srcset')) imgEl.removeAttribute('srcset');
-              imgEl.style.opacity = '1';
-              imgEl.dataset.origSrc = imgUrl;
+        // Update gallery product images strictly following admin order without disorganizing UI
+        const galleryContainer = document.querySelector('.image-gallery');
+        if (galleryContainer && product.images && Array.isArray(product.images) && product.images.length > 0) {
+          const sortedImages = [...product.images].sort((a, b) => (a.order || 0) - (b.order || 0));
 
-              const lightboxLink = imgEl.closest('a.w-lightbox');
-              if (lightboxLink) {
-                lightboxLink.setAttribute('href', imgUrl);
-                const jsonScript = lightboxLink.querySelector('script.w-json');
-                if (jsonScript) {
-                  try {
-                    jsonScript.textContent = JSON.stringify({ items: [{ url: imgUrl, type: 'image' }], group: '' });
-                  } catch (_) {}
-                }
+          let galleryRowsHtml = '';
+          if (sortedImages.length === 1) {
+            let imgUrl = sortedImages[0].url || '';
+            if (window.LANE4 && window.LANE4.resolveAssetUrl) imgUrl = window.LANE4.resolveAssetUrl(imgUrl);
+            if (!imgUrl.startsWith('http') && !imgUrl.startsWith('/') && !imgUrl.startsWith('../')) imgUrl = '../' + imgUrl;
+            const altText = sortedImages[0].alt || product.name || 'Product Image';
+
+            galleryRowsHtml = `
+              <div class="image-gallery-row single-image">
+                <a href="${imgUrl}" class="lightbox-link w-inline-block w-lightbox" data-lane4-zoom="${imgUrl}">
+                  <img class="product-img" src="${imgUrl}" alt="${altText}" loading="lazy" />
+                  <script type="application/json" class="w-json">{"items":[{"url":"${imgUrl}","type":"image"}],"group":"product-gallery"}</script>
+                </a>
+              </div>
+            `;
+          } else {
+            for (let i = 0; i < sortedImages.length; i += 2) {
+              const it1 = sortedImages[i];
+              const it2 = sortedImages[i + 1];
+
+              let url1 = it1.url || '';
+              if (window.LANE4 && window.LANE4.resolveAssetUrl) url1 = window.LANE4.resolveAssetUrl(url1);
+              if (!url1.startsWith('http') && !url1.startsWith('/') && !url1.startsWith('../')) url1 = '../' + url1;
+              const alt1 = it1.alt || product.name || 'Product Image';
+
+              let col2Html = '';
+              if (it2) {
+                let url2 = it2.url || '';
+                if (window.LANE4 && window.LANE4.resolveAssetUrl) url2 = window.LANE4.resolveAssetUrl(url2);
+                if (!url2.startsWith('http') && !url2.startsWith('/') && !url2.startsWith('../')) url2 = '../' + url2;
+                const alt2 = it2.alt || product.name || 'Product Image';
+                col2Html = `
+                  <a href="${url2}" class="lightbox-link w-inline-block w-lightbox" data-lane4-zoom="${url2}">
+                    <img class="product-img" src="${url2}" alt="${alt2}" loading="lazy" />
+                    <script type="application/json" class="w-json">{"items":[{"url":"${url2}","type":"image"}],"group":"product-gallery"}</script>
+                  </a>
+                `;
               }
+
+              galleryRowsHtml += `
+                <div class="image-gallery-row">
+                  <a href="${url1}" class="lightbox-link w-inline-block w-lightbox" data-lane4-zoom="${url1}">
+                    <img class="product-img" src="${url1}" alt="${alt1}" loading="lazy" />
+                    <script type="application/json" class="w-json">{"items":[{"url":"${url1}","type":"image"}],"group":"product-gallery"}</script>
+                  </a>
+                  ${col2Html}
+                </div>
+              `;
             }
+          }
+
+          galleryContainer.innerHTML = galleryRowsHtml;
+
+          // Reliable image click preview / zoom modal
+          galleryContainer.querySelectorAll('.lightbox-link').forEach(link => {
+            link.addEventListener('click', (ev) => {
+              const zoomUrl = link.getAttribute('data-lane4-zoom') || link.getAttribute('href');
+              if (zoomUrl && !link.classList.contains('w--lightbox-active')) {
+                ev.preventDefault();
+                showStorefrontImageModal(zoomUrl, link.querySelector('img')?.alt || product.name);
+              }
+            });
           });
         }
 
@@ -926,9 +977,6 @@
         console.warn('Could not load dynamic product variants:', err);
       }
     })();
-  }
-      console.warn('Could not load dynamic product variants:', err);
-    }
   }
 
   async function initProductReviews(product) {
@@ -1236,6 +1284,30 @@
         `;
       }
     }
+  }
+
+  function showStorefrontImageModal(src, alt) {
+    let modal = document.getElementById('lane4-image-lightbox-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'lane4-image-lightbox-modal';
+      modal.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.88);z-index:999999;display:flex;align-items:center;justify-content:center;padding:20px;cursor:zoom-out;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);';
+      modal.innerHTML = `
+        <div style="position:relative;max-width:92vw;max-height:92vh;display:flex;align-items:center;justify-content:center;" onclick="event.stopPropagation()">
+          <img id="lane4-lightbox-img" src="" alt="" style="max-width:100%;max-height:90vh;object-fit:contain;border-radius:8px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);" />
+          <button id="lane4-lightbox-close" style="position:absolute;top:-38px;right:-4px;background:none;border:none;color:#fff;font-size:32px;cursor:pointer;line-height:1;padding:4px 8px;" aria-label="Close">&times;</button>
+        </div>
+      `;
+      modal.onclick = () => { modal.style.display = 'none'; };
+      modal.querySelector('#lane4-lightbox-close').onclick = () => { modal.style.display = 'none'; };
+      document.body.appendChild(modal);
+    }
+    const imgEl = modal.querySelector('#lane4-lightbox-img');
+    if (imgEl) {
+      imgEl.src = src;
+      imgEl.alt = alt || 'Product Image Preview';
+    }
+    modal.style.display = 'flex';
   }
 
   // Export public methods for cross-module usage

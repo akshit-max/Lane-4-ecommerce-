@@ -4,7 +4,6 @@
  */
 
 (function () {
-(function () {
   async function hydrateCatalog() {
     const isInSubfolder = /\/(product|category|blog|authors|utility-pages|category-blog)\//i.test(window.location.pathname);
     const catMatch = window.location.pathname.match(/\/category\/([a-zA-Z0-9_-]+)(?:\.html)?/i);

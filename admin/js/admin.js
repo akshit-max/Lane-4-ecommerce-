@@ -1195,12 +1195,41 @@ var formatDateString = window.formatDateString || formatDateTime;
     }
   }
 
+  const adminOrderSyncChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('lane4_orders_channel') : null;
+
+  function notifyOrderUpdated(orderId) {
+    try {
+      if (adminOrderSyncChannel) {
+        adminOrderSyncChannel.postMessage({ type: 'order_updated', orderId: orderId || null, timestamp: Date.now() });
+      }
+      localStorage.setItem('lane4_order_updated', JSON.stringify({ orderId: orderId || null, timestamp: Date.now() }));
+    } catch (_) {}
+  }
+  window.notifyOrderUpdated = notifyOrderUpdated;
+
+  async function quietRefreshOrders() {
+    try {
+      const res = await window.lane4ApiRequest('/admin/orders');
+      const allOrders = res.data || [];
+      allOrders.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
+      const prevDigest = (window.currentOrders || []).map(o => `${o.orderId || o.id}_${o.status}_${o.paymentStatus}_${o.fulfillment && o.fulfillment.trackingNumber}`).join('|');
+      const newDigest = allOrders.map(o => `${o.orderId || o.id}_${o.status}_${o.paymentStatus}_${o.fulfillment && o.fulfillment.trackingNumber}`).join('|');
+      if (prevDigest !== newDigest) {
+        window.currentOrders = allOrders;
+        loadOrders(true);
+      }
+    } catch (_) {}
+  }
+
   function startPaymentPolling() {
     if (paymentPollingTimer) clearInterval(paymentPollingTimer);
     checkPendingPaymentsRealtime(true);
     paymentPollingTimer = setInterval(() => {
       checkPendingPaymentsRealtime(true);
-    }, 5000);
+      if (currentView === 'orders') {
+        quietRefreshOrders();
+      }
+    }, 4000);
   }
 
   function stopPaymentPolling() {
@@ -1777,6 +1806,7 @@ var formatDateString = window.formatDateString || formatDateTime;
 
           hideModal();
           showToast(`Payment verified for #${verifiedOrderNum}! Order is now CONFIRMED.`, 'success', 'PAYMENT RECEIVED');
+          notifyOrderUpdated(verifiedOrderId);
           loadPayments();
           checkPendingPaymentsRealtime(false);
 
@@ -1918,6 +1948,7 @@ var formatDateString = window.formatDateString || formatDateTime;
           });
           hideModal();
           showToast('Payment submission marked as rejected. Customer notified to resubmit.', 'info', 'PAYMENT REJECTED');
+          notifyOrderUpdated((p && p.orderId) || paymentId);
           loadPayments();
           checkPendingPaymentsRealtime(false);
         } catch (err) {
@@ -1932,13 +1963,15 @@ var formatDateString = window.formatDateString || formatDateTime;
   // --- ORDERS ---
   window.orderFilter = window.orderFilter || 'all';
 
-  async function loadOrders() {
+  async function loadOrders(isQuiet = false) {
     const container = document.getElementById('view-orders');
     if (!container) return;
-    if (!container.children.length) {
-      container.innerHTML = getSkeletonHtml('table');
+    if (!isQuiet) {
+      if (!container.children.length) {
+        container.innerHTML = getSkeletonHtml('table');
+      }
+      showTopLoader();
     }
-    showTopLoader();
 
     try {
       const res = await window.lane4ApiRequest('/admin/orders');
@@ -2201,6 +2234,7 @@ var formatDateString = window.formatDateString || formatDateTime;
           });
           hideModal();
           showToast(`Refund recorded for #${orderNum}!`, 'success');
+          notifyOrderUpdated(orderId);
           loadOrders();
         } catch (err) {
           submitBtn.disabled = false;
@@ -2228,6 +2262,7 @@ var formatDateString = window.formatDateString || formatDateTime;
         body: JSON.stringify({ status: newStatus })
       });
       showToast(`Order status updated to ${formatStatusLabel(newStatus)}.`);
+      notifyOrderUpdated(orderId);
       loadOrders();
     } catch (err) {
       showToast(err.message || 'Error updating order status', 'error');
@@ -2332,6 +2367,7 @@ var formatDateString = window.formatDateString || formatDateTime;
           });
           hideModal();
           showToast(`Order #${orderNum} dispatched! Tracking email sent to ${customerEmail}.`);
+          notifyOrderUpdated(targetId);
           loadOrders();
         } catch (err) {
           submitBtn.disabled = false;

@@ -653,8 +653,11 @@ window.INDIAN_STATES = [
     document.getElementById('lane4-auth-backdrop').onclick = closeAuthModal;
     document.getElementById('lane4-auth-close').onclick = closeAuthModal;
     document.getElementById('lane4-order-back-btn').onclick = () => {
+      activeViewingOrderId = null;
+      activeViewingOrderData = null;
       document.getElementById('lane4-order-details-panel').style.display = 'none';
       document.getElementById('lane4-account-panel').style.display = 'block';
+      loadCustomerOrders();
     };
 
     // Password visibility toggles
@@ -793,66 +796,8 @@ window.INDIAN_STATES = [
             body: JSON.stringify({ orderNumber, email })
           });
 
-          const ord = res.data;
-          const isShipped = ord.status === 'shipped' || ord.status === 'out_for_delivery' || ord.status === 'delivered';
-          const isVerified = ord.paymentStatus === 'verified';
-
-          resultEl.style.display = 'block';
-          resultEl.innerHTML = `
-            <div style="background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:10px;padding:16px;box-sizing:border-box;">
-              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
-                <div>
-                  <div style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Order Tracking Snapshot</div>
-                  <div style="font-size:16px;font-weight:900;color:#0f172a;">#${ord.orderNumber}</div>
-                </div>
-                <div style="text-align:right;">
-                  <span style="font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:4px;background:${isVerified ? '#dcfce7' : '#fef3c7'};color:${isVerified ? '#15803d' : '#92400e'};text-transform:uppercase;">
-                    ${isVerified ? 'Payment Verified' : (ord.paymentStatus || 'Awaiting Verification').replace(/_/g, ' ')}
-                  </span>
-                </div>
-              </div>
-
-              <!-- Status Stepper Bar -->
-              <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0;padding:10px 12px;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;font-size:11px;font-weight:800;text-align:center;">
-                <div style="color:${ord.status !== 'pending_payment' ? '#16a34a' : '#0f172a'};">
-                  <div>1. Placed</div>
-                </div>
-                <div style="color:#cbd5e1;">&rarr;</div>
-                <div style="color:${isVerified ? '#16a34a' : '#94a3b8'};">
-                  <div>2. Verified</div>
-                </div>
-                <div style="color:#cbd5e1;">&rarr;</div>
-                <div style="color:${isShipped ? '#16a34a' : (ord.status === 'confirmed' || ord.status === 'processing' ? '#0f172a' : '#94a3b8')};">
-                  <div>3. Processing</div>
-                </div>
-                <div style="color:#cbd5e1;">&rarr;</div>
-                <div style="color:${isShipped ? '#16a34a' : '#94a3b8'};">
-                  <div>4. Shipped</div>
-                </div>
-              </div>
-
-              <div style="font-size:12px;color:#334155;line-height:1.6;margin-bottom:12px;">
-                <div><strong>Current Fulfillment Status:</strong> <span style="text-transform:uppercase;font-weight:800;color:#0f172a;">${(ord.status || 'pending').replace(/_/g, ' ')}</span></div>
-                <div><strong>Delivery Destination:</strong> ${ord.shippingAddress ? `${ord.shippingAddress.city}, PIN ${ord.shippingAddress.postalCode}` : 'India'}</div>
-                <div><strong>Payable Order Total:</strong> ${ord.pricing ? ord.pricing.finalPayableFormatted : ''}</div>
-              </div>
-
-              ${ord.fulfillment && ord.fulfillment.trackingNumber ? `
-                <div style="background:#ffffff;border:1px solid #bbf7d0;border-radius:8px;padding:12px;margin-top:10px;">
-                  <div style="font-size:11px;font-weight:800;color:#166534;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Dispatched via ${ord.fulfillment.courierName || 'DTDC'}</div>
-                  <div style="font-size:13px;font-weight:800;color:#0f172a;margin-bottom:8px;">AWB / Tracking #: <code>${ord.fulfillment.trackingNumber}</code></div>
-                  <a href="${ord.fulfillment.trackingUrl || `https://www.google.com/search?q=${encodeURIComponent((ord.fulfillment.courierName || '') + ' ' + ord.fulfillment.trackingNumber)}`}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:#000000;color:#ffffff;padding:8px 14px;border-radius:6px;font-size:11.5px;font-weight:800;text-decoration:none;">
-                    <span>LIVE COURIER TRACKING</span>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                  </a>
-                </div>
-              ` : `
-                <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;font-size:12px;color:#1e40af;">
-                  Order is confirmed and being prepared for packaging at our Nagpur store. You will receive courier dispatch information via email as soon as it ships.
-                </div>
-              `}
-            </div>
-          `;
+          lastTrackedQuery = { orderNumber, email };
+          renderTrackResult(res.data);
         } catch (err) {
           showAlert(err.message || 'Unable to find order matching these details.', 'error');
         } finally {
@@ -912,7 +857,7 @@ window.INDIAN_STATES = [
 
         // Double check response role
         if (loggedInUser.role === 'admin' || loggedInUser.role === 'super_admin') {
-          showAlert('Administrator accounts cannot access customer storefront. Please use /admin/.', 'error');
+          showAlert('Administrator accounts cannot sign in to the customer storefront.', 'error');
           return;
         }
 
@@ -1101,6 +1046,8 @@ window.INDIAN_STATES = [
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
 
+    startSwimmerRealtimePolling();
+
     // Ensure password inputs are securely masked when modal opens
     wrapper.querySelectorAll('.lane4-auth-password-wrap').forEach(wrap => {
       const input = wrap.querySelector('input');
@@ -1232,6 +1179,9 @@ window.INDIAN_STATES = [
     if (accPanel) accPanel.style.display = 'none';
     detailsPanel.style.display = 'block';
 
+    const modalBody = document.querySelector('#lane4-auth-modal-wrapper > div:nth-child(2)');
+    if (modalBody) modalBody.scrollTop = 0;
+
     const orderNum = ord.orderNumber || ord.orderId || 'Order';
     const isVerified = ord.paymentStatus === 'verified';
     const isRejected = ord.paymentStatus === 'payment_rejected' || ord.status === 'payment_rejected';
@@ -1257,12 +1207,26 @@ window.INDIAN_STATES = [
       const variantDesc = [it.size ? `Size: ${it.size}` : '', it.color ? `Color: ${it.color}` : ''].filter(Boolean).join(' · ');
 
       // Robust unit and subtotal calculation matching backend quote
-      const unitPaise = it.unitPricePaise !== undefined ? it.unitPricePaise : (it.pricePaise !== undefined ? it.pricePaise : (it.price ? Math.round(parseFloat(it.price) * 100) : 0));
-      const unitPriceFormatted = it.unitPriceFormatted || it.priceFormatted || (window.LANE4 && unitPaise ? window.LANE4.formatINR(unitPaise) : `₹${((unitPaise || 0)/100).toFixed(2)}`);
+      let unitPaise = it.unitPricePaise !== undefined ? it.unitPricePaise : (it.pricePaise !== undefined ? it.pricePaise : (it.price ? Math.round(parseFloat(it.price) * 100) : 0));
+      if (!unitPaise && pricing.subtotalPaise > 0 && items.length > 0) {
+        unitPaise = Math.round(pricing.subtotalPaise / items.length);
+      }
+      const unitPriceFormatted = (it.unitPriceFormatted && it.unitPriceFormatted !== '₹0.00')
+        ? it.unitPriceFormatted
+        : ((it.priceFormatted && it.priceFormatted !== '₹0.00')
+          ? it.priceFormatted
+          : (window.LANE4 && unitPaise ? window.LANE4.formatINR(unitPaise) : `₹${((unitPaise || 0)/100).toFixed(2)}`));
 
       const qty = it.quantity || 1;
-      const itemSubtotalPaise = it.totalPricePaise !== undefined ? it.totalPricePaise : (it.subtotalPaise !== undefined ? it.subtotalPaise : (unitPaise * qty));
-      const itemSubtotalFormatted = it.totalPriceFormatted || it.subtotalFormatted || (window.LANE4 && itemSubtotalPaise ? window.LANE4.formatINR(itemSubtotalPaise) : `₹${((itemSubtotalPaise || 0)/100).toFixed(2)}`);
+      let itemSubtotalPaise = it.totalPricePaise !== undefined ? it.totalPricePaise : (it.subtotalPaise !== undefined ? it.subtotalPaise : (unitPaise * qty));
+      if (!itemSubtotalPaise && unitPaise) {
+        itemSubtotalPaise = unitPaise * qty;
+      }
+      const itemSubtotalFormatted = (it.totalPriceFormatted && it.totalPriceFormatted !== '₹0.00')
+        ? it.totalPriceFormatted
+        : ((it.subtotalFormatted && it.subtotalFormatted !== '₹0.00')
+          ? it.subtotalFormatted
+          : (window.LANE4 && itemSubtotalPaise ? window.LANE4.formatINR(itemSubtotalPaise) : `₹${((itemSubtotalPaise || 0)/100).toFixed(2)}`));
 
       return `
         <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f1f5f9;">
@@ -1848,9 +1812,11 @@ window.INDIAN_STATES = [
               <strong>Courier:</strong> ${ord.fulfillment.courierName || 'DTDC'} &bull; <strong>AWB:</strong> <code>${ord.fulfillment.trackingNumber}</code>
             </div>
           ` : ''}
-          <div style="margin-top:10px;display:flex;align-items:center;justify-content:flex-end;gap:4px;font-size:11.5px;font-weight:800;color:#000000;padding-top:6px;border-top:1px dashed #f1f5f9;">
-            <span>View Items &amp; Billing Details</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          <div style="margin-top:10px;padding-top:8px;border-top:1px solid #e2e8f0;">
+            <button type="button" class="lane4-view-details-action" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f172a;color:#ffffff;padding:8px 12px;border:none;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;transition:background 0.15s ease;">
+              <span>View Order, Products &amp; Billing Details</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
           </div>
         `;
 
@@ -1878,6 +1844,7 @@ window.INDIAN_STATES = [
   }
 
   function closeAuthModal() {
+    stopSwimmerRealtimePolling();
     const wrapper = document.getElementById('lane4-auth-modal-wrapper');
     if (wrapper) {
       wrapper.style.display = 'none';

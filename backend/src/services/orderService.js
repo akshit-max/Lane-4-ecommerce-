@@ -354,18 +354,34 @@ class OrderService {
     const db = getDb();
     if (!db) return null;
 
-    const doc = await db.collection('orders').doc(orderId).get();
-    if (!doc.exists) return null;
+    let doc = await db.collection('orders').doc(orderId).get();
+    if (!doc.exists) {
+      const cleanNum = orderId.toString().trim().replace(/^#/, '');
+      const snap = await db.collection('orders').where('orderNumber', '==', cleanNum).limit(1).get();
+      if (!snap.empty) {
+        doc = snap.docs[0];
+      } else {
+        return null;
+      }
+    }
 
     const order = doc.data();
     if (order) {
+      order.id = doc.id;
+      order.orderId = order.orderId || doc.id;
       order.orderStatus = order.orderStatus || order.status;
       order.tracking = order.tracking || order.fulfillment || null;
     }
 
     // Security check: Customer can only view their own orders
-    if (user && user.role === 'customer' && order.customerId && order.customerId !== user.uid) {
-      throw new Error('UNAUTHORIZED: Access to requested order is denied.');
+    if (user && user.role === 'customer') {
+      const userEmail = (user.email || '').toLowerCase().trim();
+      const ordEmail = (order.customerEmail || '').toLowerCase().trim();
+      const matchUid = order.customerId && order.customerId === user.uid;
+      const matchEmail = userEmail && ordEmail && userEmail === ordEmail;
+      if (!matchUid && !matchEmail) {
+        throw new Error('UNAUTHORIZED: Access to requested order is denied.');
+      }
     }
 
     return order;
@@ -556,6 +572,42 @@ class OrderService {
       orderStatus: newStatus,
       updatedAt: now
     };
+
+    if (['confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered'].includes(newStatus)) {
+      if (orderData.paymentStatus !== 'verified') {
+        orderUpdates.paymentStatus = 'verified';
+      }
+      try {
+        const pSnap = await db.collection('payments').where('orderId', '==', orderDoc.id).get();
+        for (const pDoc of pSnap.docs) {
+          if (pDoc.data().status !== 'verified') {
+            await pDoc.ref.update({
+              status: 'verified',
+              verifiedAt: now,
+              verifiedBy: adminUser.email || adminUser.uid,
+              internalNote: 'Automatically verified upon order confirmation by admin staff',
+              updatedAt: now
+            });
+          }
+        }
+      } catch (_) {}
+    } else if (newStatus === 'payment_rejected') {
+      orderUpdates.paymentStatus = 'rejected';
+      try {
+        const pSnap = await db.collection('payments').where('orderId', '==', orderDoc.id).get();
+        for (const pDoc of pSnap.docs) {
+          if (pDoc.data().status !== 'rejected') {
+            await pDoc.ref.update({
+              status: 'rejected',
+              rejectionReason: 'Order marked as payment rejected by admin staff',
+              rejectedAt: now,
+              rejectedBy: adminUser.email || adminUser.uid,
+              updatedAt: now
+            });
+          }
+        }
+      } catch (_) {}
+    }
 
     // If order is cancelled, restore stock across inventory and product catalogs
     if (newStatus === 'cancelled' && currentStatus !== 'cancelled') {
