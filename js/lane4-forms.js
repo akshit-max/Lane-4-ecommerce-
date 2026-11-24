@@ -438,7 +438,11 @@
             failMsg.style.display = 'block';
             failMsg.innerHTML = `<div style="font-weight:700;">${err.message || 'Something went wrong submitting your enquiry.'}</div>`;
           } else {
-            alert(err.message || 'Submission failed');
+            if (window.showStorefrontToast) {
+              window.showStorefrontToast(err.message || 'Submission failed', 'error');
+            } else {
+              alert(err.message || 'Submission failed');
+            }
           }
         } finally {
           if (submitBtn) {

@@ -7,6 +7,56 @@
   const FREE_SHIPPING_THRESHOLD_PAISE = 199900; // ₹1,999.00
   let activeCart = { items: [], subtotalPaise: 0, totalItemsCount: 0 };
 
+  function showStorefrontToast(message, type = 'error') {
+    if (!message) return;
+    let toast = document.getElementById('lane4-store-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'lane4-store-toast';
+      toast.style.cssText = `
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 99999999;
+        max-width: 380px;
+        padding: 12px 18px;
+        border-radius: 8px;
+        font-size: 13.5px;
+        font-weight: 600;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2), 0 8px 10px -6px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        transform: translateY(30px);
+        opacity: 0;
+        pointer-events: none;
+      `;
+      document.body.appendChild(toast);
+    }
+
+    const isErr = type === 'error';
+    toast.style.background = '#0f172a';
+    toast.style.color = '#ffffff';
+    toast.style.border = isErr ? '1.5px solid #ef4444' : '1.5px solid #22c55e';
+    toast.innerHTML = `
+      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${isErr ? '#ef4444' : '#22c55e'};flex-shrink:0;"></span>
+      <span style="flex:1;line-height:1.4;">${message}</span>
+    `;
+
+    toast.style.pointerEvents = 'auto';
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateY(0)';
+
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(20px)';
+      toast.style.pointerEvents = 'none';
+    }, 4500);
+  }
+  window.showStorefrontToast = showStorefrontToast;
+
   // Ensure legacy Webflow cart elements never display or break layout
   try {
     const styleEl = document.createElement('style');
@@ -402,7 +452,7 @@
     document.getElementById('lane4-go-checkout-btn').onclick = (e) => {
       e.preventDefault();
       if (!activeCart || !activeCart.totalItemsCount || activeCart.totalItemsCount === 0) {
-        alert('Your cart is empty! Please select swimming products before checking out.');
+        showStorefrontToast('Your cart is empty! Please select swimming products before checking out.', 'info');
         return;
       }
       const user = window.LANE4.getUser();
@@ -414,7 +464,7 @@
             window.LANE4_AUTH.showAlert('Please sign in or create an account to proceed to checkout.', 'info');
           }
         } else {
-          alert('Please sign in or create an account to proceed to checkout.');
+          showStorefrontToast('Please sign in or create an account to proceed to checkout.', 'info');
         }
         return;
       }
@@ -573,7 +623,7 @@
           updateCartBadge();
           renderCartDrawer();
         } catch (err) {
-          alert(err.message || 'Error updating item quantity');
+          showStorefrontToast(err.message || 'Error updating item quantity', 'error');
           refreshCart();
         }
       };
@@ -592,7 +642,7 @@
           updateCartBadge();
           renderCartDrawer();
         } catch (err) {
-          alert(err.message || 'Error removing item from cart');
+          showStorefrontToast(err.message || 'Error removing item from cart', 'error');
         }
       };
     });
@@ -721,7 +771,7 @@
             window.LANE4_AUTH.showAlert('Please sign in or create an account to start shopping and add items to your cart.', 'info');
           }
         } else {
-          alert('Please sign in or create an account to start shopping and add items to your cart.');
+          showStorefrontToast('Please sign in or create an account to start shopping and add items to your cart.', 'info');
         }
         return;
       }
@@ -788,7 +838,7 @@
           else submitBtn.textContent = 'Added to Bag ✓';
         }
       } catch (err) {
-        alert(err.message || 'Unable to add product to cart.');
+        showStorefrontToast(err.message || 'Unable to add product to cart.', 'error');
       } finally {
         setTimeout(() => {
           if (submitBtn) {

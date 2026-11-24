@@ -1768,7 +1768,18 @@ window.INDIAN_STATES = [
   function startSwimmerRealtimePolling() {
     if (swimmerRealtimeTimer) clearInterval(swimmerRealtimeTimer);
     syncSwimmerRealtime();
-    swimmerRealtimeTimer = setInterval(syncSwimmerRealtime, 2500);
+    swimmerRealtimeTimer = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      syncSwimmerRealtime();
+    }, 10000);
+  }
+
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && swimmerRealtimeTimer) {
+        syncSwimmerRealtime();
+      }
+    });
   }
 
   function stopSwimmerRealtimePolling() {

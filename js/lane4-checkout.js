@@ -1040,7 +1040,11 @@
 
         // Generic fallback error message
         if (errMsg) {
-          alert(errMsg);
+          if (window.showStorefrontToast) {
+            window.showStorefrontToast(errMsg, 'error');
+          } else {
+            alert(errMsg);
+          }
         }
       }
     }, true);

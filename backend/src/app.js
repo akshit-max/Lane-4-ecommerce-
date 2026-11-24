@@ -12,6 +12,10 @@ const apiRouter = require('./routes');
 
 const app = express();
 
+// Trust reverse proxy (Render, Vercel, Cloudflare) so Express and express-rate-limit
+// identify the real client IP via X-Forwarded-For instead of bundling all users into Render's internal router IP
+app.set('trust proxy', 1);
+
 // Disable ETag header generation across the entire app to prevent 304 Not Modified responses
 app.set('etag', false);
 

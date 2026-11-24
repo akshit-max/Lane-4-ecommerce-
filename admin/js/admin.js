@@ -1229,12 +1229,27 @@ var formatDateString = window.formatDateString || formatDateTime;
     if (paymentPollingTimer) clearInterval(paymentPollingTimer);
     checkPendingPaymentsRealtime(true);
     paymentPollingTimer = setInterval(() => {
+      // Pause polling when tab is hidden to save client bandwidth & server resources
+      if (typeof document !== 'undefined' && document.hidden) return;
       checkPendingPaymentsRealtime(true);
       const active = currentView || window.currentView;
       if (active === 'orders') {
         quietRefreshOrders();
       }
-    }, 4000);
+    }, 6000);
+  }
+
+  // Immediately refresh on tab focus when returning from another tab
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        checkPendingPaymentsRealtime(true);
+        const active = currentView || window.currentView;
+        if (active === 'orders') {
+          quietRefreshOrders();
+        }
+      }
+    });
   }
 
   function stopPaymentPolling() {
