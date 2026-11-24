@@ -240,7 +240,7 @@ describe('LANE4 14 Production Bugs Verification Suite', () => {
         },
         items: [{ productId: 'mirror-racing-goggles', quantity: 1 }]
       })
-    ).rejects.toThrow(/genuine 6-digit postal PIN/i);
+    ).rejects.toThrow(/correct postal code/i);
   });
 
   // BUG 25: Authoritative price of Mirror Racing Goggles is ₹1,399

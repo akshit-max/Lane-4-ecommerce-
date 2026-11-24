@@ -2027,8 +2027,8 @@ window.INDIAN_STATES = [
         showAlert('Please enter delivery city.', 'error');
         return;
       }
-      if (!postalCode || !window.LANE4_VALIDATION.isValidPostalCode(postalCode)) {
-        showAlert('Please enter a valid 6-digit PIN / postal code.', 'error');
+      if (!postalCode || !window.LANE4_VALIDATION.isValidPostalCode(postalCode) || /^(.)\1{5}$/.test(postalCode) || postalCode === '123456') {
+        showAlert('Please provide a correct postal code.', 'error');
         return;
       }
 

@@ -21,10 +21,10 @@ const createOrderValidator = [
   body('shippingAddress.postalCode')
     .trim()
     .matches(/^[1-9][0-9]{5}$/)
-    .withMessage('Please provide a valid 6-digit Indian PIN / Postal code.')
+    .withMessage('Please provide a correct postal code.')
     .custom((val) => {
       if (/^(.)\1{5}$/.test(val) || val === '123456') {
-        throw new Error('Please provide a genuine 6-digit postal PIN code (repeated or dummy sequences like 222222 or 123456 are not serviceable).');
+        throw new Error('Please provide a correct postal code.');
       }
       return true;
     })

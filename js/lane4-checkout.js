@@ -927,8 +927,8 @@
       if (!city) {
         errors.push({ el: citySelect?.value === 'Other' ? customCityInput : citySelect, name: 'City', msg: 'Please select or enter your delivery city.' });
       }
-      if (!postalCode || !/^[1-9][0-9]{5}$/.test(postalCode)) {
-        errors.push({ el: pinEl, name: 'PIN / Postal Code', msg: 'PIN code must be exactly 6 digits (numbers only, e.g. 440001).' });
+      if (!postalCode || !/^[1-9][0-9]{5}$/.test(postalCode) || /^(.)\1{5}$/.test(postalCode) || postalCode === '123456') {
+        errors.push({ el: pinEl, name: 'PIN / Postal Code', msg: 'Please provide a correct postal code.' });
       }
       const utrClean = (utr || '').replace(/\s+/g, '');
       if (!utrClean || !/^\d{12}$/.test(utrClean)) {
