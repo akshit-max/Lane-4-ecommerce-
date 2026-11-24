@@ -862,8 +862,12 @@
 
         // Update gallery product images strictly following admin order without disorganizing UI
         const galleryContainer = document.querySelector('.image-gallery');
-        if (galleryContainer && product.images && Array.isArray(product.images) && product.images.length > 0) {
-          const sortedImages = [...product.images].sort((a, b) => (a.order || 0) - (b.order || 0));
+        const rawImages = (product.images && Array.isArray(product.images) && product.images.length > 0)
+          ? product.images
+          : (product.imageUrl ? [{ url: product.imageUrl, alt: product.name, order: 0, isPrimary: true }] : []);
+
+        if (galleryContainer && rawImages.length > 0) {
+          const sortedImages = [...rawImages].sort((a, b) => (a.order || 0) - (b.order || 0));
 
           let galleryRowsHtml = '';
           if (sortedImages.length === 1) {

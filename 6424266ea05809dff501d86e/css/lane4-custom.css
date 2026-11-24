@@ -188,7 +188,14 @@ body, button, input, select, textarea {
   justify-content: center;
 }
 
-.image-gallery-row.single-image .lightbox-link,
+.image-gallery-row.single-image .lightbox-link {
+  width: 100% !important;
+  max-width: 100% !important;
+  display: block;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
 .image-gallery-row.single-image .product-img {
   width: 100% !important;
   max-width: 100% !important;
@@ -197,32 +204,34 @@ body, button, input, select, textarea {
   aspect-ratio: 4 / 3;
   object-fit: cover;
   border-radius: 8px;
+  display: block;
 }
 
-.image-gallery-row:not(.single-image) .lightbox-link,
-.image-gallery-row:not(.single-image) .product-img {
-  flex: 1 1 calc(50% - 12px);
+.image-gallery-row:not(.single-image) .lightbox-link {
+  flex: 0 0 calc(50% - 12px);
+  width: calc(50% - 12px);
   max-width: calc(50% - 12px);
   height: 480px;
-  object-fit: cover;
-  border-radius: 8px;
-}
-
-.image-gallery .product-img {
-  opacity: 1 !important;
-  display: block;
-  width: 100%;
-  background: #f8fafc;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-  border: 1px solid #f1f5f9;
-}
-
-.image-gallery .lightbox-link {
   display: block;
   overflow: hidden;
   border-radius: 8px;
   position: relative;
-  text-decoration: none;
+}
+
+.image-gallery-row:not(.single-image) .lightbox-link .product-img {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+}
+
+.image-gallery .product-img {
+  opacity: 1 !important;
+  background: #f8fafc;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  border: 1px solid #f1f5f9;
 }
 
 .image-gallery .lightbox-link:hover .product-img {
@@ -243,9 +252,14 @@ body, button, input, select, textarea {
     gap: 16px;
   }
   .image-gallery-row .lightbox-link,
+  .image-gallery-row:not(.single-image) .lightbox-link {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    flex: 1 1 100% !important;
+  }
   .image-gallery-row .product-img,
-  .image-gallery-row:not(.single-image) .lightbox-link,
-  .image-gallery-row:not(.single-image) .product-img {
+  .image-gallery-row:not(.single-image) .lightbox-link .product-img {
     width: 100% !important;
     max-width: 100% !important;
     height: auto !important;

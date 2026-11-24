@@ -2612,7 +2612,12 @@ var formatDateString = window.formatDateString || formatDateTime;
                               <img src="${resolvedImg}" alt="${escapeHtml(p.name)}" style="width:42px;height:42px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;background:#f8fafc;" onerror="this.onerror=null;this.src='${fallbackImg}';" />
                               <div>
                                 <strong style="display:block;font-size:14px;color:#0f172a;">${escapeHtml(p.name)}</strong>
-                                <span style="font-size:11px;color:#64748b;">${escapeHtml(p.slug || '')}</span>
+                                <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+                                  <span style="font-size:11px;color:#64748b;">${escapeHtml(p.slug || '')}</span>
+                                  <span style="font-size:10px;font-weight:600;background:#f1f5f9;color:#475569;padding:1px 5px;border-radius:3px;border:1px solid #e2e8f0;">
+                                    ${p.images && p.images.length > 0 ? `${p.images.length} photo${p.images.length === 1 ? '' : 's'}` : '1 photo'}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           </td>
@@ -2705,12 +2710,28 @@ var formatDateString = window.formatDateString || formatDateTime;
       ? p.variants.reduce((acc, v) => acc + (v.stockQuantity || 0), 0)
       : (p.stockQuantity || 50);
 
-    const img = (p.images && p.images[0] && p.images[0].url) || '6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg';
+    // Initialize in-memory array of product images with their order
+    let productImages = [];
+    if (p.images && Array.isArray(p.images) && p.images.length > 0) {
+      productImages = p.images.map((img, i) => ({
+        url: typeof img === 'string' ? img : (img.url || ''),
+        alt: (typeof img === 'object' && img.alt) || p.name || 'Product Image',
+        order: typeof img.order === 'number' ? img.order : i,
+        isPrimary: i === 0
+      })).sort((a, b) => (a.order || 0) - (b.order || 0))
+         .map((img, i) => ({ ...img, order: i, isPrimary: i === 0 }));
+    } else if (p.imageUrl) {
+      productImages = [{ url: p.imageUrl, alt: p.name || 'Product Image', order: 0, isPrimary: true }];
+    } else {
+      productImages = [{ url: '6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg', alt: p.name || 'Product Image', order: 0, isPrimary: true }];
+    }
 
-    showModal('Edit Product & Pricing', `
+    const firstImg = productImages[0]?.url || '6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg';
+
+    showModal('Edit Product & Gallery', `
       <form id="form-edit-product">
         <div style="background:#f8fafc;padding:12px 14px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:16px;display:flex;align-items:center;gap:12px;">
-          <img src="${resolveAdminAsset(img)}" style="width:48px;height:48px;border-radius:6px;object-fit:cover;border:1px solid #cbd5e1;" onerror="this.onerror=null;this.src='${resolveAdminAsset('6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg')}';" />
+          <img id="edit-prod-header-thumb" src="${resolveAdminAsset(firstImg)}" style="width:48px;height:48px;border-radius:6px;object-fit:cover;border:1px solid #cbd5e1;" onerror="this.onerror=null;this.src='${resolveAdminAsset('6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg')}';" />
           <div>
             <div style="font-weight:800;font-size:14px;color:#0f172a;">${escapeHtml(p.name)}</div>
             <div style="font-size:12px;color:#64748b;">SKU: <code>${escapeHtml(p.sku || '—')}</code> &bull; Slug: <code>${escapeHtml(p.slug || '')}</code></div>
@@ -2763,22 +2784,37 @@ var formatDateString = window.formatDateString || formatDateTime;
           <div style="font-size:11px;color:#64748b;margin-top:3px;">Displayed directly below the product title on product detail and catalog pages</div>
         </div>
 
-        <!-- Product Image Change & Upload Section -->
-        <div class="form-group" style="background:#f8fafc;padding:14px;border-radius:6px;border:1.5px dashed #cbd5e1;margin-bottom:16px;">
-          <label class="form-label" style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            <span>Change / Replace Product Image</span>
-          </label>
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-            <img id="edit-prod-img-preview" src="${resolveAdminAsset(img)}" alt="Product Image" style="width:60px;height:60px;border-radius:6px;object-fit:cover;border:1px solid #cbd5e1;background:#fff;" />
-            <div style="flex:1;">
-              <input type="file" id="edit-prod-image-file" accept="image/png,image/jpeg,image/webp" style="font-size:12px;" />
-              <div id="edit-prod-img-name" style="font-size:11px;color:#64748b;margin-top:4px;">Upload new JPG, PNG, or WebP to replace</div>
-            </div>
+        <!-- Product Image Gallery & Order Management Section -->
+        <div class="form-group" style="background:#f8fafc;padding:16px;border-radius:8px;border:1.5px solid #cbd5e1;margin-bottom:18px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <label class="form-label" style="display:flex;align-items:center;gap:6px;margin:0;font-size:14px;font-weight:800;color:#0f172a;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <span>Product Images &amp; Display Order</span>
+            </label>
+            <span id="edit-prod-gallery-count" class="badge" style="background:#0f172a;color:#fff;font-weight:700;">${productImages.length} Photos</span>
           </div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span style="font-size:11px;color:#94a3b8;text-transform:uppercase;font-weight:700;">OR URL:</span>
-            <input type="url" id="edit-prod-image-url" class="form-input" placeholder="Direct Image URL (e.g. https://...)" value="${img.startsWith('http') ? escapeHtml(img) : ''}" style="font-size:12px;" />
+          <div style="font-size:12px;color:#64748b;margin-bottom:12px;line-height:1.4;">
+            Rearrange photos to modify their order. The first photo (<strong>#1 PRIMARY</strong>) serves as the main catalog cover and the primary hero image on the product detail page.
+          </div>
+
+          <!-- Interactive Ordered Image List -->
+          <div id="edit-prod-gallery-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+
+          <!-- Add Image Tools -->
+          <div style="background:#ffffff;border:1.5px dashed #cbd5e1;border-radius:8px;padding:12px 14px;">
+            <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>Upload New Photos or Add by URL</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+              <input type="file" id="edit-prod-add-files" multiple accept="image/png,image/jpeg,image/webp" style="font-size:12px;flex:1;" />
+            </div>
+            <div id="edit-prod-upload-status" style="font-size:11px;color:#64748b;margin-bottom:8px;">Select JPG, PNG, or WebP to add to the gallery. Multiple files supported.</div>
+            <div style="display:flex;align-items:center;gap:8px;padding-top:8px;border-top:1px solid #f1f5f9;">
+              <span style="font-size:11px;color:#94a3b8;font-weight:700;">OR URL:</span>
+              <input type="url" id="edit-prod-add-url" class="form-input" placeholder="Paste direct image URL (https://...)" style="font-size:12px;flex:1;" />
+              <button type="button" id="btn-add-img-url" class="btn btn-outline" style="font-size:11px;padding:7px 12px;white-space:nowrap;background:#f8fafc;font-weight:600;">+ Add URL</button>
+            </div>
           </div>
         </div>
 
@@ -2791,27 +2827,202 @@ var formatDateString = window.formatDateString || formatDateTime;
           <button type="button" class="btn btn-outline" onclick="hideModal()">Cancel</button>
           <button type="submit" id="btn-save-prod" class="btn btn-primary" style="background:#000;color:#fff;display:inline-flex;align-items:center;gap:6px;padding:9px 18px;font-weight:600;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>Save Price &amp; Catalog Updates</span>
+            <span>Save Product &amp; Gallery Order</span>
           </button>
         </div>
       </form>
     `);
 
-    // Live preview for image file change
-    const fileInput = document.getElementById('edit-prod-image-file');
-    const previewImg = document.getElementById('edit-prod-img-preview');
-    const previewName = document.getElementById('edit-prod-img-name');
-    if (fileInput) {
-      fileInput.onchange = () => {
-        if (fileInput.files && fileInput.files[0]) {
-          const file = fileInput.files[0];
-          previewName.textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            if (previewImg) previewImg.src = ev.target.result;
-          };
-          reader.readAsDataURL(file);
+    function reindexImages() {
+      productImages.forEach((img, i) => {
+        img.order = i;
+        img.isPrimary = (i === 0);
+      });
+      const headerThumb = document.getElementById('edit-prod-header-thumb');
+      if (headerThumb && productImages[0]) {
+        headerThumb.src = resolveAdminAsset(productImages[0].url);
+      }
+    }
+
+    function renderGalleryList() {
+      const container = document.getElementById('edit-prod-gallery-list');
+      const countBadge = document.getElementById('edit-prod-gallery-count');
+      if (!container) return;
+
+      if (countBadge) {
+        countBadge.textContent = `${productImages.length} Photo${productImages.length === 1 ? '' : 's'}`;
+      }
+
+      if (productImages.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center;padding:16px;background:#fff;border:1px dashed #cbd5e1;border-radius:6px;color:#94a3b8;font-size:12px;">
+            No photos in gallery. Add photos below to showcase this product.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = productImages.map((img, idx) => {
+        const isFirst = (idx === 0);
+        const isLast = (idx === productImages.length - 1);
+        const resolvedSrc = resolveAdminAsset(img.url);
+
+        return `
+          <div style="display:flex;align-items:center;gap:12px;background:#ffffff;border:1px solid ${isFirst ? '#86efac' : '#e2e8f0'};border-radius:8px;padding:8px 12px;box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+            <div style="display:flex;align-items:center;justify-content:center;min-width:32px;">
+              ${isFirst
+                ? `<span style="font-size:10px;font-weight:800;background:#16a34a;color:#fff;padding:3px 7px;border-radius:4px;white-space:nowrap;">★ #1 PRIMARY</span>`
+                : `<span style="font-size:11px;font-weight:700;background:#f1f5f9;color:#475569;padding:3px 7px;border-radius:4px;border:1px solid #cbd5e1;">#${idx + 1}</span>`
+              }
+            </div>
+            <img src="${resolvedSrc}" alt="Gallery ${idx + 1}" style="width:50px;height:50px;object-fit:cover;border-radius:6px;border:1px solid #cbd5e1;background:#f8fafc;" onerror="this.onerror=null;this.src='${resolveAdminAsset('6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg')}';" />
+            <div style="flex:1;min-width:0;">
+              <input type="text" class="form-input edit-gallery-alt" data-idx="${idx}" value="${escapeHtml(img.alt || '')}" placeholder="Alt text / description" style="font-size:11px;padding:4px 8px;margin-bottom:3px;height:26px;" />
+              <div style="font-size:11px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px;" title="${escapeHtml(img.url)}">
+                ${escapeHtml(img.url)}
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <button type="button" class="btn btn-outline btn-gallery-up" data-idx="${idx}" ${isFirst ? 'disabled style="opacity:0.3;cursor:not-allowed;padding:5px 8px;font-size:11px;"' : 'style="padding:5px 8px;font-size:11px;cursor:pointer;"'} title="Move Earlier (Up in order)">
+                ▲
+              </button>
+              <button type="button" class="btn btn-outline btn-gallery-down" data-idx="${idx}" ${isLast ? 'disabled style="opacity:0.3;cursor:not-allowed;padding:5px 8px;font-size:11px;"' : 'style="padding:5px 8px;font-size:11px;cursor:pointer;"'} title="Move Later (Down in order)">
+                ▼
+              </button>
+              ${!isFirst ? `
+                <button type="button" class="btn btn-outline btn-gallery-primary" data-idx="${idx}" style="padding:5px 8px;font-size:11px;color:#16a34a;border-color:#bbf7d0;background:#f0fdf4;cursor:pointer;" title="Make Primary Cover photo">
+                  ★ Cover
+                </button>
+              ` : ''}
+              <button type="button" class="btn btn-danger btn-gallery-remove" data-idx="${idx}" style="padding:5px 8px;font-size:11px;cursor:pointer;" title="Remove this photo">
+                ✕
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Wire buttons
+      container.querySelectorAll('.btn-gallery-up').forEach(btn => {
+        btn.onclick = () => {
+          const idx = parseInt(btn.getAttribute('data-idx'), 10);
+          if (idx > 0) {
+            const temp = productImages[idx];
+            productImages[idx] = productImages[idx - 1];
+            productImages[idx - 1] = temp;
+            reindexImages();
+            renderGalleryList();
+          }
+        };
+      });
+
+      container.querySelectorAll('.btn-gallery-down').forEach(btn => {
+        btn.onclick = () => {
+          const idx = parseInt(btn.getAttribute('data-idx'), 10);
+          if (idx < productImages.length - 1) {
+            const temp = productImages[idx];
+            productImages[idx] = productImages[idx + 1];
+            productImages[idx + 1] = temp;
+            reindexImages();
+            renderGalleryList();
+          }
+        };
+      });
+
+      container.querySelectorAll('.btn-gallery-primary').forEach(btn => {
+        btn.onclick = () => {
+          const idx = parseInt(btn.getAttribute('data-idx'), 10);
+          if (idx > 0) {
+            const item = productImages.splice(idx, 1)[0];
+            productImages.unshift(item);
+            reindexImages();
+            renderGalleryList();
+            showToast('Set as primary cover photo', 'info');
+          }
+        };
+      });
+
+      container.querySelectorAll('.btn-gallery-remove').forEach(btn => {
+        btn.onclick = () => {
+          const idx = parseInt(btn.getAttribute('data-idx'), 10);
+          productImages.splice(idx, 1);
+          reindexImages();
+          renderGalleryList();
+        };
+      });
+
+      container.querySelectorAll('.edit-gallery-alt').forEach(input => {
+        input.onchange = () => {
+          const idx = parseInt(input.getAttribute('data-idx'), 10);
+          if (productImages[idx]) {
+            productImages[idx].alt = input.value.trim();
+          }
+        };
+      });
+    }
+
+    renderGalleryList();
+
+    // File input multi-upload
+    const fileAddInput = document.getElementById('edit-prod-add-files');
+    const uploadStatus = document.getElementById('edit-prod-upload-status');
+
+    if (fileAddInput) {
+      fileAddInput.onchange = async () => {
+        if (!fileAddInput.files || fileAddInput.files.length === 0) return;
+        const files = Array.from(fileAddInput.files);
+        if (uploadStatus) uploadStatus.textContent = `Uploading ${files.length} photo(s)...`;
+
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          try {
+            if (uploadStatus) uploadStatus.textContent = `Uploading ${i + 1}/${files.length}: ${file.name}...`;
+            const formData = new FormData();
+            formData.append('image', file);
+            const uploadRes = await window.lane4ApiRequest('/admin/uploads/image', {
+              method: 'POST',
+              body: formData
+            });
+            const url = uploadRes.data && (uploadRes.data.secureUrl || uploadRes.data.url);
+            if (url) {
+              productImages.push({
+                url,
+                alt: file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '),
+                order: productImages.length,
+                isPrimary: productImages.length === 0
+              });
+            }
+          } catch (err) {
+            showToast(`Failed to upload ${file.name}: ${err.message}`, 'error');
+          }
         }
+        reindexImages();
+        renderGalleryList();
+        if (uploadStatus) uploadStatus.textContent = `Upload complete. Total: ${productImages.length} images.`;
+        fileAddInput.value = '';
+        showToast(`Added ${files.length} photo(s) to gallery`, 'success');
+      };
+    }
+
+    const btnAddUrl = document.getElementById('btn-add-img-url');
+    const urlInput = document.getElementById('edit-prod-add-url');
+    if (btnAddUrl && urlInput) {
+      btnAddUrl.onclick = () => {
+        const val = urlInput.value.trim();
+        if (!val) {
+          showToast('Please enter an image URL', 'error');
+          return;
+        }
+        productImages.push({
+          url: val,
+          alt: `${p.name} Photo`,
+          order: productImages.length,
+          isPrimary: productImages.length === 0
+        });
+        reindexImages();
+        renderGalleryList();
+        urlInput.value = '';
+        showToast('Image URL added to gallery', 'success');
       };
     }
 
@@ -2836,22 +3047,12 @@ var formatDateString = window.formatDateString || formatDateTime;
         const description = document.getElementById('edit-prod-desc').value.trim();
 
         try {
-          let updatedImageUrl = null;
-          if (fileInput && fileInput.files && fileInput.files[0]) {
-            if (saveBtn) saveBtn.textContent = 'Uploading Image...';
-            const formData = new FormData();
-            formData.append('image', fileInput.files[0]);
-            const uploadRes = await window.lane4ApiRequest('/admin/uploads/image', {
-              method: 'POST',
-              body: formData
-            });
-            updatedImageUrl = uploadRes.data && (uploadRes.data.secureUrl || uploadRes.data.url);
-          } else {
-            const directUrl = document.getElementById('edit-prod-image-url').value.trim();
-            if (directUrl && directUrl !== img) {
-              updatedImageUrl = directUrl;
-            }
-          }
+          const formattedImages = productImages.map((img, i) => ({
+            url: img.url,
+            alt: img.alt || name,
+            order: i,
+            isPrimary: i === 0
+          }));
 
           const patchPayload = {
             name,
@@ -2861,10 +3062,11 @@ var formatDateString = window.formatDateString || formatDateTime;
             stockQuantity,
             isPublished,
             shortDescription,
-            description
+            description,
+            images: formattedImages
           };
-          if (updatedImageUrl) {
-            patchPayload.imageUrl = updatedImageUrl;
+          if (formattedImages.length > 0) {
+            patchPayload.imageUrl = formattedImages[0].url;
           }
 
           await window.lane4ApiRequest(`/admin/products/${productId}`, {
@@ -2872,12 +3074,12 @@ var formatDateString = window.formatDateString || formatDateTime;
             body: JSON.stringify(patchPayload)
           });
           hideModal();
-          showToast(`Prices and details for "${name}" updated successfully!`, 'success');
+          showToast(`Prices, details, and gallery for "${name}" updated successfully!`, 'success');
           await loadProducts();
         } catch (err) {
           if (saveBtn) {
             saveBtn.disabled = false;
-            saveBtn.textContent = 'Save Price & Catalog Updates';
+            saveBtn.textContent = 'Save Product & Gallery Order';
           }
           showToast(err.message || 'Failed to update product', 'error');
         }
@@ -2893,6 +3095,8 @@ var formatDateString = window.formatDateString || formatDateTime;
         catOptions = res.data.map(c => `<option value="${c.slug}">${c.name}</option>`).join('');
       }
     } catch (e) {}
+
+    let newProductImages = [];
 
     const formHtml = `
       <form id="form-create-product">
@@ -2939,23 +3143,34 @@ var formatDateString = window.formatDateString || formatDateTime;
           <textarea id="new-prod-features" class="form-textarea" rows="3" placeholder="Ergonomic contoured profile&#10;Chlorine-resistant durable silicone straps&#10;Hydrodynamic flow holes to maintain water feel"></textarea>
         </div>
 
-        <!-- Image Upload Section -->
-        <div class="form-group" style="background:#f8fafc;padding:16px;border-radius:6px;border:1.5px dashed #cbd5e1;">
-          <label class="form-label" style="display:flex;align-items:center;gap:6px;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            Product Image (Upload to Cloudinary or Provide URL)
-          </label>
-          <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
-            <div>
-              <input type="file" id="new-prod-image-file" accept="image/png,image/jpeg,image/webp" style="font-size:13px;" />
-              <div id="new-prod-img-preview-container" style="display:none;margin-top:10px;align-items:center;gap:12px;">
-                <img id="new-prod-img-preview" src="" alt="Preview" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid #cbd5e1;" />
-                <span id="new-prod-img-name" style="font-size:12px;color:#64748b;">Selected image</span>
-              </div>
+        <!-- Product Image Gallery & Order Section -->
+        <div class="form-group" style="background:#f8fafc;padding:16px;border-radius:8px;border:1.5px solid #cbd5e1;margin-bottom:18px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <label class="form-label" style="display:flex;align-items:center;gap:6px;margin:0;font-size:14px;font-weight:800;color:#0f172a;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <span>Product Image Gallery &amp; Display Order</span>
+            </label>
+            <span id="new-prod-gallery-count" class="badge" style="background:#0f172a;color:#fff;font-weight:700;">0 Photos</span>
+          </div>
+          <div style="font-size:12px;color:#64748b;margin-bottom:12px;">
+            Add photos for this product. Use the ▲ / ▼ buttons to adjust the order. Photo <strong>#1 PRIMARY</strong> will be the main storefront cover image.
+          </div>
+
+          <div id="new-prod-gallery-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+
+          <div style="background:#ffffff;border:1.5px dashed #cbd5e1;border-radius:8px;padding:12px 14px;">
+            <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>Upload Photos or Add by URL</span>
             </div>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <span style="font-size:12px;color:#94a3b8;text-transform:uppercase;font-weight:700;">OR</span>
-              <input type="url" id="new-prod-image-url" class="form-input" placeholder="Direct Image URL (e.g. https://res.cloudinary.com/...)" style="font-size:12px;" />
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+              <input type="file" id="new-prod-image-file" multiple accept="image/png,image/jpeg,image/webp" style="font-size:12px;flex:1;" />
+            </div>
+            <div id="new-prod-upload-status" style="font-size:11px;color:#64748b;margin-bottom:8px;">Select JPG, PNG, or WebP files to add to gallery. Multiple files supported.</div>
+            <div style="display:flex;align-items:center;gap:8px;padding-top:8px;border-top:1px solid #f1f5f9;">
+              <span style="font-size:11px;color:#94a3b8;font-weight:700;">OR URL:</span>
+              <input type="url" id="new-prod-image-url" class="form-input" placeholder="Paste direct image URL (https://...)" style="font-size:12px;flex:1;" />
+              <button type="button" id="btn-add-new-img-url" class="btn btn-outline" style="font-size:11px;padding:7px 12px;white-space:nowrap;background:#f8fafc;font-weight:600;">+ Add URL</button>
             </div>
           </div>
         </div>
@@ -2984,24 +3199,191 @@ var formatDateString = window.formatDateString || formatDateTime;
 
     showModal('Add New Product to Catalog', formHtml);
 
-    // Live preview for image file input
+    function reindexNewImages() {
+      newProductImages.forEach((img, i) => {
+        img.order = i;
+        img.isPrimary = (i === 0);
+      });
+    }
+
+    function renderNewGalleryList() {
+      const container = document.getElementById('new-prod-gallery-list');
+      const countBadge = document.getElementById('new-prod-gallery-count');
+      if (!container) return;
+
+      if (countBadge) {
+        countBadge.textContent = `${newProductImages.length} Photo${newProductImages.length === 1 ? '' : 's'}`;
+      }
+
+      if (newProductImages.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center;padding:16px;background:#fff;border:1px dashed #cbd5e1;border-radius:6px;color:#94a3b8;font-size:12px;">
+            No photos added yet. Select photos below to build this product's gallery.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = newProductImages.map((img, idx) => {
+        const isFirst = (idx === 0);
+        const isLast = (idx === newProductImages.length - 1);
+        const resolvedSrc = resolveAdminAsset(img.url);
+
+        return `
+          <div style="display:flex;align-items:center;gap:12px;background:#ffffff;border:1px solid ${isFirst ? '#86efac' : '#e2e8f0'};border-radius:8px;padding:8px 12px;box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+            <div style="display:flex;align-items:center;justify-content:center;min-width:32px;">
+              ${isFirst
+                ? `<span style="font-size:10px;font-weight:800;background:#16a34a;color:#fff;padding:3px 7px;border-radius:4px;white-space:nowrap;">★ #1 PRIMARY</span>`
+                : `<span style="font-size:11px;font-weight:700;background:#f1f5f9;color:#475569;padding:3px 7px;border-radius:4px;border:1px solid #cbd5e1;">#${idx + 1}</span>`
+              }
+            </div>
+            <img src="${resolvedSrc}" alt="Gallery ${idx + 1}" style="width:50px;height:50px;object-fit:cover;border-radius:6px;border:1px solid #cbd5e1;background:#f8fafc;" onerror="this.onerror=null;this.src='${resolveAdminAsset('6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg')}';" />
+            <div style="flex:1;min-width:0;">
+              <input type="text" class="form-input new-gallery-alt" data-idx="${idx}" value="${escapeHtml(img.alt || '')}" placeholder="Alt text / description" style="font-size:11px;padding:4px 8px;margin-bottom:3px;height:26px;" />
+              <div style="font-size:11px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px;" title="${escapeHtml(img.url)}">
+                ${escapeHtml(img.url)}
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <button type="button" class="btn btn-outline btn-new-gallery-up" data-idx="${idx}" ${isFirst ? 'disabled style="opacity:0.3;cursor:not-allowed;padding:5px 8px;font-size:11px;"' : 'style="padding:5px 8px;font-size:11px;cursor:pointer;"'} title="Move Earlier (Up)">
+                ▲
+              </button>
+              <button type="button" class="btn btn-outline btn-new-gallery-down" data-idx="${idx}" ${isLast ? 'disabled style="opacity:0.3;cursor:not-allowed;padding:5px 8px;font-size:11px;"' : 'style="padding:5px 8px;font-size:11px;cursor:pointer;"'} title="Move Later (Down)">
+                ▼
+              </button>
+              ${!isFirst ? `
+                <button type="button" class="btn btn-outline btn-new-gallery-primary" data-idx="${idx}" style="padding:5px 8px;font-size:11px;color:#16a34a;border-color:#bbf7d0;background:#f0fdf4;cursor:pointer;" title="Set as primary cover image">
+                  ★ Cover
+                </button>
+              ` : ''}
+              <button type="button" class="btn btn-danger btn-new-gallery-remove" data-idx="${idx}" style="padding:5px 8px;font-size:11px;cursor:pointer;" title="Remove this photo">
+                ✕
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.querySelectorAll('.btn-new-gallery-up').forEach(btn => {
+        btn.onclick = () => {
+          const idx = parseInt(btn.getAttribute('data-idx'), 10);
+          if (idx > 0) {
+            const temp = newProductImages[idx];
+            newProductImages[idx] = newProductImages[idx - 1];
+            newProductImages[idx - 1] = temp;
+            reindexNewImages();
+            renderNewGalleryList();
+          }
+        };
+      });
+
+      container.querySelectorAll('.btn-new-gallery-down').forEach(btn => {
+        btn.onclick = () => {
+          const idx = parseInt(btn.getAttribute('data-idx'), 10);
+          if (idx < newProductImages.length - 1) {
+            const temp = newProductImages[idx];
+            newProductImages[idx] = newProductImages[idx + 1];
+            newProductImages[idx + 1] = temp;
+            reindexNewImages();
+            renderNewGalleryList();
+          }
+        };
+      });
+
+      container.querySelectorAll('.btn-new-gallery-primary').forEach(btn => {
+        btn.onclick = () => {
+          const idx = parseInt(btn.getAttribute('data-idx'), 10);
+          if (idx > 0) {
+            const item = newProductImages.splice(idx, 1)[0];
+            newProductImages.unshift(item);
+            reindexNewImages();
+            renderNewGalleryList();
+            showToast('Set as primary cover image', 'info');
+          }
+        };
+      });
+
+      container.querySelectorAll('.btn-new-gallery-remove').forEach(btn => {
+        btn.onclick = () => {
+          const idx = parseInt(btn.getAttribute('data-idx'), 10);
+          newProductImages.splice(idx, 1);
+          reindexNewImages();
+          renderNewGalleryList();
+        };
+      });
+
+      container.querySelectorAll('.new-gallery-alt').forEach(input => {
+        input.onchange = () => {
+          const idx = parseInt(input.getAttribute('data-idx'), 10);
+          if (newProductImages[idx]) {
+            newProductImages[idx].alt = input.value.trim();
+          }
+        };
+      });
+    }
+
+    renderNewGalleryList();
+
+    // Multi file upload handler
     const fileInput = document.getElementById('new-prod-image-file');
-    const previewContainer = document.getElementById('new-prod-img-preview-container');
-    const previewImg = document.getElementById('new-prod-img-preview');
-    const previewName = document.getElementById('new-prod-img-name');
+    const uploadStatus = document.getElementById('new-prod-upload-status');
 
     if (fileInput) {
-      fileInput.onchange = () => {
-        if (fileInput.files && fileInput.files[0]) {
-          const file = fileInput.files[0];
-          previewName.textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            previewImg.src = e.target.result;
-            previewContainer.style.display = 'flex';
-          };
-          reader.readAsDataURL(file);
+      fileInput.onchange = async () => {
+        if (!fileInput.files || fileInput.files.length === 0) return;
+        const files = Array.from(fileInput.files);
+        if (uploadStatus) uploadStatus.textContent = `Uploading ${files.length} photo(s)...`;
+
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          try {
+            if (uploadStatus) uploadStatus.textContent = `Uploading ${i + 1}/${files.length}: ${file.name}...`;
+            const formData = new FormData();
+            formData.append('image', file);
+            const uploadRes = await window.lane4ApiRequest('/admin/uploads/image', {
+              method: 'POST',
+              body: formData
+            });
+            const url = uploadRes.data && (uploadRes.data.secureUrl || uploadRes.data.url);
+            if (url) {
+              newProductImages.push({
+                url,
+                alt: file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '),
+                order: newProductImages.length,
+                isPrimary: newProductImages.length === 0
+              });
+            }
+          } catch (err) {
+            showToast(`Failed to upload ${file.name}: ${err.message}`, 'error');
+          }
         }
+        reindexNewImages();
+        renderNewGalleryList();
+        if (uploadStatus) uploadStatus.textContent = `Upload complete. Total: ${newProductImages.length} images.`;
+        fileInput.value = '';
+        showToast(`Added ${files.length} photo(s) to gallery`, 'success');
+      };
+    }
+
+    const btnAddNewImgUrl = document.getElementById('btn-add-new-img-url');
+    const newImgUrlInput = document.getElementById('new-prod-image-url');
+    if (btnAddNewImgUrl && newImgUrlInput) {
+      btnAddNewImgUrl.onclick = () => {
+        const val = newImgUrlInput.value.trim();
+        if (!val) {
+          showToast('Please enter an image URL', 'error');
+          return;
+        }
+        newProductImages.push({
+          url: val,
+          alt: 'Product Image',
+          order: newProductImages.length,
+          isPrimary: newProductImages.length === 0
+        });
+        reindexNewImages();
+        renderNewGalleryList();
+        newImgUrlInput.value = '';
+        showToast('Image URL added to gallery', 'success');
       };
     }
 
@@ -3029,35 +3411,21 @@ var formatDateString = window.formatDateString || formatDateTime;
         const stockQty = parseInt(document.getElementById('new-prod-stock').value, 10) || 50;
         const isPublished = document.getElementById('new-prod-published').checked;
 
-        let finalImageUrl = document.getElementById('new-prod-image-url').value.trim();
-
-        // If file selected, upload to backend Cloudinary endpoint first
-        if (fileInput.files && fileInput.files[0]) {
-          submitBtn.textContent = 'Uploading Image...';
-          const formData = new FormData();
-          formData.append('image', fileInput.files[0]);
-
-          const adminToken = localStorage.getItem('lane4_admin_token');
-          const apiUrl = (window.LANE4_CONFIG && window.LANE4_CONFIG.API_URL) || '/api';
-          const uploadRes = await fetch(`${apiUrl}/admin/uploads/image`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${adminToken}`
-            },
-            body: formData
+        if (newProductImages.length === 0) {
+          newProductImages.push({
+            url: '6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg',
+            alt: name,
+            order: 0,
+            isPrimary: true
           });
-
-          const uploadJson = await uploadRes.json();
-          if (!uploadRes.ok || !uploadJson.success) {
-            throw new Error((uploadJson && uploadJson.error && uploadJson.error.message) || 'Image upload to Cloudinary failed');
-          }
-
-          finalImageUrl = (uploadJson.data && uploadJson.data.secureUrl) || finalImageUrl;
         }
 
-        if (!finalImageUrl) {
-          finalImageUrl = '6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg';
-        }
+        const formattedImages = newProductImages.map((img, i) => ({
+          url: img.url,
+          alt: img.alt || name,
+          order: i,
+          isPrimary: i === 0
+        }));
 
         const features = featuresText.split('\n').map(f => f.trim()).filter(Boolean);
 
@@ -3072,7 +3440,8 @@ var formatDateString = window.formatDateString || formatDateTime;
           shortDescription,
           description,
           features,
-          images: [{ url: finalImageUrl, alt: name, isPrimary: true }],
+          images: formattedImages,
+          imageUrl: formattedImages[0].url,
           stockQuantity: stockQty,
           isPublished
         };

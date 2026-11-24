@@ -1126,6 +1126,11 @@ window.INDIAN_STATES = [
   }
 
   let customerOrdersCache = [];
+  let activeViewingOrderId = null;
+  let activeViewingOrderData = null;
+  let swimmerRealtimeTimer = null;
+  let lastTrackedQuery = null;
+  const orderSyncChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('lane4_orders_channel') : null;
 
   const statusDisplayMap = {
     'pending_payment': 'Pending Payment',
@@ -1170,29 +1175,112 @@ window.INDIAN_STATES = [
     });
   }
 
-  function showOrderDetails(ord) {
-    const accPanel = document.getElementById('lane4-account-panel');
-    const detailsPanel = document.getElementById('lane4-order-details-panel');
-    const content = document.getElementById('lane4-order-details-content');
-    if (!detailsPanel || !content) return;
+  function getOrderStepperData(ord) {
+    if (!ord) ord = {};
+    const st = (ord.status || '').toLowerCase();
+    const pst = (ord.paymentStatus || '').toLowerCase();
 
-    if (accPanel) accPanel.style.display = 'none';
-    detailsPanel.style.display = 'block';
-
-    const modalBody = document.querySelector('#lane4-auth-modal-wrapper > div:nth-child(2)');
-    if (modalBody) modalBody.scrollTop = 0;
-
-    const orderNum = ord.orderNumber || ord.orderId || 'Order';
-    const isVerified = ord.paymentStatus === 'verified';
-    const isRejected = ord.paymentStatus === 'payment_rejected' || ord.status === 'payment_rejected';
-
-    const st = ord.status || '';
     const isCancelled = st === 'cancelled';
     const isDelivered = st === 'delivered';
     const isOutForDelivery = st === 'out_for_delivery';
     const isShipped = st === 'shipped' || isOutForDelivery || isDelivered;
     const isProcessing = st === 'processing';
     const isConfirmed = st === 'confirmed';
+
+    // Step 1: Placed is always completed once order exists
+    const isStep1Done = true;
+
+    // Step 2: Payment / Verification
+    // A past process is done if payment is verified OR order has advanced to confirmed, processing, shipped, out_for_delivery, delivered
+    const isPaymentVerified = pst === 'verified';
+    const isPaymentRejected = pst === 'payment_rejected' || pst === 'rejected' || st === 'payment_rejected';
+    const isStep2Done = isPaymentVerified || ['confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered'].includes(st);
+
+    let step2Text = '● 2. Awaiting Payment';
+    let step2Color = '#d97706';
+    if (isStep2Done) {
+      step2Text = '✓ 2. Verified';
+      step2Color = '#16a34a';
+    } else if (isPaymentRejected) {
+      step2Text = '✕ 2. Rejected';
+      step2Color = '#dc2626';
+    } else if (st === 'payment_verification' || pst === 'verification_pending') {
+      step2Text = '● 2. Verification Pending';
+      step2Color = '#0284c7';
+    }
+
+    // Step 3: Packing / Processing
+    // Step 3 is a past process (done) if the order has been shipped, out for delivery, or delivered
+    const isStep3Done = isShipped;
+    let step3Html = '';
+    if (isStep3Done) {
+      step3Html = '<span style="color:#16a34a;">✓ 3. Packed</span>';
+    } else if (isProcessing) {
+      step3Html = '<span style="color:#0284c7;font-weight:900;">● 3. Processing</span>';
+    } else if (isConfirmed) {
+      step3Html = '<span style="color:#0284c7;font-weight:900;">● 3. Confirmed (Ready to Pack)</span>';
+    } else if (isCancelled) {
+      step3Html = '<span style="color:#dc2626;">✕ 3. Cancelled</span>';
+    } else {
+      step3Html = '<span style="color:#94a3b8;">3. Ready to Pack</span>';
+    }
+
+    // Step 4: Dispatch & Delivery
+    // Step 4 is done (past process) if delivered!
+    const isStep4Done = isDelivered;
+    let step4Html = '';
+    if (isStep4Done) {
+      step4Html = '<span style="color:#16a34a;">✓ 4. Delivered</span>';
+    } else if (isOutForDelivery) {
+      step4Html = '<span style="color:#0284c7;font-weight:900;">● 4. Out For Delivery</span>';
+    } else if (st === 'shipped') {
+      step4Html = '<span style="color:#0284c7;font-weight:900;">● 4. Shipped</span>';
+    } else {
+      step4Html = '<span style="color:#94a3b8;">4. Shipped</span>';
+    }
+
+    const arrow1Color = isStep2Done ? '#16a34a' : '#cbd5e1';
+    const arrow2Color = (isStep3Done || isConfirmed || isProcessing) && isStep2Done ? '#16a34a' : '#cbd5e1';
+    const arrow3Color = (isStep4Done || isOutForDelivery || st === 'shipped') && isStep3Done ? '#16a34a' : '#cbd5e1';
+
+    return {
+      isStep1Done,
+      isStep2Done,
+      isPaymentRejected,
+      step2Text,
+      step2Color,
+      isStep3Done,
+      step3Html,
+      isStep4Done,
+      step4Html,
+      arrow1Color,
+      arrow2Color,
+      arrow3Color
+    };
+  }
+
+  function showOrderDetails(ord, isBackgroundRefresh = false) {
+    const accPanel = document.getElementById('lane4-account-panel');
+    const detailsPanel = document.getElementById('lane4-order-details-panel');
+    const content = document.getElementById('lane4-order-details-content');
+    if (!detailsPanel || !content) return;
+
+    activeViewingOrderId = ord.orderNumber || ord.orderId || ord.id;
+    activeViewingOrderData = ord;
+
+    let prevScrollTop = 0;
+    if (isBackgroundRefresh) {
+      prevScrollTop = content.scrollTop;
+    } else {
+      if (accPanel) accPanel.style.display = 'none';
+      detailsPanel.style.display = 'block';
+      const modalBody = document.querySelector('#lane4-auth-modal-wrapper > div:nth-child(2)');
+      if (modalBody) modalBody.scrollTop = 0;
+      content.scrollTop = 0;
+    }
+
+    const orderNum = ord.orderNumber || ord.orderId || 'Order';
+    const stepper = getOrderStepperData(ord);
 
     const items = ord.items || [];
     const pricing = ord.pricing || {};
@@ -1273,8 +1361,8 @@ window.INDIAN_STATES = [
           <span style="font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:4px;background:#e2e8f0;color:#334155;text-transform:uppercase;">
             ${getOrderStatusBadge(ord.status)}
           </span>
-          <span style="font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:4px;background:${isVerified ? '#dcfce7' : (isRejected ? '#fee2e2' : '#fef3c7')};color:${isVerified ? '#15803d' : (isRejected ? '#b91c1c' : '#92400e')};text-transform:uppercase;">
-            ${isVerified ? 'Payment Verified' : (isRejected ? 'Payment Rejected' : (ord.paymentStatus || 'Awaiting Verification').replace(/_/g, ' '))}
+          <span style="font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:4px;background:${stepper.isStep2Done ? '#dcfce7' : (stepper.isPaymentRejected ? '#fee2e2' : '#fef3c7')};color:${stepper.isStep2Done ? '#15803d' : (stepper.isPaymentRejected ? '#b91c1c' : '#92400e')};text-transform:uppercase;">
+            ${stepper.isStep2Done ? 'Payment Verified' : (stepper.isPaymentRejected ? 'Payment Rejected' : (ord.paymentStatus || 'Awaiting Verification').replace(/_/g, ' '))}
           </span>
         </div>
       </div>
@@ -1286,38 +1374,17 @@ window.INDIAN_STATES = [
           <div style="color:#16a34a;">
             <div>✓ 1. Placed</div>
           </div>
-          <div style="color:#cbd5e1;">&rarr;</div>
-          <div style="color:${isVerified ? '#16a34a' : (isRejected ? '#dc2626' : '#d97706')};">
-            <div>${isVerified ? '✓ 2. Verified' : (isRejected ? '✕ 2. Rejected' : '● 2. Awaiting Payment')}</div>
+          <div style="color:${stepper.arrow1Color};">&rarr;</div>
+          <div style="color:${stepper.step2Color};">
+            <div>${stepper.step2Text}</div>
           </div>
-          <div style="color:#cbd5e1;">&rarr;</div>
+          <div style="color:${stepper.arrow2Color};">&rarr;</div>
           <div>
-            ${isShipped
-              ? '<span style="color:#16a34a;">✓ 3. Packed</span>'
-              : (isProcessing
-                ? '<span style="color:#0284c7;font-weight:900;">● 3. Processing</span>'
-                : (isConfirmed
-                  ? '<span style="color:#0284c7;font-weight:900;">● 3. Confirmed (Ready to Pack)</span>'
-                  : (isCancelled
-                    ? '<span style="color:#dc2626;">✕ 3. Cancelled</span>'
-                    : '<span style="color:#94a3b8;">3. Ready to Pack</span>'
-                  )
-                )
-              )
-            }
+            ${stepper.step3Html}
           </div>
-          <div style="color:#cbd5e1;">&rarr;</div>
+          <div style="color:${stepper.arrow3Color};">&rarr;</div>
           <div>
-            ${isDelivered
-              ? '<span style="color:#16a34a;">✓ 4. Delivered</span>'
-              : (isOutForDelivery
-                ? '<span style="color:#0284c7;font-weight:900;">● 4. Out For Delivery</span>'
-                : (isShipped
-                  ? '<span style="color:#0284c7;font-weight:900;">● 4. Shipped</span>'
-                  : '<span style="color:#94a3b8;">4. Shipped</span>'
-                )
-              )
-            }
+            ${stepper.step4Html}
           </div>
         </div>
       </div>
@@ -1396,6 +1463,10 @@ window.INDIAN_STATES = [
     const returnBtn = document.getElementById('lane4-order-return-btn');
     if (returnBtn) {
       returnBtn.onclick = () => openReturnForm(ord);
+    }
+
+    if (isBackgroundRefresh) {
+      content.scrollTop = prevScrollTop;
     }
   }
 
@@ -1488,6 +1559,237 @@ window.INDIAN_STATES = [
       }
     };
   }
+
+  function renderTrackResult(ord) {
+    const resultEl = document.getElementById('lane4-order-track-result');
+    if (!resultEl || !ord) return;
+
+    const stepper = getOrderStepperData(ord);
+
+    resultEl.style.display = 'block';
+    resultEl.innerHTML = `
+      <div style="background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:10px;padding:16px;box-sizing:border-box;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+          <div>
+            <div style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Order Tracking Snapshot</div>
+            <div style="font-size:16px;font-weight:900;color:#0f172a;">#${ord.orderNumber || ord.orderId}</div>
+          </div>
+          <div style="text-align:right;">
+            <span style="font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:4px;background:${stepper.isStep2Done ? '#dcfce7' : (stepper.isPaymentRejected ? '#fee2e2' : '#fef3c7')};color:${stepper.isStep2Done ? '#15803d' : (stepper.isPaymentRejected ? '#b91c1c' : '#92400e')};text-transform:uppercase;">
+              ${stepper.isStep2Done ? 'Payment Verified' : (stepper.isPaymentRejected ? 'Payment Rejected' : (ord.paymentStatus || 'Awaiting Verification').replace(/_/g, ' '))}
+            </span>
+          </div>
+        </div>
+
+        <!-- Status Stepper Bar -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0;padding:10px 12px;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;font-size:11px;font-weight:800;text-align:center;">
+          <div style="color:#16a34a;">
+            <div>✓ 1. Placed</div>
+          </div>
+          <div style="color:${stepper.arrow1Color};">&rarr;</div>
+          <div style="color:${stepper.step2Color};">
+            <div>${stepper.step2Text}</div>
+          </div>
+          <div style="color:${stepper.arrow2Color};">&rarr;</div>
+          <div>
+            ${stepper.step3Html}
+          </div>
+          <div style="color:${stepper.arrow3Color};">&rarr;</div>
+          <div>
+            ${stepper.step4Html}
+          </div>
+        </div>
+
+        <div style="font-size:12px;color:#334155;line-height:1.6;margin-bottom:12px;">
+          <div><strong>Current Fulfillment Status:</strong> <span style="text-transform:uppercase;font-weight:800;color:#0f172a;">${(ord.status || 'pending').replace(/_/g, ' ')}</span></div>
+          <div><strong>Delivery Destination:</strong> ${ord.shippingAddress ? `${ord.shippingAddress.city}, PIN ${ord.shippingAddress.postalCode}` : 'India'}</div>
+          <div><strong>Payable Order Total:</strong> ${ord.pricing ? ord.pricing.finalPayableFormatted : ''}</div>
+        </div>
+
+        ${ord.fulfillment && ord.fulfillment.trackingNumber ? `
+          <div style="background:#ffffff;border:1px solid #bbf7d0;border-radius:8px;padding:12px;margin-top:10px;">
+            <div style="font-size:11px;font-weight:800;color:#166534;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Dispatched via ${ord.fulfillment.courierName || 'DTDC'}</div>
+            <div style="font-size:13px;font-weight:800;color:#0f172a;margin-bottom:8px;">AWB / Tracking #: <code>${ord.fulfillment.trackingNumber}</code></div>
+            <a href="${ord.fulfillment.trackingUrl || `https://www.google.com/search?q=${encodeURIComponent((ord.fulfillment.courierName || '') + ' ' + ord.fulfillment.trackingNumber)}`}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:#000000;color:#ffffff;padding:8px 14px;border-radius:6px;font-size:11.5px;font-weight:800;text-decoration:none;">
+              <span>LIVE COURIER TRACKING</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            </a>
+          </div>
+        ` : `
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;font-size:12px;color:#1e40af;">
+            Order is confirmed and being prepared for packaging at our Nagpur store. You will receive courier dispatch information via email as soon as it ships.
+          </div>
+        `}
+      </div>
+    `;
+  }
+
+  function renderCustomerOrders(orders) {
+    const container = document.getElementById('lane4-account-orders');
+    if (!container) return;
+
+    if (!orders || orders.length === 0) {
+      container.innerHTML = `
+        <div style="padding:22px 14px;text-align:center;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;">
+          <div style="width:38px;height:38px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;color:#64748b;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          </div>
+          <div style="font-size:13.5px;font-weight:800;color:#0f172a;margin-bottom:4px;">No Orders Yet</div>
+          <div style="font-size:12px;color:#64748b;line-height:1.4;margin-bottom:14px;">You haven't placed any competitive swim orders yet. Discover our competition gear to elevate your training.</div>
+          <a href="shop.html" onclick="document.getElementById('lane4-auth-modal-wrapper').style.display='none';" style="display:inline-flex;align-items:center;gap:6px;background:#000000;color:#ffffff;padding:8px 16px;border-radius:6px;font-size:11.5px;font-weight:800;text-decoration:none;letter-spacing:0.5px;">
+            <span>EXPLORE SHOP</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = '';
+    orders.forEach(ord => {
+      const orderRef = ord.orderNumber || ord.orderId;
+      const totalText = ord.pricing ? ord.pricing.finalPayableFormatted : '';
+      const stepper = getOrderStepperData(ord);
+      const itemCount = (ord.items || []).reduce((sum, it) => sum + (it.quantity || 1), 0);
+
+      const card = document.createElement('div');
+      card.className = 'lane4-order-card';
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.setAttribute('title', 'Click to view complete order items and billing breakdown');
+      card.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;font-weight:800;font-size:13.5px;color:#0f172a;margin-bottom:4px;">
+          <span>#${orderRef}</span>
+          <span style="font-size:14px;font-weight:900;">${totalText}</span>
+        </div>
+        <div style="font-size:11.5px;color:#64748b;margin-bottom:6px;">
+          ${itemCount} ${itemCount === 1 ? 'item' : 'items'} &bull; ${formatOrderTimestamp(ord.createdAt)}
+        </div>
+        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+          <span style="font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;background:#e2e8f0;color:#334155;text-transform:uppercase;">
+            ${getOrderStatusBadge(ord.status)}
+          </span>
+          <span style="font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;background:${stepper.isStep2Done ? '#dcfce7' : (stepper.isPaymentRejected ? '#fee2e2' : '#fef3c7')};color:${stepper.isStep2Done ? '#15803d' : (stepper.isPaymentRejected ? '#b91c1c' : '#92400e')};text-transform:uppercase;">
+            ${stepper.isStep2Done ? 'Payment Verified' : (stepper.isPaymentRejected ? 'Payment Rejected' : 'Awaiting Verification')}
+          </span>
+        </div>
+        ${ord.fulfillment && ord.fulfillment.trackingNumber ? `
+          <div style="margin-top:8px;padding-top:6px;border-top:1px dashed #cbd5e1;font-size:11.5px;color:#475569;">
+            <strong>Courier:</strong> ${ord.fulfillment.courierName || 'DTDC'} &bull; <strong>AWB:</strong> <code>${ord.fulfillment.trackingNumber}</code>
+          </div>
+        ` : ''}
+        <div style="margin-top:10px;padding-top:8px;border-top:1px solid #e2e8f0;">
+          <button type="button" class="lane4-view-details-action" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f172a;color:#ffffff;padding:8px 12px;border:none;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;transition:background 0.15s ease;">
+            <span>View Order, Products &amp; Billing Details</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        </div>
+      `;
+
+      card.onclick = () => showOrderDetails(ord);
+      card.onkeydown = (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          showOrderDetails(ord);
+        }
+      };
+
+      container.appendChild(card);
+    });
+  }
+
+  async function syncSwimmerRealtime() {
+    const wrapper = document.getElementById('lane4-auth-modal-wrapper');
+    if (!wrapper || wrapper.style.display === 'none') return;
+
+    const detailsPanel = document.getElementById('lane4-order-details-panel');
+    const accountPanel = document.getElementById('lane4-account-panel');
+    const trackPanel = document.getElementById('lane4-track-panel');
+    const trackResult = document.getElementById('lane4-order-track-result');
+
+    // 1. If viewing single order details
+    if (detailsPanel && detailsPanel.style.display !== 'none' && activeViewingOrderId) {
+      try {
+        const res = await window.lane4ApiRequest(`/orders/${encodeURIComponent(activeViewingOrderId)}`);
+        if (res && res.data) {
+          const updated = res.data;
+          const prev = activeViewingOrderData || {};
+          const changed =
+            updated.status !== prev.status ||
+            updated.orderStatus !== prev.orderStatus ||
+            updated.paymentStatus !== prev.paymentStatus ||
+            JSON.stringify(updated.fulfillment || {}) !== JSON.stringify(prev.fulfillment || {}) ||
+            JSON.stringify(updated.refundDetails || {}) !== JSON.stringify(prev.refundDetails || {});
+
+          if (changed) {
+            activeViewingOrderData = updated;
+            if (customerOrdersCache && Array.isArray(customerOrdersCache)) {
+              const idx = customerOrdersCache.findIndex(o =>
+                (o.orderNumber && o.orderNumber === updated.orderNumber) ||
+                (o.orderId && o.orderId === updated.orderId) ||
+                (o.id && o.id === updated.id)
+              );
+              if (idx !== -1) customerOrdersCache[idx] = updated;
+            }
+            showOrderDetails(updated, true);
+          }
+        }
+      } catch (_) {}
+    }
+    // 2. If viewing account orders list
+    else if (accountPanel && accountPanel.style.display !== 'none') {
+      try {
+        const res = await window.lane4ApiRequest('/orders/my-orders');
+        if (res && res.data) {
+          const newOrders = res.data;
+          const prevDigest = (customerOrdersCache || []).map(o => `${o.orderNumber || o.orderId}_${o.status}_${o.paymentStatus}_${o.fulfillment && o.fulfillment.trackingNumber}`).join('|');
+          const newDigest = newOrders.map(o => `${o.orderNumber || o.orderId}_${o.status}_${o.paymentStatus}_${o.fulfillment && o.fulfillment.trackingNumber}`).join('|');
+          if (prevDigest !== newDigest) {
+            customerOrdersCache = newOrders;
+            renderCustomerOrders(newOrders);
+          }
+        }
+      } catch (_) {}
+    }
+    // 3. If viewing order track result
+    else if (trackPanel && trackPanel.style.display !== 'none' && trackResult && trackResult.style.display !== 'none' && lastTrackedQuery) {
+      try {
+        const res = await window.lane4ApiRequest('/orders/track', {
+          method: 'POST',
+          body: JSON.stringify(lastTrackedQuery)
+        });
+        if (res && res.data) {
+          renderTrackResult(res.data);
+        }
+      } catch (_) {}
+    }
+  }
+
+  function startSwimmerRealtimePolling() {
+    if (swimmerRealtimeTimer) clearInterval(swimmerRealtimeTimer);
+    syncSwimmerRealtime();
+    swimmerRealtimeTimer = setInterval(syncSwimmerRealtime, 2500);
+  }
+
+  function stopSwimmerRealtimePolling() {
+    if (swimmerRealtimeTimer) {
+      clearInterval(swimmerRealtimeTimer);
+      swimmerRealtimeTimer = null;
+    }
+  }
+
+  if (orderSyncChannel) {
+    orderSyncChannel.onmessage = function (event) {
+      if (event && event.data && event.data.type === 'order_updated') {
+        syncSwimmerRealtime();
+      }
+    };
+  }
+  window.addEventListener('storage', function (e) {
+    if (e.key === 'lane4_order_updated') {
+      syncSwimmerRealtime();
+    }
+  });
 
   function initSubtabs() {
     const subtabs = document.getElementById('lane4-acc-subtabs');
@@ -1761,75 +2063,7 @@ window.INDIAN_STATES = [
       const res = await window.lane4ApiRequest('/orders/my-orders');
       const orders = (res && res.data) || [];
       customerOrdersCache = orders;
-
-      if (orders.length === 0) {
-        container.innerHTML = `
-          <div style="padding:22px 14px;text-align:center;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;">
-            <div style="width:38px;height:38px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;color:#64748b;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-            </div>
-            <div style="font-size:13.5px;font-weight:800;color:#0f172a;margin-bottom:4px;">No Orders Yet</div>
-            <div style="font-size:12px;color:#64748b;line-height:1.4;margin-bottom:14px;">You haven't placed any competitive swim orders yet. Discover our competition gear to elevate your training.</div>
-            <a href="shop.html" onclick="document.getElementById('lane4-auth-modal-wrapper').style.display='none';" style="display:inline-flex;align-items:center;gap:6px;background:#000000;color:#ffffff;padding:8px 16px;border-radius:6px;font-size:11.5px;font-weight:800;text-decoration:none;letter-spacing:0.5px;">
-              <span>EXPLORE SHOP</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-            </a>
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = '';
-      orders.forEach(ord => {
-        const orderRef = ord.orderNumber || ord.orderId;
-        const totalText = ord.pricing ? ord.pricing.finalPayableFormatted : '';
-        const isVerified = ord.paymentStatus === 'verified';
-        const itemCount = (ord.items || []).reduce((sum, it) => sum + (it.quantity || 1), 0);
-
-        const card = document.createElement('div');
-        card.className = 'lane4-order-card';
-        card.setAttribute('role', 'button');
-        card.setAttribute('tabindex', '0');
-        card.setAttribute('title', 'Click to view complete order items and billing breakdown');
-        card.innerHTML = `
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;font-weight:800;font-size:13.5px;color:#0f172a;margin-bottom:4px;">
-            <span>#${orderRef}</span>
-            <span style="font-size:14px;font-weight:900;">${totalText}</span>
-          </div>
-          <div style="font-size:11.5px;color:#64748b;margin-bottom:6px;">
-            ${itemCount} ${itemCount === 1 ? 'item' : 'items'} &bull; ${formatOrderTimestamp(ord.createdAt)}
-          </div>
-          <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
-            <span style="font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;background:#e2e8f0;color:#334155;text-transform:uppercase;">
-              ${getOrderStatusBadge(ord.status)}
-            </span>
-            <span style="font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;background:${isVerified ? '#dcfce7' : (ord.paymentStatus === 'payment_rejected' ? '#fee2e2' : '#fef3c7')};color:${isVerified ? '#15803d' : (ord.paymentStatus === 'payment_rejected' ? '#b91c1c' : '#92400e')};text-transform:uppercase;">
-              ${isVerified ? 'Payment Verified' : (ord.paymentStatus === 'payment_rejected' ? 'Payment Rejected' : 'Awaiting Verification')}
-            </span>
-          </div>
-          ${ord.fulfillment && ord.fulfillment.trackingNumber ? `
-            <div style="margin-top:8px;padding-top:6px;border-top:1px dashed #cbd5e1;font-size:11.5px;color:#475569;">
-              <strong>Courier:</strong> ${ord.fulfillment.courierName || 'DTDC'} &bull; <strong>AWB:</strong> <code>${ord.fulfillment.trackingNumber}</code>
-            </div>
-          ` : ''}
-          <div style="margin-top:10px;padding-top:8px;border-top:1px solid #e2e8f0;">
-            <button type="button" class="lane4-view-details-action" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f172a;color:#ffffff;padding:8px 12px;border:none;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;transition:background 0.15s ease;">
-              <span>View Order, Products &amp; Billing Details</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            </button>
-          </div>
-        `;
-
-        card.onclick = () => showOrderDetails(ord);
-        card.onkeydown = (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            showOrderDetails(ord);
-          }
-        };
-
-        container.appendChild(card);
-      });
+      renderCustomerOrders(orders);
     } catch (err) {
       container.innerHTML = `
         <div style="padding:20px 14px;text-align:center;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;">
