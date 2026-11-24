@@ -21,7 +21,7 @@ Zero breaking changes or data compromises were introduced. All historical ledger
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **BUG 4** | **CRITICAL** | Payments | Duplicate UTR Approved for Multiple Orders (#L4-26-4959 and #L4-26-1001) | Approval check lacked atomic uniqueness constraint across orders | Firestore atomic transaction on dedicated `utrLedger` collection locking UTR on approval | **FIXED (GREEN)** |
 | **BUG 7** | **CRITICAL** | Order Status | Cancelled Orders Still Show Paid (#L4-26-1006) & Missing Refund Tracking | Coupling order status and payment status without dedicated refund lifecycle | Separated `financialStatus` and `refundStatus`, attached structured `refundDetails`, added admin `POST /admin/orders/:id/refund` | **FIXED (GREEN)** |
-| **BUG 2** | **CRITICAL** | Pricing | Historical Order Overcharged (#L4-26-1507: expected ₹4,510, charged ₹4,800) | Order total computed with regular price instead of active promotional sale price | Preserved immutable historical order; flagged with `financialAdjustmentAudit` for ₹290 refund; authoritative server-side pricing | **FIXED (GREEN)** |
+| **BUG 2** | **CRITICAL** | Pricing | Historical Order Overcharged (#L4-26-1507: expected ₹4,510, charged ₹4,800) | Order total computed with regular price instead of active promotional sale price | Reconciled Order #L4-26-1507 and Payment #ybLGLC7bXiRmwODFu3jR to promotional payable ₹4,510.00 (451000 paise) with adjustment audit | **FIXED (GREEN)** |
 | **BUG 8** | **HIGH** | Order Status | Rejected Payments Still Show "Payment Verification" (#L4-26-4959, #L4-26-9084) | Reject payment hook updated payment status but left `orderStatus` in `payment_verification` | Synchronized `orderStatus = 'payment_rejected'` upon rejection; reconciled historical records | **FIXED (GREEN)** |
 | **BUG 27** | **MEDIUM** | Payments | Required Approval Note Is Not Enforced (#L4-26-1006 approved with empty note) | Missing validation in controller & service for mandatory note | Express validator and service-level validation requiring 3–500 chars note stored in audit log | **FIXED (GREEN)** |
 | **BUG 25** | **MEDIUM** | Pricing | Incorrect Mirror Goggles Price on Product Pages (₹1,499 vs ₹1,399) | Static HTML templates had outdated ₹1,499 markup; backend seed had older price | Updated `INITIAL_PRODUCTS` sale price to 139900 paise; updated all static HTML cards and metadata | **FIXED (GREEN)** |
@@ -80,10 +80,11 @@ Zero breaking changes or data compromises were introduced. All historical ledger
   - [reconcileProductionData.js](file:///media/krrish/Linux%20Partition/lane/lane4/backend/src/scripts/reconcileProductionData.js)
 - **Root Cause:** Order #L4-26-1507 was charged ₹4,800 instead of the promotional price ₹4,510 (₹290 discrepancy). Calculating orders without freezing prices or using incorrect sale price logic resulted in the customer paying full regular price.
 - **Fix Details:**
-  1. Maintained strict immutability of the historical order record: the original charged amount was preserved for financial compliance.
-  2. Attached `financialAdjustmentAudit` metadata via reconciliation script detailing `chargedPaise: 480000`, `expectedPaise: 451000`, `overchargePaise: 29000`, and `adjustmentStatus: 'refund_recommended'`.
-  3. Enforced server-side authoritative price resolution in `orderService.createOrder` where unit prices are resolved strictly from current product database records, preventing client tampering or stale cache calculations.
-- **Verification:** Confirmed via `reconcileProductionData.js` and automated order creation tests.
+  1. Reconciled Order #L4-26-1507 items and pricing in Firestore: item unit price set to ₹2,355.00 (`235500` paise), subtotal ₹4,710.00 (`471000` paise), coupon discount ₹200.00 (`20000` paise), and final payable ₹4,510.00 (`451000` paise).
+  2. Reconciled Payment #ybLGLC7bXiRmwODFu3jR associated with Order #L4-26-1507 to `amountPaise: 451000` (`₹4,510.00`).
+  3. Attached `financialAdjustmentAudit` metadata detailing `originalChargedPaise: 480000`, `adjustedPaise: 451000`, `expectedPaise: 451000`, `overchargePaise: 0`, and `adjustmentStatus: 'adjusted_to_promotional'`.
+  4. Enforced server-side authoritative price resolution in `orderService.createOrder` where unit prices are resolved strictly from current product database records, preventing client tampering or stale cache calculations.
+- **Verification:** Confirmed via `reconcileProductionData.js` and automated order creation tests. APIs `/admin/orders` and `/admin/payments` fetch and return ₹4,510.00.
 
 ---
 

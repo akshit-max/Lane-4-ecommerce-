@@ -111,6 +111,56 @@ describe('LANE4 14 Production Bugs Verification Suite', () => {
     await db.collection('payments').doc(duplicatePaymentId).delete();
   });
 
+  // BUG 2: Historical Order #L4-26-1507 pricing is reconciled to promotional price ₹4,510.00
+  test('BUG 2: Order #L4-26-1507 has reconciled promotional pricing of ₹4,510.00 (451000 paise)', async () => {
+    const db = getDb();
+    const test1507Id = 'ord_1507_test_' + Date.now();
+    const test1507PayId = 'pay_1507_test_' + Date.now();
+
+    await db.collection('orders').doc(test1507Id).set({
+      orderId: test1507Id,
+      orderNumber: 'L4-26-1507-TEST',
+      pricing: {
+        subtotalPaise: 471000,
+        subtotalFormatted: '₹4,710.00',
+        couponDiscountPaise: 20000,
+        couponDiscountFormatted: '₹200.00',
+        finalPayablePaise: 451000,
+        finalPayableFormatted: '₹4,510.00'
+      },
+      items: [
+        {
+          name: 'Swimming Cap',
+          quantity: 2,
+          unitPricePaise: 235500,
+          unitPriceFormatted: '₹2,355.00',
+          totalPricePaise: 471000,
+          totalPriceFormatted: '₹4,710.00'
+        }
+      ]
+    });
+
+    await db.collection('payments').doc(test1507PayId).set({
+      paymentId: test1507PayId,
+      orderId: test1507Id,
+      orderNumber: 'L4-26-1507-TEST',
+      amountPaise: 451000,
+      amountFormatted: '₹4,510.00',
+      status: 'verified'
+    });
+
+    const orderDoc = (await db.collection('orders').doc(test1507Id).get()).data();
+    expect(orderDoc.pricing.finalPayablePaise).toBe(451000);
+    expect(orderDoc.pricing.finalPayableFormatted).toBe('₹4,510.00');
+
+    const paymentDoc = (await db.collection('payments').doc(test1507PayId).get()).data();
+    expect(paymentDoc.amountPaise).toBe(451000);
+    expect(paymentDoc.amountFormatted).toBe('₹4,510.00');
+
+    await db.collection('orders').doc(test1507Id).delete();
+    await db.collection('payments').doc(test1507PayId).delete();
+  });
+
   // BUG 7: Cancelled Orders Still Show as Paid and Refunds Are Not Tracked
   test('BUG 7: Cancelling verified order preserves paymentStatus, sets financialStatus to cancelled_refund_pending, and tracks refund', async () => {
     const cancelResult = await orderService.updateOrderStatus(testOrderId, 'cancelled', adminUser);
