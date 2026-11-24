@@ -9,6 +9,8 @@ var formatDateString = window.formatDateString || formatDateTime;
 
 (function () {
   let activeAdmin = null;
+  let currentView = 'dashboard';
+  window.currentView = currentView;
 
   function escapeHtml(str) {
     if (str === null || str === undefined) return '';
@@ -717,6 +719,8 @@ var formatDateString = window.formatDateString || formatDateTime;
 
   function switchView(viewName, skipHash) {
     if (!viewName) viewName = 'dashboard';
+    currentView = viewName;
+    window.currentView = viewName;
     if (!skipHash) {
       window.location.hash = viewName;
       localStorage.setItem('lane4_admin_active_view', viewName);
@@ -1226,7 +1230,8 @@ var formatDateString = window.formatDateString || formatDateTime;
     checkPendingPaymentsRealtime(true);
     paymentPollingTimer = setInterval(() => {
       checkPendingPaymentsRealtime(true);
-      if (currentView === 'orders') {
+      const active = currentView || window.currentView;
+      if (active === 'orders') {
         quietRefreshOrders();
       }
     }, 4000);
@@ -1716,7 +1721,9 @@ var formatDateString = window.formatDateString || formatDateTime;
       });
       showToast('Payment screenshot updated successfully!');
       await loadPayments();
-      viewPaymentDetail(paymentId);
+      if (typeof window.viewPaymentDetail === 'function') {
+        window.viewPaymentDetail(paymentId);
+      }
     } catch (err) {
       showToast(err.message || 'Failed to upload screenshot', 'error');
       if (btn) {
@@ -1866,7 +1873,9 @@ var formatDateString = window.formatDateString || formatDateTime;
     const checkAndOpen = (attempts = 0) => {
       const o = (window.currentOrders || []).find(it => it.orderId === orderId || it.id === orderId || it.orderNumber === orderId);
       if (o || attempts >= 8) {
-        openTrackingModal(orderId);
+        if (typeof window.openTrackingModal === 'function') {
+          window.openTrackingModal(orderId);
+        }
       } else {
         setTimeout(() => checkAndOpen(attempts + 1), 120);
       }
