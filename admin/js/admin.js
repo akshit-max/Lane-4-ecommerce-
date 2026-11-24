@@ -2781,10 +2781,10 @@ var formatDateString = window.formatDateString || formatDateTime;
             <input type="number" step="0.01" min="1" id="edit-prod-regular" class="form-input" value="${regularRupees}" required />
             <div style="font-size:11px;color:#64748b;margin-top:3px;">Catalog base retail price</div>
           </div>
-          <div class="form-group" style="flex:1;">
-            <label class="form-label">Sale / Offer Price (₹ INR)</label>
-            <input type="number" step="0.01" min="0" id="edit-prod-sale" class="form-input" value="${saleRupees}" placeholder="Leave blank if no sale" />
-            <div style="font-size:11px;color:#16a34a;margin-top:3px;">Discounted checkout price</div>
+          <div class="form-group">
+            <label class="form-label">Sale / Offer Price (₹ INR) *</label>
+            <input type="number" step="0.01" min="1" id="edit-prod-sale" class="form-input" value="${saleRupees}" placeholder="e.g. 1399" required />
+            <div style="font-size:11px;color:#16a34a;margin-top:3px;">Discounted checkout price (must be less than regular price) *</div>
           </div>
           <div class="form-group" style="flex:1;">
             <label class="form-label">Available Stock (Units) *</label>
@@ -2838,8 +2838,9 @@ var formatDateString = window.formatDateString || formatDateTime;
         </div>
 
         <div class="form-group">
-          <label class="form-label">Product Description</label>
-          <textarea id="edit-prod-desc" class="form-textarea" rows="3">${escapeHtml(p.description || '')}</textarea>
+          <label class="form-label">Product Description *</label>
+          <textarea id="edit-prod-desc" class="form-textarea" rows="3" required minlength="10">${escapeHtml(p.description || '')}</textarea>
+          <div style="font-size:11px;color:#64748b;margin-top:3px;">Detailed product specifications, materials, and benefits (minimum 10 characters) *</div>
         </div>
 
         <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid #e2e8f0;">
@@ -3044,6 +3045,32 @@ var formatDateString = window.formatDateString || formatDateTime;
         const shortDescription = document.getElementById('edit-prod-short-desc').value.trim();
         const description = document.getElementById('edit-prod-desc').value.trim();
 
+        if (!name || name.length < 3) {
+          if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Product & Gallery Order'; }
+          showToast('Product name is required (at least 3 characters).', 'error');
+          return;
+        }
+        if (!regularPrice || isNaN(regularPrice) || regularPrice <= 0) {
+          if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Product & Gallery Order'; }
+          showToast('A valid regular price greater than ₹0 is required.', 'error');
+          return;
+        }
+        if (!saleVal || isNaN(salePrice) || salePrice <= 0) {
+          if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Product & Gallery Order'; }
+          showToast('A valid discounted sale price greater than ₹0 is required.', 'error');
+          return;
+        }
+        if (salePrice > regularPrice) {
+          if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Product & Gallery Order'; }
+          showToast(`Sale price (₹${salePrice}) cannot exceed regular price (₹${regularPrice}).`, 'error');
+          return;
+        }
+        if (!description || description.length < 10) {
+          if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Product & Gallery Order'; }
+          showToast('Product description is required (at least 10 characters).', 'error');
+          return;
+        }
+
         try {
           const formattedImages = productImages.map((img, i) => ({
             url: img.url,
@@ -3121,19 +3148,21 @@ var formatDateString = window.formatDateString || formatDateTime;
             <input type="number" id="new-prod-price" class="form-input" placeholder="1999" min="1" step="1" required />
           </div>
           <div class="form-group">
-            <label class="form-label">Sale Price (₹ INR, optional)</label>
-            <input type="number" id="new-prod-sale-price" class="form-input" placeholder="1799" min="0" step="1" />
+            <label class="form-label">Sale Price (₹ INR) *</label>
+            <input type="number" id="new-prod-sale-price" class="form-input" placeholder="1799" min="1" step="1" required />
+            <div style="font-size:11px;color:#16a34a;margin-top:3px;">Discounted checkout price (must be less than regular price) *</div>
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Short Tagline / Subtitle</label>
-          <input type="text" id="new-prod-short-desc" class="form-input" placeholder="e.g. Pool-tested resistance paddles for upper-body stroke strength" />
+          <label class="form-label">Short Tagline / Subtitle *</label>
+          <input type="text" id="new-prod-short-desc" class="form-input" placeholder="e.g. Pool-tested resistance paddles for upper-body stroke strength" required minlength="3" />
         </div>
 
         <div class="form-group">
-          <label class="form-label">Full Product Description</label>
-          <textarea id="new-prod-desc" class="form-textarea" rows="3" placeholder="Detailed product specifications, materials, fit and technical benefits..."></textarea>
+          <label class="form-label">Full Product Description *</label>
+          <textarea id="new-prod-desc" class="form-textarea" rows="3" placeholder="Detailed product specifications, materials, fit and technical benefits..." required minlength="10"></textarea>
+          <div style="font-size:11px;color:#64748b;margin-top:3px;">Detailed specifications, materials, and benefits (minimum 10 characters) *</div>
         </div>
 
         <div class="form-group">
@@ -3375,13 +3404,32 @@ var formatDateString = window.formatDateString || formatDateTime;
         const sku = document.getElementById('new-prod-sku').value.trim();
         const category = document.getElementById('new-prod-category').value;
         const regPrice = parseFloat(document.getElementById('new-prod-price').value);
-        const salePriceVal = document.getElementById('new-prod-sale-price').value;
+        const salePriceVal = document.getElementById('new-prod-sale-price').value.trim();
         const salePrice = salePriceVal ? parseFloat(salePriceVal) : null;
         const shortDescription = document.getElementById('new-prod-short-desc').value.trim();
         const description = document.getElementById('new-prod-desc').value.trim();
         const featuresText = document.getElementById('new-prod-features').value;
         const stockQty = parseInt(document.getElementById('new-prod-stock').value, 10) || 50;
         const isPublished = document.getElementById('new-prod-published').checked;
+
+        if (!name || name.length < 3) {
+          throw new Error('Product name is required (at least 3 characters).');
+        }
+        if (!regPrice || isNaN(regPrice) || regPrice <= 0) {
+          throw new Error('A valid regular price greater than ₹0 is required.');
+        }
+        if (!salePriceVal || isNaN(salePrice) || salePrice <= 0) {
+          throw new Error('A valid discounted sale price greater than ₹0 is required.');
+        }
+        if (salePrice > regPrice) {
+          throw new Error(`Sale price (₹${salePrice}) cannot exceed regular price (₹${regPrice}).`);
+        }
+        if (!shortDescription || shortDescription.length < 3) {
+          throw new Error('Short tagline / subtitle is required (at least 3 characters).');
+        }
+        if (!description || description.length < 10) {
+          throw new Error('Full product description is required (at least 10 characters).');
+        }
 
         if (newProductImages.length === 0) {
           newProductImages.push({

@@ -12,8 +12,12 @@ const moderateReviewValidator = [
 ];
 
 const createProductValidator = [
-  body('name').trim().notEmpty().withMessage('Product name is required'),
-  body('regularPricePaise').isInt({ min: 0 }).withMessage('Regular price in paise must be >= 0')
+  body('name').trim().isLength({ min: 3 }).withMessage('Product name must be at least 3 characters'),
+  body('description').trim().isLength({ min: 10 }).withMessage('A detailed product description (at least 10 characters) is required'),
+  body('regularPricePaise').optional().isInt({ min: 1 }).withMessage('Regular price in paise must be > 0'),
+  body('salePricePaise').optional().isInt({ min: 1 }).withMessage('Sale price in paise must be > 0'),
+  body('regularPrice').optional().isFloat({ min: 0.01 }).withMessage('Regular price must be > 0'),
+  body('salePrice').optional().isFloat({ min: 0.01 }).withMessage('Sale price must be > 0')
 ];
 
 module.exports = {

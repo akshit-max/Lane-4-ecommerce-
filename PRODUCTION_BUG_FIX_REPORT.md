@@ -182,16 +182,20 @@ Zero breaking changes or data compromises were introduced. All historical ledger
 
 ---
 
-### BUG 17 (LOW) – Test Product Is Live on Storefront
+### BUG 17 (LOW) – Test Product Is Live on Storefront & Missing Required Product Details
 - **Affected Files:**
+  - [admin.js](file:///media/krrish/Linux%20Partition/lane/lane4/admin/js/admin.js)
+  - [admin/index.html](file:///media/krrish/Linux%20Partition/lane/lane4/admin/index.html)
   - [productService.js](file:///media/krrish/Linux%20Partition/lane/lane4/backend/src/services/productService.js)
+  - [productValidators.js](file:///media/krrish/Linux%20Partition/lane/lane4/backend/src/validators/productValidators.js)
   - [reconcileProductionData.js](file:///media/krrish/Linux%20Partition/lane/lane4/backend/src/scripts/reconcileProductionData.js)
-- **Root Cause:** "TEST C" (SKU `L4-TEST`) had `isPublished: true` in Firestore, and public catalog endpoints did not enforce minimum validation criteria.
+- **Root Cause:** "TEST C" (SKU `L4-TEST`) had `isPublished: true` in Firestore, and the Admin Add/Edit product form treated "Sale Price" as optional and lacked mandatory validation for "Description", allowing incomplete products without description or sale price to be created and published.
 - **Fix Details:**
-  1. Enforced minimum publication criteria in `productService.createProduct` and `updateProduct` (name >= 3 chars, description >= 10 chars, price > 0).
-  2. Filtered out test and draft products in `productService.listProducts`.
-  3. Reconciled database by unpublishing "TEST C" to `isPublished: false`, `status: 'draft'`.
-- **Verification:** Verified by unit test `BUG 17` in `qa14ProductionBugs.test.js`.
+  1. Updated the Admin Add Product and Edit Product forms in `admin/js/admin.js` to mark both **Full Product Description** (`minlength="10"`) and **Sale Price** (`min="1"`, `salePrice <= regularPrice`) as required (`*`), with client-side submit validation preventing form submission if either field is missing.
+  2. Enforced backend validation in `productService.createProduct` and `updateProduct`: a product cannot be published without a valid name (>= 3 chars), description (>= 10 chars), regular price (> 0), and sale price (> 0 and <= regular price).
+  3. Filtered out test and draft products in `productService.listProducts`.
+  4. Reconciled database by unpublishing "TEST C" to `isPublished: false`, `status: 'draft'`.
+- **Verification:** Verified by unit tests in `qa14ProductionBugs.test.js` and `catalog.test.js`.
 
 ---
 

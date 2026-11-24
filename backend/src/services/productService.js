@@ -515,9 +515,22 @@ class ProductService {
     const productId = docRef.id;
 
     const regularPricePaise = data.regularPricePaise || rupeesToPaise(data.regularPrice || 0);
-    const parsedSalePaise = data.salePrice ? rupeesToPaise(data.salePrice) : (data.salePricePaise || null);
-    const salePricePaise = (parsedSalePaise && parsedSalePaise > 0 && parsedSalePaise < regularPricePaise) ? parsedSalePaise : null;
+    const parsedSalePaise = data.salePricePaise || (data.salePrice ? rupeesToPaise(data.salePrice) : null);
+    const salePricePaise = (parsedSalePaise && parsedSalePaise > 0 && parsedSalePaise <= regularPricePaise) ? parsedSalePaise : null;
     const effectivePricePaise = regularPricePaise;
+
+    // Basic sanity validation
+    if (!data.name || data.name.trim().length < 3) {
+      const err = new Error('Product name (at least 3 characters) is required.');
+      err.statusCode = 400;
+      throw err;
+    }
+    if (parsedSalePaise && regularPricePaise && parsedSalePaise > regularPricePaise) {
+      const err = new Error('Sale price cannot exceed the regular catalog price.');
+      err.statusCode = 400;
+      throw err;
+    }
+
     const variants = (data.variants && data.variants.length > 0)
       ? data.variants.map((v, i) => ({
           variantId: v.variantId || `var_${i + 1}`,
@@ -526,7 +539,7 @@ class ProductService {
           color: v.color || '',
           colorHex: v.colorHex || '',
           pricePaise: regularPricePaise,
-          salePricePaise: (v.salePricePaise && v.salePricePaise < regularPricePaise) ? v.salePricePaise : (salePricePaise || null),
+          salePricePaise: (v.salePricePaise && v.salePricePaise <= regularPricePaise) ? v.salePricePaise : (salePricePaise || null),
           stockQuantity: parseInt(v.stockQuantity, 10) || 0,
           lowStockThreshold: parseInt(v.lowStockThreshold, 10) || 5,
           isActive: v.isActive !== false
@@ -548,7 +561,8 @@ class ProductService {
     const canBePublished = Boolean(
       (data.name && data.name.trim().length >= 3) &&
       (data.description && data.description.trim().length >= 10) &&
-      (effectivePricePaise > 0)
+      (regularPricePaise > 0) &&
+      (salePricePaise && salePricePaise > 0 && salePricePaise <= regularPricePaise)
     );
 
     if (isExplicitlyPublished && !canBePublished) {
@@ -562,8 +576,13 @@ class ProductService {
         err.statusCode = 400;
         throw err;
       }
-      if (effectivePricePaise <= 0) {
-        const err = new Error('A valid price greater than zero is required to publish.');
+      if (regularPricePaise <= 0) {
+        const err = new Error('A valid regular price greater than zero is required to publish.');
+        err.statusCode = 400;
+        throw err;
+      }
+      if (!salePricePaise || salePricePaise <= 0) {
+        const err = new Error('A valid discounted sale price greater than zero is required to publish.');
         err.statusCode = 400;
         throw err;
       }
@@ -707,13 +726,28 @@ class ProductService {
       }));
     }
 
+    if (updates.description !== undefined && updates.description.trim().length < 10) {
+      const err = new Error('A detailed product description (at least 10 characters) is required.');
+      err.statusCode = 400;
+      throw err;
+    }
+    if (updates.salePricePaise !== undefined && updates.salePricePaise !== null && updates.salePricePaise <= 0) {
+      const err = new Error('A valid discounted sale price greater than zero is required.');
+      err.statusCode = 400;
+      throw err;
+    }
+    if (resolvedSale && resolvedRegular && resolvedSale > resolvedRegular) {
+      const err = new Error('Sale price cannot exceed the regular catalog price.');
+      err.statusCode = 400;
+      throw err;
+    }
+
     const willBePublished = updates.isPublished !== undefined ? updates.isPublished : existingData.isPublished;
     if (willBePublished) {
       const name = (updates.name !== undefined ? updates.name : existingData.name) || '';
       const desc = (updates.description !== undefined ? updates.description : existingData.description) || '';
       const reg = updates.regularPricePaise !== undefined ? updates.regularPricePaise : existingData.regularPricePaise;
       const sale = updates.salePricePaise !== undefined ? updates.salePricePaise : existingData.salePricePaise;
-      const price = sale || reg || 0;
 
       if (!name || name.trim().length < 3) {
         const err = new Error('Product name (at least 3 characters) is required to publish.');
@@ -725,8 +759,18 @@ class ProductService {
         err.statusCode = 400;
         throw err;
       }
-      if (price <= 0) {
-        const err = new Error('A valid price greater than zero is required to publish.');
+      if (!reg || reg <= 0) {
+        const err = new Error('A valid regular price greater than zero is required to publish.');
+        err.statusCode = 400;
+        throw err;
+      }
+      if (!sale || sale <= 0) {
+        const err = new Error('A valid discounted sale price greater than zero is required to publish.');
+        err.statusCode = 400;
+        throw err;
+      }
+      if (sale > reg) {
+        const err = new Error('Sale price cannot exceed the regular catalog price.');
         err.statusCode = 400;
         throw err;
       }

@@ -266,15 +266,38 @@ describe('LANE4 14 Production Bugs Verification Suite', () => {
     const hasTestC = listRes.products.some(p => p.sku === 'L4-TEST' || (p.name && p.name.includes('TEST C')));
     expect(hasTestC).toBe(false);
 
-    // Publishing incomplete product is rejected
+    // Publishing incomplete product is rejected (missing description)
     await expect(
       productService.createProduct({
         name: 'Incomplete Test',
         description: '', // Missing description
         regularPricePaise: 50000,
+        salePricePaise: 40000,
         isPublished: true
       }, adminUser)
     ).rejects.toThrow(/description/i);
+
+    // Creating product without sale price is rejected
+    await expect(
+      productService.createProduct({
+        name: 'Incomplete Test 2',
+        description: 'Valid description for testing product creation',
+        regularPricePaise: 50000,
+        salePricePaise: null,
+        isPublished: true
+      }, adminUser)
+    ).rejects.toThrow(/sale price/i);
+
+    // Creating product where sale price exceeds regular price is rejected
+    await expect(
+      productService.createProduct({
+        name: 'Incomplete Test 3',
+        description: 'Valid description for testing product creation',
+        regularPricePaise: 50000,
+        salePricePaise: 60000,
+        isPublished: true
+      }, adminUser)
+    ).rejects.toThrow(/cannot exceed/i);
   });
 
   // BUG 21: Invalid PIN codes (dummy repeated digits) are rejected
