@@ -2041,16 +2041,79 @@ var formatDateString = window.formatDateString || formatDateTime;
     const map = {
       pending_payment: 'Pending Payment',
       payment_verification: 'Payment Verification',
-      confirmed: 'Confirmed',
+      confirmed: 'Confirmed (Ready to Pack)',
       processing: 'Processing',
       shipped: 'Shipped',
       out_for_delivery: 'Out for Delivery',
       delivered: 'Delivered',
+      returned: 'Returned',
       cancelled: 'Cancelled',
-      payment_rejected: 'Payment Rejected'
+      payment_rejected: 'Payment Rejected',
+      refunded: 'Refunded'
     };
     return map[status] || (status ? status.replace(/_/g, ' ') : status);
   }
+  window.formatStatusLabel = formatStatusLabel;
+  window.formatOrderStatus = formatStatusLabel;
+
+  window.openRefundModal = function (orderId) {
+    const o = (window.currentOrders || []).find(it => it.orderId === orderId || it.id === orderId || it.orderNumber === orderId);
+    const orderNum = o ? (o.orderNumber || o.orderId || orderId) : orderId;
+    const amountStr = (o && o.pricing) ? o.pricing.finalPayableFormatted : '';
+
+    showModal('Record & Process Customer Refund', `
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px;color:#991b1b;font-size:13px;line-height:1.4;">
+          <strong>Process Refund for Cancelled Order #${orderNum}</strong><br />
+          Original Amount: <strong>${amountStr}</strong>. Confirm you have initiated the refund via your UPI/bank dashboard and record the reference transaction ID below.
+        </div>
+        <div>
+          <label class="form-label" style="display:block;font-size:12px;font-weight:700;margin-bottom:6px;">Bank / UPI Refund Reference ID *</label>
+          <input type="text" id="refund-ref-input" class="form-input" style="width:100%;font-size:13px;padding:9px 12px;border:1.5px solid #cbd5e1;border-radius:6px;" placeholder="e.g. REF123456789012 or Bank UTR" required />
+        </div>
+        <div>
+          <label class="form-label" style="display:block;font-size:12px;font-weight:700;margin-bottom:6px;">Admin Refund Notes</label>
+          <input type="text" id="refund-notes-input" class="form-input" style="width:100%;font-size:13px;padding:9px 12px;border:1.5px solid #cbd5e1;border-radius:6px;" placeholder="e.g. Refunded to customer original UPI handle" />
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:12px;border-top:1px solid #e2e8f0;">
+          <button type="button" class="btn btn-outline" onclick="hideModal()">Cancel</button>
+          <button type="button" id="submit-refund-btn" class="btn btn-danger" style="padding:9px 18px;font-size:13px;font-weight:800;background:#dc2626;color:#fff;">
+            Confirm & Save Refund
+          </button>
+        </div>
+      </div>
+    `);
+
+    const submitBtn = document.getElementById('submit-refund-btn');
+    if (submitBtn) {
+      submitBtn.onclick = async () => {
+        const refInput = document.getElementById('refund-ref-input');
+        const refVal = (refInput?.value || '').trim();
+        const notes = (document.getElementById('refund-notes-input')?.value || '').trim();
+        if (!refVal || refVal.length < 3) {
+          if (refInput) { refInput.style.borderColor = '#dc2626'; refInput.focus(); }
+          showToast('Please enter a valid refund transaction reference.', 'error');
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving...';
+        try {
+          await window.lane4ApiRequest(`/admin/orders/${orderId}/refund`, {
+            method: 'POST',
+            body: JSON.stringify({ refundReference: refVal, notes })
+          });
+          hideModal();
+          showToast(`Refund recorded for #${orderNum}!`, 'success');
+          loadOrders();
+        } catch (err) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Confirm & Save Refund';
+          showToast(err.message || 'Failed to record refund', 'error');
+        }
+      };
+    }
+  };
 
   window.updateOrderStatus = async function (orderId, newStatus) {
     if (newStatus === 'cancelled') {

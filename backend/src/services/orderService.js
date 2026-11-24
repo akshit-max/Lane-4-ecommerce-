@@ -196,8 +196,8 @@ class OrderService {
       throw new Error('Please provide a valid standard email address.');
     }
     const cleanPin = (data.shippingAddress && data.shippingAddress.postalCode ? data.shippingAddress.postalCode.toString().trim() : '');
-    if (!/^[1-9][0-9]{5}$/.test(cleanPin)) {
-      throw new Error('Please provide a valid 6-digit Indian PIN / Postal code.');
+    if (!/^[1-9][0-9]{5}$/.test(cleanPin) || /^(.)\1{5}$/.test(cleanPin) || cleanPin === '123456') {
+      throw new Error('Please provide a genuine 6-digit postal PIN code (repeated or dummy sequences like 222222 or 123456 are not serviceable).');
     }
     if (!data.shippingAddress || !data.shippingAddress.addressLine1) {
       throw new Error('Complete shipping address is required.');

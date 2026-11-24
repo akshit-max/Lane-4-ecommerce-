@@ -252,6 +252,35 @@ const INITIAL_PRODUCTS = [
       metaDescription: 'Short-blade swim training fins for kick mechanics and speed.',
       keywords: ['swimming fins India', 'training fins', 'swim gear Nagpur']
     }
+  },
+  {
+    name: 'Pro Kickboard Hydro Flow',
+    slug: 'pro-kickboard-hydro-flow',
+    sku: 'L4-TRN-KB-001',
+    description: 'High-density closed-cell EVA foam kickboard engineered to reduce shoulder strain and maximize leg power generation.',
+    shortDescription: 'High-density closed-cell EVA foam kickboard for kicking technique.',
+    categorySlug: 'training-gear',
+    regularPricePaise: 249900,
+    salePricePaise: 199900,
+    hasVariants: false,
+    variants: [],
+    specifications: {
+      'Material': 'High-density closed-cell EVA foam',
+      'Grip': 'Dual contoured hand grip cutouts'
+    },
+    images: [
+      { publicId: 'lane4-X8RgOcqugtQ-640x960', url: '6424266ea05809dff501d86e/lane4-X8RgOcqugtQ-640x960.jpg', alt: 'Pro Kickboard Hydro Flow', isPrimary: true, order: 0 }
+    ],
+    isFeatured: true,
+    isBestseller: false,
+    isNewArrival: false,
+    isPublished: true,
+    isDeleted: false,
+    seo: {
+      metaTitle: 'Pro Kickboard Hydro Flow | Buy Online India | The Lane4 Performance Store',
+      metaDescription: 'High-density closed-cell EVA foam kickboard engineered to reduce shoulder strain.',
+      keywords: ['kickboard India', 'swimming kickboard', 'training gear Nagpur']
+    }
   }
 ];
 
@@ -337,8 +366,26 @@ class ProductService {
     let products = snapshot.docs.map(doc => doc.data());
 
     if (filters.onlyPublished !== false) {
-      products = products.filter(p => p.isPublished === true && p.slug !== 'test-product-cap' && p.sku !== '123' && !(p.name && p.name.toLowerCase().includes('test product')));
+      products = products.filter(p =>
+        p.isPublished === true &&
+        p.description && p.description.trim().length >= 10 &&
+        p.sku !== 'L4-TEST' &&
+        !(p.name && p.name.toLowerCase().includes('test'))
+      );
     }
+
+    // Sanitize any broken image paths
+    products = products.map(p => {
+      if (p.images && Array.isArray(p.images)) {
+        p.images = p.images.map(img => {
+          if (img.url && img.url.includes('test-kickboard.jpg')) {
+            return { ...img, url: '6424266ea05809dff501d86e/lane4-X8RgOcqugtQ-640x960.jpg' };
+          }
+          return img;
+        });
+      }
+      return p;
+    });
 
     // Search filter in-memory if requested
     if (filters.search) {
@@ -451,11 +498,40 @@ class ProductService {
           isActive: true
         }];
 
+    const isExplicitlyPublished = data.isPublished === true;
+    const canBePublished = Boolean(
+      (data.name && data.name.trim().length >= 3) &&
+      (data.description && data.description.trim().length >= 10) &&
+      (effectivePricePaise > 0)
+    );
+
+    if (isExplicitlyPublished && !canBePublished) {
+      if (!data.name || data.name.trim().length < 3) {
+        const err = new Error('Product name (at least 3 characters) is required to publish.');
+        err.statusCode = 400;
+        throw err;
+      }
+      if (!data.description || data.description.trim().length < 10) {
+        const err = new Error('A detailed product description (at least 10 characters) is required to publish.');
+        err.statusCode = 400;
+        throw err;
+      }
+      if (effectivePricePaise <= 0) {
+        const err = new Error('A valid price greater than zero is required to publish.');
+        err.statusCode = 400;
+        throw err;
+      }
+    }
+
+    const isPublished = isExplicitlyPublished || (data.isPublished !== false && canBePublished);
+    const status = isPublished ? 'published' : (data.status || 'draft');
+
     const newProduct = {
       id: productId,
       name: data.name,
       slug: data.slug || data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
       sku: data.sku || `L4-PROD-${Date.now().toString().slice(-4)}`,
+      status,
       description: data.description || '',
       shortDescription: data.shortDescription || '',
       categoryId: data.categoryId || '',
@@ -469,7 +545,7 @@ class ProductService {
       isFeatured: Boolean(data.isFeatured),
       isBestseller: Boolean(data.isBestseller),
       isNewArrival: Boolean(data.isNewArrival),
-      isPublished: data.isPublished !== false,
+      isPublished,
       isDeleted: false,
       seo: {
         metaTitle: data.metaTitle || `${data.name} | The Lane4 Performance Store`,
@@ -556,6 +632,31 @@ class ProductService {
         pricePaise: v.pricePaise || (v.price ? rupeesToPaise(v.price) : effectiveSellingPrice),
         salePricePaise: v.salePricePaise !== undefined ? v.salePricePaise : (resolvedSale || null)
       }));
+    }
+
+    const willBePublished = updates.isPublished !== undefined ? updates.isPublished : existingData.isPublished;
+    if (willBePublished) {
+      const name = (updates.name !== undefined ? updates.name : existingData.name) || '';
+      const desc = (updates.description !== undefined ? updates.description : existingData.description) || '';
+      const reg = updates.regularPricePaise !== undefined ? updates.regularPricePaise : existingData.regularPricePaise;
+      const sale = updates.salePricePaise !== undefined ? updates.salePricePaise : existingData.salePricePaise;
+      const price = sale || reg || 0;
+
+      if (!name || name.trim().length < 3) {
+        const err = new Error('Product name (at least 3 characters) is required to publish.');
+        err.statusCode = 400;
+        throw err;
+      }
+      if (!desc || desc.trim().length < 10) {
+        const err = new Error('A detailed product description (at least 10 characters) is required to publish.');
+        err.statusCode = 400;
+        throw err;
+      }
+      if (price <= 0) {
+        const err = new Error('A valid price greater than zero is required to publish.');
+        err.statusCode = 400;
+        throw err;
+      }
     }
 
     await docRef.update(updates);

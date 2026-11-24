@@ -586,6 +586,15 @@ class PaymentService {
       updatedAt: now
     });
 
+    // Revert coupon redemption if applied so coupon usage limit is not wasted
+    const couponCode = (orderData.coupon && orderData.coupon.code) || (orderData.pricing && orderData.pricing.couponCode);
+    if (couponCode) {
+      try {
+        const couponService = require('./couponService');
+        await couponService.revertCouponRedemption(couponCode);
+      } catch (_) {}
+    }
+
     // Audit log
     await db.collection('adminActivityLogs').add({
       adminUid: adminUser.uid,
