@@ -751,38 +751,16 @@
   }
 
   function showCheckoutErrorBanner(title, messages, focusEl = null) {
-    let alertBox = document.getElementById('lane4-checkout-form-alert');
-    const placeOrderBtn = document.getElementById('lane4-place-order-btn') || document.querySelector('.w-commerce-commercecheckoutplaceorderbutton, .submit-order');
-    const targetParent = placeOrderBtn ? placeOrderBtn.parentElement : document.querySelector('form');
-
-    if (!alertBox && targetParent) {
-      alertBox = document.createElement('div');
-      alertBox.id = 'lane4-checkout-form-alert';
-      alertBox.style.cssText = 'background:#fef2f2;border:1.5px solid #f87171;border-radius:8px;padding:14px 18px;margin-bottom:18px;color:#991b1b;box-shadow:0 2px 8px rgba(220,38,38,0.06);font-family:inherit;';
-      targetParent.insertBefore(alertBox, placeOrderBtn || targetParent.firstChild);
-    }
-
-    if (alertBox) {
-      alertBox.style.display = 'block';
-      const listHtml = Array.isArray(messages)
-        ? `<ul style="margin:6px 0 0 16px;padding:0;font-size:12.5px;color:#b91c1c;line-height:1.5;">${messages.map(m => `<li>${m}</li>`).join('')}</ul>`
-        : `<div style="font-size:13px;color:#b91c1c;margin-top:4px;">${messages}</div>`;
-
-      alertBox.innerHTML = `
-        <div style="flex:1;">
-          <div style="font-weight:700;font-size:13.5px;color:#991b1b;">${title}</div>
-          ${listHtml}
-        </div>
-      `;
-    }
+    // User requested: No message box above 'Place Order & Submit Payment' button.
+    // Inline field validation errors within the form are sufficient.
+    const alertBox = document.getElementById('lane4-checkout-form-alert');
+    if (alertBox) alertBox.remove();
 
     if (focusEl) {
       try {
         focusEl.focus();
         focusEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       } catch (_) {}
-    } else if (alertBox) {
-      alertBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }
 
@@ -868,10 +846,6 @@
             window.LANE4_AUTH.showAlert('Please sign in or create an account to complete checkout and place your order.', 'error');
           }
         }
-        showCheckoutErrorBanner(
-          'Sign In Required',
-          'Please sign in or create a swimmer account to complete checkout and submit payment.'
-        );
         return;
       }
 
@@ -942,11 +916,12 @@
         errors.forEach(err => {
           if (err.el) setFieldError(err.el, err.msg);
         });
-        showCheckoutErrorBanner(
-          'Please correct the following fields before submitting:',
-          errors.map(e => `<strong>${e.name}:</strong> ${e.msg}`),
-          errors[0].el
-        );
+        if (errors[0] && errors[0].el) {
+          try {
+            errors[0].el.focus();
+            errors[0].el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          } catch (_) {}
+        }
         return;
       }
 
@@ -1020,11 +995,12 @@
         const errMsg = err.message || '';
         if (errMsg.toLowerCase().includes('already been submitted') || errMsg.toLowerCase().includes('duplicate') || errMsg.toLowerCase().includes('utr')) {
           setFieldError(utrEl, 'This UTR Number has already been submitted or verified for another order.');
-          showCheckoutErrorBanner(
-            'Duplicate Payment Reference',
-            'This UPI Reference / UTR Number has already been submitted or verified for another order. Please check your transaction history in Google Pay, PhonePe, or Paytm and enter the unique 12-digit reference for this order.',
-            utrEl
-          );
+          if (utrEl) {
+            try {
+              utrEl.focus();
+              utrEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } catch (_) {}
+          }
           return;
         }
 
@@ -1043,33 +1019,29 @@
             'screenshot': { el: fileInput, label: 'Payment Screenshot' }
           };
 
-          const messages = [];
           let firstFocus = null;
 
           err.details.forEach(d => {
             const mapping = fieldMap[d.field];
             if (mapping && mapping.el) {
               setFieldError(mapping.el, d.message);
-              messages.push(`<strong>${mapping.label}:</strong> ${d.message}`);
               if (!firstFocus) firstFocus = mapping.el;
-            } else {
-              messages.push(d.message || d.field);
             }
           });
 
-          showCheckoutErrorBanner(
-            'Please correct the following fields:',
-            messages,
-            firstFocus
-          );
+          if (firstFocus) {
+            try {
+              firstFocus.focus();
+              firstFocus.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } catch (_) {}
+          }
           return;
         }
 
-        // Generic fallback error message (still displayed in-form, no browser alert!)
-        showCheckoutErrorBanner(
-          'Order Submission Error',
-          errMsg || 'Unable to submit order. Please check all details and try again.'
-        );
+        // Generic fallback error message
+        if (errMsg) {
+          alert(errMsg);
+        }
       }
     }, true);
   }
