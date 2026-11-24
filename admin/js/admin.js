@@ -2747,15 +2747,15 @@ var formatDateString = window.formatDateString || formatDateTime;
     } else if (p.imageUrl) {
       productImages = [{ url: p.imageUrl, alt: p.name || 'Product Image', order: 0, isPrimary: true }];
     } else {
-      productImages = [{ url: '6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg', alt: p.name || 'Product Image', order: 0, isPrimary: true }];
+      productImages = [];
     }
 
-    const firstImg = productImages[0]?.url || '6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg';
+    const firstImg = productImages[0]?.url || '';
 
     showModal('Edit Product & Gallery', `
       <form id="form-edit-product">
         <div style="background:#f8fafc;padding:12px 14px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:16px;display:flex;align-items:center;gap:12px;">
-          <img id="edit-prod-header-thumb" src="${resolveAdminAsset(firstImg)}" style="width:48px;height:48px;border-radius:6px;object-fit:cover;border:1px solid #cbd5e1;" onerror="this.onerror=null;this.src='${resolveAdminAsset('6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg')}';" />
+          ${firstImg ? `<img id="edit-prod-header-thumb" src="${resolveAdminAsset(firstImg)}" style="width:48px;height:48px;border-radius:6px;object-fit:cover;border:1px solid #cbd5e1;" onerror="this.onerror=null;this.style.display='none';" />` : `<div style="width:48px;height:48px;border-radius:6px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:20px;">📦</div>`}
           <div>
             <div style="font-weight:800;font-size:14px;color:#0f172a;">${escapeHtml(p.name)}</div>
             <div style="font-size:12px;color:#64748b;">SKU: <code>${escapeHtml(p.sku || '—')}</code> &bull; Slug: <code>${escapeHtml(p.slug || '')}</code></div>
@@ -2813,12 +2813,12 @@ var formatDateString = window.formatDateString || formatDateTime;
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
             <label class="form-label" style="display:flex;align-items:center;gap:6px;margin:0;font-size:14px;font-weight:800;color:#0f172a;">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              <span>Product Images &amp; Display Order</span>
+              <span>Product Images &amp; Display Order <span style="color:#dc2626;">*</span></span>
             </label>
             <span id="edit-prod-gallery-count" class="badge" style="background:#0f172a;color:#fff;font-weight:700;">${productImages.length} Photos</span>
           </div>
-          <div style="font-size:12px;color:#64748b;margin-bottom:12px;line-height:1.4;">
-            Rearrange photos to modify their order. The first photo (<strong>#1 PRIMARY</strong>) serves as the main catalog cover and the primary hero image on the product detail page.
+          <div style="font-size:12px;color:#dc2626;font-weight:700;margin-bottom:12px;background:#fef2f2;border:1px solid #fecaca;padding:8px 12px;border-radius:6px;line-height:1.4;">
+            <span style="font-size:14px;margin-right:4px;">⚠️</span> <strong>Mandatory:</strong> At least one product photo is required. Photo <strong>#1 PRIMARY</strong> serves as the main catalog cover and the primary hero image.
           </div>
 
           <!-- Interactive Ordered Image List -->
@@ -2837,10 +2837,19 @@ var formatDateString = window.formatDateString || formatDateTime;
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Product Description *</label>
-          <textarea id="edit-prod-desc" class="form-textarea" rows="3" required minlength="10">${escapeHtml(p.description || '')}</textarea>
-          <div style="font-size:11px;color:#64748b;margin-top:3px;">Detailed product specifications, materials, and benefits (minimum 10 characters) *</div>
+        <div class="form-group" id="group-edit-prod-desc">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <label class="form-label" for="edit-prod-desc" style="margin:0;font-weight:700;">Product Description *</label>
+            <span id="edit-prod-desc-count" style="font-size:11px;font-weight:700;color:#64748b;">${(p.description || '').trim().length} / 10 chars min</span>
+          </div>
+          <div style="position:relative;">
+            <textarea id="edit-prod-desc" class="form-textarea" rows="3" required minlength="10" placeholder="Detailed product specifications, materials, fit and technical benefits..." style="transition:border-color 0.2s, box-shadow 0.2s, background-color 0.2s;">${escapeHtml(p.description || '')}</textarea>
+          </div>
+          <div id="edit-prod-desc-hint" style="font-size:11px;color:#64748b;margin-top:4px;">Detailed product specifications, materials, and benefits (minimum 10 characters) *</div>
+          <div id="edit-prod-desc-error" style="display:none;margin-top:6px;padding:8px 12px;background:#fef2f2;border:1.5px solid #fecaca;border-radius:6px;color:#dc2626;font-size:12px;font-weight:700;align-items:center;gap:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span id="edit-prod-desc-error-text">A detailed product description (at least 10 characters) is required.</span>
+          </div>
         </div>
 
         <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid #e2e8f0;">
@@ -3026,6 +3035,50 @@ var formatDateString = window.formatDateString || formatDateTime;
 
 
     const editForm = document.getElementById('form-edit-product');
+    const editDescInput = document.getElementById('edit-prod-desc');
+    const editDescCount = document.getElementById('edit-prod-desc-count');
+    const editDescError = document.getElementById('edit-prod-desc-error');
+    const editDescErrorText = document.getElementById('edit-prod-desc-error-text');
+
+    function updateEditDescStatus() {
+      if (!editDescInput) return;
+      const len = editDescInput.value.trim().length;
+      if (editDescCount) {
+        if (len >= 10) {
+          editDescCount.innerHTML = `<span style="color:#16a34a;font-weight:700;">✓ ${len} characters</span>`;
+        } else {
+          editDescCount.innerHTML = `<span style="color:#64748b;">${len} / 10 chars min</span>`;
+        }
+      }
+      if (len >= 10) {
+        if (editDescError) editDescError.style.display = 'none';
+        editDescInput.style.borderColor = '#cbd5e1';
+        editDescInput.style.boxShadow = '';
+        editDescInput.style.backgroundColor = '#ffffff';
+      }
+    }
+    if (editDescInput) {
+      editDescInput.addEventListener('input', updateEditDescStatus);
+      updateEditDescStatus();
+    }
+
+    function pointToEditDesc(message) {
+      if (!editDescInput) return;
+      editDescInput.style.borderColor = '#dc2626';
+      editDescInput.style.boxShadow = '0 0 0 4px rgba(220, 38, 38, 0.18)';
+      editDescInput.style.backgroundColor = '#fff5f5';
+
+      if (editDescError && editDescErrorText) {
+        editDescErrorText.textContent = message || 'A detailed product description (at least 10 characters) is required.';
+        editDescError.style.display = 'flex';
+      }
+
+      editDescInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => {
+        try { editDescInput.focus(); } catch (e) {}
+      }, 100);
+    }
+
     if (editForm) {
       editForm.onsubmit = async (e) => {
         e.preventDefault();
@@ -3043,31 +3096,60 @@ var formatDateString = window.formatDateString || formatDateTime;
         const category = document.getElementById('edit-prod-cat').value;
         const isPublished = document.getElementById('edit-prod-status').value === 'published';
         const shortDescription = document.getElementById('edit-prod-short-desc').value.trim();
-        const description = document.getElementById('edit-prod-desc').value.trim();
+        const description = editDescInput ? editDescInput.value.trim() : '';
 
         if (!name || name.length < 3) {
           if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Product & Gallery Order'; }
+          const nameEl = document.getElementById('edit-prod-name');
+          if (nameEl) {
+            nameEl.style.borderColor = '#dc2626';
+            nameEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            nameEl.focus();
+          }
           showToast('Product name is required (at least 3 characters).', 'error');
           return;
         }
         if (!regularPrice || isNaN(regularPrice) || regularPrice <= 0) {
           if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Product & Gallery Order'; }
+          const regEl = document.getElementById('edit-prod-regular');
+          if (regEl) {
+            regEl.style.borderColor = '#dc2626';
+            regEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            regEl.focus();
+          }
           showToast('A valid regular price greater than ₹0 is required.', 'error');
           return;
         }
         if (!saleVal || isNaN(salePrice) || salePrice <= 0) {
           if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Product & Gallery Order'; }
+          const saleEl = document.getElementById('edit-prod-sale');
+          if (saleEl) {
+            saleEl.style.borderColor = '#dc2626';
+            saleEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            saleEl.focus();
+          }
           showToast('A valid discounted sale price greater than ₹0 is required.', 'error');
           return;
         }
         if (salePrice > regularPrice) {
           if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Product & Gallery Order'; }
+          const saleEl = document.getElementById('edit-prod-sale');
+          if (saleEl) {
+            saleEl.style.borderColor = '#dc2626';
+            saleEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            saleEl.focus();
+          }
           showToast(`Sale price (₹${salePrice}) cannot exceed regular price (₹${regularPrice}).`, 'error');
           return;
         }
         if (!description || description.length < 10) {
           if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Product & Gallery Order'; }
-          showToast('Product description is required (at least 10 characters).', 'error');
+          pointToEditDesc('A detailed product description (at least 10 characters) is required.');
+          return;
+        }
+        if (!productImages || productImages.length === 0) {
+          if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Product & Gallery Order'; }
+          showToast('At least one product photo is required. Please upload an image before saving.', 'error');
           return;
         }
 
@@ -3106,7 +3188,12 @@ var formatDateString = window.formatDateString || formatDateTime;
             saveBtn.disabled = false;
             saveBtn.textContent = 'Save Product & Gallery Order';
           }
-          showToast(err.message || 'Failed to update product', 'error');
+          const errMsg = err.message || 'Failed to update product';
+          if (/description/i.test(errMsg)) {
+            pointToEditDesc(errMsg);
+            return;
+          }
+          showToast(errMsg, 'error');
         }
       };
     }
@@ -3148,21 +3235,30 @@ var formatDateString = window.formatDateString || formatDateTime;
             <input type="number" id="new-prod-price" class="form-input" placeholder="1999" min="1" step="1" required />
           </div>
           <div class="form-group">
-            <label class="form-label">Sale Price (₹ INR) *</label>
-            <input type="number" id="new-prod-sale-price" class="form-input" placeholder="1799" min="1" step="1" required />
-            <div style="font-size:11px;color:#16a34a;margin-top:3px;">Discounted checkout price (must be less than regular price) *</div>
+            <label class="form-label" style="font-weight:700;">Sale Price (₹ INR) <span style="color:#dc2626;">*</span></label>
+            <input type="number" id="new-prod-sale-price" class="form-input" placeholder="e.g. 1799" min="1" step="1" required />
+            <div style="font-size:11px;color:#16a34a;margin-top:3px;font-weight:600;">Discounted checkout price (must be less than regular price) *</div>
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Short Tagline / Subtitle *</label>
+          <label class="form-label" style="font-weight:700;">Short Tagline / Subtitle <span style="color:#dc2626;">*</span></label>
           <input type="text" id="new-prod-short-desc" class="form-input" placeholder="e.g. Pool-tested resistance paddles for upper-body stroke strength" required minlength="3" />
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Full Product Description *</label>
-          <textarea id="new-prod-desc" class="form-textarea" rows="3" placeholder="Detailed product specifications, materials, fit and technical benefits..." required minlength="10"></textarea>
-          <div style="font-size:11px;color:#64748b;margin-top:3px;">Detailed specifications, materials, and benefits (minimum 10 characters) *</div>
+        <div class="form-group" id="group-new-prod-desc">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <label class="form-label" for="new-prod-desc" style="margin:0;font-weight:700;">Full Product Description <span style="color:#dc2626;">*</span></label>
+            <span id="new-prod-desc-count" style="font-size:11px;font-weight:700;color:#64748b;">0 / 10 chars min</span>
+          </div>
+          <div style="position:relative;">
+            <textarea id="new-prod-desc" class="form-textarea" rows="3" placeholder="Detailed product specifications, materials, fit and technical benefits..." required minlength="10" style="transition:border-color 0.2s, box-shadow 0.2s, background-color 0.2s;"></textarea>
+          </div>
+          <div id="new-prod-desc-hint" style="font-size:11px;color:#64748b;margin-top:4px;">Detailed specifications, materials, and benefits (minimum 10 characters) *</div>
+          <div id="new-prod-desc-error" style="display:none;margin-top:6px;padding:8px 12px;background:#fef2f2;border:1.5px solid #fecaca;border-radius:6px;color:#dc2626;font-size:12px;font-weight:700;align-items:center;gap:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span id="new-prod-desc-error-text">A detailed product description (at least 10 characters) is required to publish.</span>
+          </div>
         </div>
 
         <div class="form-group">
@@ -3175,12 +3271,12 @@ var formatDateString = window.formatDateString || formatDateTime;
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
             <label class="form-label" style="display:flex;align-items:center;gap:6px;margin:0;font-size:14px;font-weight:800;color:#0f172a;">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              <span>Product Image Gallery &amp; Display Order</span>
+              <span>Product Image Gallery &amp; Display Order <span style="color:#dc2626;">*</span></span>
             </label>
             <span id="new-prod-gallery-count" class="badge" style="background:#0f172a;color:#fff;font-weight:700;">0 Photos</span>
           </div>
-          <div style="font-size:12px;color:#64748b;margin-bottom:12px;">
-            Add photos for this product. Use the ▲ / ▼ buttons to adjust the order. Photo <strong>#1 PRIMARY</strong> will be the main storefront cover image.
+          <div style="font-size:12px;color:#dc2626;font-weight:700;margin-bottom:12px;background:#fef2f2;border:1px solid #fecaca;padding:8px 12px;border-radius:6px;line-height:1.4;">
+            <span style="font-size:14px;margin-right:4px;">⚠️</span> <strong>Mandatory:</strong> At least one product photo must be uploaded. Products cannot be added without an image. Photo <strong>#1 PRIMARY</strong> will be the main storefront cover image.
           </div>
 
           <div id="new-prod-gallery-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
@@ -3388,6 +3484,60 @@ var formatDateString = window.formatDateString || formatDateTime;
     }
 
 
+    // Live validation & pointing for Full Product Description
+    const newDescInput = document.getElementById('new-prod-desc');
+    const newDescCount = document.getElementById('new-prod-desc-count');
+    const newDescError = document.getElementById('new-prod-desc-error');
+    const newDescErrorText = document.getElementById('new-prod-desc-error-text');
+
+    function updateNewDescStatus() {
+      if (!newDescInput) return;
+      const len = newDescInput.value.trim().length;
+      if (newDescCount) {
+        if (len >= 10) {
+          newDescCount.innerHTML = `<span style="color:#16a34a;font-weight:700;">✓ ${len} characters</span>`;
+        } else {
+          newDescCount.innerHTML = `<span style="color:#64748b;">${len} / 10 chars min</span>`;
+        }
+      }
+      if (len >= 10) {
+        if (newDescError) newDescError.style.display = 'none';
+        newDescInput.style.borderColor = '#cbd5e1';
+        newDescInput.style.boxShadow = '';
+        newDescInput.style.backgroundColor = '#ffffff';
+      }
+    }
+
+    if (newDescInput) {
+      newDescInput.addEventListener('input', updateNewDescStatus);
+      updateNewDescStatus();
+    }
+
+    function pointToNewDesc(message) {
+      if (!newDescInput) return;
+      newDescInput.style.borderColor = '#dc2626';
+      newDescInput.style.boxShadow = '0 0 0 4px rgba(220, 38, 38, 0.18)';
+      newDescInput.style.backgroundColor = '#fff5f5';
+
+      if (newDescError && newDescErrorText) {
+        newDescErrorText.textContent = message || 'A detailed product description (at least 10 characters) is required to publish.';
+        newDescError.style.display = 'flex';
+      }
+
+      // Hide the detached bottom alert box
+      const alertBox = document.getElementById('modal-submit-alert');
+      if (alertBox) {
+        alertBox.style.display = 'none';
+        alertBox.textContent = '';
+      }
+
+      // Scroll modal smoothly to the description field and focus it
+      newDescInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => {
+        try { newDescInput.focus(); } catch (e) {}
+      }, 100);
+    }
+
     // Submit handler
     const form = document.getElementById('form-create-product');
     form.onsubmit = async (e) => {
@@ -3397,7 +3547,7 @@ var formatDateString = window.formatDateString || formatDateTime;
 
       submitBtn.disabled = true;
       submitBtn.textContent = 'Saving Product...';
-      alertBox.style.display = 'none';
+      if (alertBox) alertBox.style.display = 'none';
 
       try {
         const name = document.getElementById('new-prod-name').value.trim();
@@ -3407,37 +3557,88 @@ var formatDateString = window.formatDateString || formatDateTime;
         const salePriceVal = document.getElementById('new-prod-sale-price').value.trim();
         const salePrice = salePriceVal ? parseFloat(salePriceVal) : null;
         const shortDescription = document.getElementById('new-prod-short-desc').value.trim();
-        const description = document.getElementById('new-prod-desc').value.trim();
+        const description = newDescInput ? newDescInput.value.trim() : '';
         const featuresText = document.getElementById('new-prod-features').value;
         const stockQty = parseInt(document.getElementById('new-prod-stock').value, 10) || 50;
         const isPublished = document.getElementById('new-prod-published').checked;
 
         if (!name || name.length < 3) {
-          throw new Error('Product name is required (at least 3 characters).');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Save & Publish';
+          const nameEl = document.getElementById('new-prod-name');
+          if (nameEl) {
+            nameEl.style.borderColor = '#dc2626';
+            nameEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            nameEl.focus();
+          }
+          showToast('Product name is required (at least 3 characters).', 'error');
+          return;
         }
         if (!regPrice || isNaN(regPrice) || regPrice <= 0) {
-          throw new Error('A valid regular price greater than ₹0 is required.');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Save & Publish';
+          const regEl = document.getElementById('new-prod-price');
+          if (regEl) {
+            regEl.style.borderColor = '#dc2626';
+            regEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            regEl.focus();
+          }
+          showToast('A valid regular price greater than ₹0 is required.', 'error');
+          return;
         }
         if (!salePriceVal || isNaN(salePrice) || salePrice <= 0) {
-          throw new Error('A valid discounted sale price greater than ₹0 is required.');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Save & Publish';
+          const saleEl = document.getElementById('new-prod-sale-price');
+          if (saleEl) {
+            saleEl.style.borderColor = '#dc2626';
+            saleEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            saleEl.focus();
+          }
+          showToast('A valid discounted sale price greater than ₹0 is required.', 'error');
+          return;
         }
         if (salePrice > regPrice) {
-          throw new Error(`Sale price (₹${salePrice}) cannot exceed regular price (₹${regPrice}).`);
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Save & Publish';
+          const saleEl = document.getElementById('new-prod-sale-price');
+          if (saleEl) {
+            saleEl.style.borderColor = '#dc2626';
+            saleEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            saleEl.focus();
+          }
+          showToast(`Sale price (₹${salePrice}) cannot exceed regular price (₹${regPrice}).`, 'error');
+          return;
         }
         if (!shortDescription || shortDescription.length < 3) {
-          throw new Error('Short tagline / subtitle is required (at least 3 characters).');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Save & Publish';
+          const shortEl = document.getElementById('new-prod-short-desc');
+          if (shortEl) {
+            shortEl.style.borderColor = '#dc2626';
+            shortEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            shortEl.focus();
+          }
+          showToast('Short tagline / subtitle is required (at least 3 characters).', 'error');
+          return;
         }
         if (!description || description.length < 10) {
-          throw new Error('Full product description is required (at least 10 characters).');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Save & Publish';
+          pointToNewDesc('A detailed product description (at least 10 characters) is required to publish.');
+          return;
         }
 
-        if (newProductImages.length === 0) {
-          newProductImages.push({
-            url: '6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg',
-            alt: name,
-            order: 0,
-            isPrimary: true
-          });
+        if (!newProductImages || newProductImages.length === 0) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Save & Publish';
+          const fileInput = document.getElementById('new-prod-image-file');
+          if (fileInput) {
+            fileInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            fileInput.focus();
+          }
+          showToast('Please upload at least one product photo before saving.', 'error');
+          return;
         }
 
         const formattedImages = newProductImages.map((img, i) => ({
@@ -3476,12 +3677,46 @@ var formatDateString = window.formatDateString || formatDateTime;
         loadProducts();
 
       } catch (err) {
-        alertBox.style.display = 'block';
-        alertBox.style.background = '#fef2f2';
-        alertBox.style.color = '#dc2626';
-        alertBox.textContent = err.message || 'Failed to create product.';
         submitBtn.disabled = false;
         submitBtn.textContent = 'Save & Publish';
+        const errMsg = err.message || 'Failed to create product.';
+
+        // If error relates to product description, point directly to description field and hide the bottom alert
+        if (/description/i.test(errMsg)) {
+          pointToNewDesc(errMsg);
+          return;
+        }
+
+        if (/name/i.test(errMsg)) {
+          const nameEl = document.getElementById('new-prod-name');
+          if (nameEl) {
+            nameEl.style.borderColor = '#dc2626';
+            nameEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            nameEl.focus();
+          }
+          showToast(errMsg, 'error');
+          return;
+        }
+
+        if (/price/i.test(errMsg)) {
+          const priceEl = document.getElementById('new-prod-sale-price') || document.getElementById('new-prod-price');
+          if (priceEl) {
+            priceEl.style.borderColor = '#dc2626';
+            priceEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            priceEl.focus();
+          }
+          showToast(errMsg, 'error');
+          return;
+        }
+
+        if (alertBox) {
+          alertBox.style.display = 'block';
+          alertBox.style.background = '#fef2f2';
+          alertBox.style.color = '#dc2626';
+          alertBox.textContent = errMsg;
+        } else {
+          showToast(errMsg, 'error');
+        }
       }
     };
   }
