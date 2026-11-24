@@ -59,24 +59,27 @@ window.INDIAN_STATES = [
     }
 
     // 1. Update all navbar SIGN IN / Account links
-    const candidateLinks = document.querySelectorAll('.cart-inner a, .info-bar-button-wrapper a, .info-bar-button, nav a, .nav-menu a, a');
+    const candidateLinks = document.querySelectorAll('.cart-inner a, .info-bar-button-wrapper a, .info-bar-button, nav a, .nav-menu a, [data-lane4-auth], .lane4-account-trigger');
     candidateLinks.forEach(link => {
       const text = (link.textContent || '').trim().toUpperCase();
-      if (text.includes('SIGN') || text.includes('ACCOUNT') || text.startsWith('HI,')) {
-        const textHolder = link.querySelector('.paragraph-13px') || link;
+      if (text.includes('SIGN') || text.includes('ACCOUNT') || text.startsWith('HI,') || link.matches('.cart-inner a, .info-bar-button, .info-bar-button-wrapper a, [data-lane4-auth], .lane4-account-trigger')) {
+        link.setAttribute('data-lane4-auth', 'true');
+        link.classList.add('lane4-account-trigger');
+        const textHolder = link.querySelector('.paragraph-13px') || link.querySelector('.paragraph-14px') || link;
         if (user) {
           textHolder.textContent = `HI, ${(user.displayName || user.email.split('@')[0]).toUpperCase()}`;
           link.classList.remove('opacity-50');
         } else {
-          textHolder.textContent = 'Account';
-          link.classList.remove('opacity-50');
+          textHolder.textContent = link.classList.contains('paragraph-14px') ? 'SIGN IN' : 'Account';
+          if (link.classList.contains('mb')) link.classList.add('opacity-50');
         }
 
-        link.addEventListener('click', function (e) {
+        link.onclick = function (e) {
           e.preventDefault();
           e.stopPropagation();
-          openAuthModal(user ? 'account' : 'login');
-        });
+          const curr = (window.LANE4 && window.LANE4.getUser) ? window.LANE4.getUser() : user;
+          openAuthModal(curr ? 'account' : 'login');
+        };
       }
     });
 
@@ -2120,6 +2123,27 @@ window.INDIAN_STATES = [
     hideAlert: hideAlert
   };
   window.openAuthModal = openAuthModal;
+
+  // Global capturing listener to ensure clicking account/swimmer links always opens account profile or login
+  document.addEventListener('click', function (e) {
+    const authTarget = e.target.closest(
+      '.cart-inner a, .info-bar-button, .info-bar-button-wrapper a, [data-lane4-auth], .lane4-account-trigger, a[href="#account"], a[href="#profile"], a[href="#login"]'
+    );
+    if (!authTarget) return;
+
+    // Do not interfere if user is clicking inside the auth modal itself
+    if (e.target.closest('#lane4-auth-modal-wrapper')) return;
+
+    const text = (authTarget.textContent || '').trim().toUpperCase();
+    const isExplicit = authTarget.matches('.cart-inner a, .info-bar-button, .info-bar-button-wrapper a, [data-lane4-auth], .lane4-account-trigger, a[href="#account"], a[href="#profile"], a[href="#login"]');
+    if (isExplicit || text.includes('SIGN') || text.includes('ACCOUNT') || text.startsWith('HI,')) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+      const curr = (window.LANE4 && window.LANE4.getUser) ? window.LANE4.getUser() : null;
+      openAuthModal(curr ? 'account' : 'login');
+    }
+  }, true);
 
   document.addEventListener('DOMContentLoaded', initAuthUI);
   window.addEventListener('lane4:auth-changed', initAuthUI);

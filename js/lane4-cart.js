@@ -681,10 +681,23 @@
 
     // Intercept clicks on ALL cart buttons across the entire website
     document.addEventListener('click', (e) => {
+      // 1. Never intercept clicks on auth / account / profile links or inside auth modal
+      if (e.target.closest(
+        '.cart-inner a, .info-bar-button, .info-bar-button-wrapper a, [data-lane4-auth], .lane4-account-trigger, a[href="#account"], a[href="#profile"], a[href="#login"], #lane4-auth-modal-wrapper'
+      )) {
+        return;
+      }
+
+      // 2. If click happened inside .cart-inner, ensure it was NOT on an anchor or auth trigger
+      const cartInner = e.target.closest('.cart-inner');
+      if (cartInner && e.target.closest('a')) {
+        return;
+      }
+
       const openBtn = e.target.closest(
-        '[data-node-type="commerce-cart-open-link"], .cart-button, .cart-inner, .cart-2, .w-commerce-commercecartopenlink, [aria-label="Open cart"], a[href="#cart"]'
+        '[data-node-type="commerce-cart-open-link"], .cart-button, .cart-inner p, .cart-2, .w-commerce-commercecartopenlink, [aria-label="Open cart"], a[href="#cart"]'
       );
-      if (openBtn) {
+      if (openBtn && !e.target.closest('.cart-inner a')) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
