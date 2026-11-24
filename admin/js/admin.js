@@ -2813,17 +2813,12 @@ var formatDateString = window.formatDateString || formatDateTime;
           <div style="background:#ffffff;border:1.5px dashed #cbd5e1;border-radius:8px;padding:12px 14px;">
             <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              <span>Upload New Photos or Add by URL</span>
+              <span>Upload New Photos</span>
             </div>
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
               <input type="file" id="edit-prod-add-files" multiple accept="image/png,image/jpeg,image/webp" style="font-size:12px;flex:1;" />
             </div>
-            <div id="edit-prod-upload-status" style="font-size:11px;color:#64748b;margin-bottom:8px;">Select JPG, PNG, or WebP to add to the gallery. Multiple files supported.</div>
-            <div style="display:flex;align-items:center;gap:8px;padding-top:8px;border-top:1px solid #f1f5f9;">
-              <span style="font-size:11px;color:#94a3b8;font-weight:700;">OR URL:</span>
-              <input type="url" id="edit-prod-add-url" class="form-input" placeholder="Paste direct image URL (https://...)" style="font-size:12px;flex:1;" />
-              <button type="button" id="btn-add-img-url" class="btn btn-outline" style="font-size:11px;padding:7px 12px;white-space:nowrap;background:#f8fafc;font-weight:600;">+ Add URL</button>
-            </div>
+            <div id="edit-prod-upload-status" style="font-size:11px;color:#64748b;">Select JPG, PNG, or WebP to add to the gallery. Multiple files supported.</div>
           </div>
         </div>
 
@@ -3013,27 +3008,6 @@ var formatDateString = window.formatDateString || formatDateTime;
       };
     }
 
-    const btnAddUrl = document.getElementById('btn-add-img-url');
-    const urlInput = document.getElementById('edit-prod-add-url');
-    if (btnAddUrl && urlInput) {
-      btnAddUrl.onclick = () => {
-        const val = urlInput.value.trim();
-        if (!val) {
-          showToast('Please enter an image URL', 'error');
-          return;
-        }
-        productImages.push({
-          url: val,
-          alt: `${p.name} Photo`,
-          order: productImages.length,
-          isPrimary: productImages.length === 0
-        });
-        reindexImages();
-        renderGalleryList();
-        urlInput.value = '';
-        showToast('Image URL added to gallery', 'success');
-      };
-    }
 
     const editForm = document.getElementById('form-edit-product');
     if (editForm) {
@@ -3170,17 +3144,12 @@ var formatDateString = window.formatDateString || formatDateTime;
           <div style="background:#ffffff;border:1.5px dashed #cbd5e1;border-radius:8px;padding:12px 14px;">
             <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              <span>Upload Photos or Add by URL</span>
+              <span>Upload Product Photos</span>
             </div>
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
               <input type="file" id="new-prod-image-file" multiple accept="image/png,image/jpeg,image/webp" style="font-size:12px;flex:1;" />
             </div>
-            <div id="new-prod-upload-status" style="font-size:11px;color:#64748b;margin-bottom:8px;">Select JPG, PNG, or WebP files to add to gallery. Multiple files supported.</div>
-            <div style="display:flex;align-items:center;gap:8px;padding-top:8px;border-top:1px solid #f1f5f9;">
-              <span style="font-size:11px;color:#94a3b8;font-weight:700;">OR URL:</span>
-              <input type="url" id="new-prod-image-url" class="form-input" placeholder="Paste direct image URL (https://...)" style="font-size:12px;flex:1;" />
-              <button type="button" id="btn-add-new-img-url" class="btn btn-outline" style="font-size:11px;padding:7px 12px;white-space:nowrap;background:#f8fafc;font-weight:600;">+ Add URL</button>
-            </div>
+            <div id="new-prod-upload-status" style="font-size:11px;color:#64748b;">Select JPG, PNG, or WebP files to add to gallery. Multiple files supported.</div>
           </div>
         </div>
 
@@ -3374,27 +3343,6 @@ var formatDateString = window.formatDateString || formatDateTime;
       };
     }
 
-    const btnAddNewImgUrl = document.getElementById('btn-add-new-img-url');
-    const newImgUrlInput = document.getElementById('new-prod-image-url');
-    if (btnAddNewImgUrl && newImgUrlInput) {
-      btnAddNewImgUrl.onclick = () => {
-        const val = newImgUrlInput.value.trim();
-        if (!val) {
-          showToast('Please enter an image URL', 'error');
-          return;
-        }
-        newProductImages.push({
-          url: val,
-          alt: 'Product Image',
-          order: newProductImages.length,
-          isPrimary: newProductImages.length === 0
-        });
-        reindexNewImages();
-        renderNewGalleryList();
-        newImgUrlInput.value = '';
-        showToast('Image URL added to gallery', 'success');
-      };
-    }
 
     // Submit handler
     const form = document.getElementById('form-create-product');
