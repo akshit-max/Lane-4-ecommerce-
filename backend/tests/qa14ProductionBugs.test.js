@@ -284,6 +284,7 @@ describe('LANE4 14 Production Bugs Verification Suite', () => {
         description: 'Valid description for testing product creation',
         regularPricePaise: 50000,
         salePricePaise: null,
+        images: [{ url: 'https://example.com/test.jpg' }],
         isPublished: true
       }, adminUser)
     ).rejects.toThrow(/sale price/i);
@@ -295,9 +296,22 @@ describe('LANE4 14 Production Bugs Verification Suite', () => {
         description: 'Valid description for testing product creation',
         regularPricePaise: 50000,
         salePricePaise: 60000,
+        images: [{ url: 'https://example.com/test.jpg' }],
         isPublished: true
       }, adminUser)
     ).rejects.toThrow(/cannot exceed/i);
+
+    // Creating product without images is rejected
+    await expect(
+      productService.createProduct({
+        name: 'Incomplete Test 4',
+        description: 'Valid description for testing product creation',
+        regularPricePaise: 50000,
+        salePricePaise: 40000,
+        images: [],
+        isPublished: true
+      }, adminUser)
+    ).rejects.toThrow(/image/i);
   });
 
   // BUG 21: Invalid PIN codes (dummy repeated digits) are rejected

@@ -557,12 +557,17 @@ class ProductService {
           isActive: true
         }];
 
+    const rawImages = (data.images && Array.isArray(data.images) && data.images.length > 0)
+      ? data.images
+      : (data.imageUrl ? [{ url: data.imageUrl, alt: data.name, order: 0, isPrimary: true }] : []);
+
     const isExplicitlyPublished = data.isPublished === true;
     const canBePublished = Boolean(
       (data.name && data.name.trim().length >= 3) &&
       (data.description && data.description.trim().length >= 10) &&
       (regularPricePaise > 0) &&
-      (salePricePaise && salePricePaise > 0 && salePricePaise <= regularPricePaise)
+      (salePricePaise && salePricePaise > 0 && salePricePaise <= regularPricePaise) &&
+      (rawImages.length > 0)
     );
 
     if (isExplicitlyPublished && !canBePublished) {
@@ -586,14 +591,15 @@ class ProductService {
         err.statusCode = 400;
         throw err;
       }
+      if (rawImages.length === 0) {
+        const err = new Error('At least one product image is required to publish.');
+        err.statusCode = 400;
+        throw err;
+      }
     }
 
     const isPublished = isExplicitlyPublished || (data.isPublished !== false && canBePublished);
     const status = isPublished ? 'published' : (data.status || 'draft');
-
-    const rawImages = (data.images && Array.isArray(data.images) && data.images.length > 0)
-      ? data.images
-      : (data.imageUrl ? [{ url: data.imageUrl, alt: data.name, order: 0, isPrimary: true }] : []);
 
     const formattedImages = rawImages.map((img, idx) => ({
       url: typeof img === 'string' ? img : img.url,
@@ -771,6 +777,12 @@ class ProductService {
       }
       if (sale > reg) {
         const err = new Error('Sale price cannot exceed the regular catalog price.');
+        err.statusCode = 400;
+        throw err;
+      }
+      const finalImages = (updates.images && updates.images.length > 0) ? updates.images : (existingData.images || []);
+      if (!finalImages || finalImages.length === 0) {
+        const err = new Error('At least one product image is required to publish.');
         err.statusCode = 400;
         throw err;
       }
