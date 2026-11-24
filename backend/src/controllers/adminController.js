@@ -64,6 +64,16 @@ class AdminController {
     }
   }
 
+  async processRefund(req, res, next) {
+    try {
+      const { refundReference, notes } = req.body;
+      const result = await orderService.processRefund(req.params.id, req.user, { refundReference, notes });
+      return sendSuccess(res, result, 'Refund recorded and processed successfully.');
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async addTracking(req, res, next) {
     try {
       const result = await orderService.addTrackingInfo(req.params.id, req.body, req.user);
@@ -97,7 +107,7 @@ class AdminController {
 
   async approvePayment(req, res, next) {
     try {
-      const { internalNote } = req.body;
+      const internalNote = (req.body.internalNote || req.body.approvalNote || req.body.note || '').trim();
       const result = await paymentService.approvePayment(req.params.id, req.user, internalNote);
       return sendSuccess(res, result, 'Payment verified and approved.');
     } catch (err) {

@@ -33,6 +33,9 @@ class OrderController {
       if (!req.user) {
         return res.status(401).json({ success: false, message: 'Authentication required' });
       }
+      if (req.user.role === 'admin' || req.user.role === 'super_admin') {
+        return sendSuccess(res, []);
+      }
       const orders = await orderService.getMyOrders(req.user.uid, req.user.email);
       return sendSuccess(res, orders);
     } catch (err) {

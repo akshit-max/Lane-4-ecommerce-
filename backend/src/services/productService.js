@@ -57,7 +57,7 @@ const INITIAL_PRODUCTS = [
     shortDescription: 'Pool-tested performance mirrored racing goggles with UV protection.',
     categorySlug: 'goggles',
     regularPricePaise: 179900,
-    salePricePaise: 149900,
+    salePricePaise: 139900,
     hasVariants: true,
     variants: [
       { variantId: 'mrg-smk', sku: 'L4-GOG-MRG-SMK', size: 'One Size', color: 'Smoke Mirror', stockQuantity: 25, lowStockThreshold: 5, isActive: true },

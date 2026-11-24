@@ -623,17 +623,55 @@
    * Hook "Buy Now Online" form on product pages
    */
   async function setupProductPageForm() {
-    const form = document.querySelector('form.w-commerce-commerceaddtocartform, [data-node-type="commerce-add-to-cart-form"]');
+    const form = document.querySelector('form.w-commerce-commerceaddtocartform, [data-node-type="commerce-add-to-cart-form"], form.lane4-add-to-cart-form');
     if (!form) return;
 
     // Permanently disable Webflow legacy error banner
     if (!document.getElementById('lane4-cart-error-override')) {
       const s = document.createElement('style');
       s.id = 'lane4-cart-error-override';
-      s.textContent = '.w-commerce-commerceaddtocarterror, [data-node-type="commerce-add-to-cart-error"] { display: none !important; }';
+      s.textContent = '.w-commerce-commerceaddtocarterror, [data-node-type="commerce-add-to-cart-error"], [data-node-type="commerce-cart-error"] { display: none !important; visibility: hidden !important; height: 0 !important; overflow: hidden !important; }';
       document.head.appendChild(s);
     }
-    document.querySelectorAll('.w-commerce-commerceaddtocarterror, [data-node-type="commerce-add-to-cart-error"]').forEach(el => el.remove());
+    document.querySelectorAll('.w-commerce-commerceaddtocarterror, [data-node-type="commerce-add-to-cart-error"], [data-node-type="commerce-cart-error"]').forEach(el => el.remove());
+
+    // Neutralize Webflow attributes immediately
+    form.removeAttribute('data-node-type');
+    form.classList.remove('w-commerce-commerceaddtocartform');
+
+    // Convert submit input to type="button" immediately before any async call
+    const submitInput = form.querySelector('input[type="submit"]');
+    let buyBtn;
+    if (submitInput) {
+      buyBtn = document.createElement('button');
+      buyBtn.type = 'button';
+      buyBtn.className = submitInput.className;
+      buyBtn.id = 'lane4-buy-now-btn';
+      const label = (submitInput.value || '').trim() || 'Buy Now Online';
+      buyBtn.textContent = label;
+      buyBtn.setAttribute('aria-label', label);
+      buyBtn.setAttribute('aria-busy', 'false');
+      buyBtn.style.color = '#ffffff';
+      buyBtn.style.backgroundColor = '#000000';
+      buyBtn.style.fontWeight = '700';
+      buyBtn.style.cursor = 'pointer';
+      submitInput.parentNode.replaceChild(buyBtn, submitInput);
+    } else {
+      buyBtn = form.querySelector('button, [data-node-type="commerce-add-to-cart-button"], #lane4-buy-now-btn');
+      if (buyBtn) {
+        buyBtn.type = 'button';
+        const label = (buyBtn.textContent || '').trim() || 'Buy Now Online';
+        buyBtn.textContent = label;
+        buyBtn.setAttribute('aria-label', label);
+        buyBtn.setAttribute('aria-busy', 'false');
+        buyBtn.style.color = '#ffffff';
+        buyBtn.style.backgroundColor = '#000000';
+        buyBtn.style.fontWeight = '700';
+      }
+    }
+
+    let loadedProduct = null;
+    let productPromise = null;
 
     const path = window.location.pathname;
     const match = path.match(/\/product\/([a-zA-Z0-9-]+)(?:\.html)?/);
@@ -641,218 +679,208 @@
     const querySlug = new URLSearchParams(window.location.search).get('slug');
     const effectiveSlug = (slug && slug !== 'detail') ? slug : querySlug;
 
-    if (!effectiveSlug) return;
-
-    try {
-      const res = await window.lane4ApiRequest(`/products/${encodeURIComponent(effectiveSlug)}`);
-      const product = res.data;
-      if (!product) return;
-
-      // Real-time product details hydration
-      const nameEl = document.querySelector('.pd-heading .title-h4');
-      if (nameEl && product.name) nameEl.textContent = product.name;
-
-      const shortDescEl = document.querySelector('.pd-heading .paragraph-18px');
-      if (shortDescEl && product.shortDescription) shortDescEl.textContent = product.shortDescription;
-
-      // Fix Price Inconsistency: Regular price by default, sale price + strikethrough if active discount
-      const regPaise = product.regularPricePaise || 0;
-      const hasSale = product.salePricePaise && product.salePricePaise > 0 && product.salePricePaise < regPaise;
-      let priceHtml = '';
-      if (hasSale) {
-        const saleFormatted = window.LANE4 ? `${window.LANE4.formatINR(product.salePricePaise)} INR` : `₹ ${(product.salePricePaise/100).toFixed(2)} INR`;
-        const regFormatted = window.LANE4 ? `${window.LANE4.formatINR(regPaise)} INR` : `₹ ${(regPaise/100).toFixed(2)} INR`;
-        priceHtml = `${saleFormatted} <span style="font-size:14px;text-decoration:line-through;color:#94a3b8;font-weight:normal;margin-left:8px;">${regFormatted}</span>`;
-      } else {
-        const primaryPaise = regPaise > 0 ? regPaise : (product.salePricePaise || 0);
-        priceHtml = window.LANE4 ? `${window.LANE4.formatINR(primaryPaise)} INR` : `₹ ${(primaryPaise/100).toFixed(2)} INR`;
-      }
-      const priceEl = document.querySelector('.pd-heading .title-h6, .pd-heading h6, h6[data-wf-sku-bindings]');
-      if (priceEl) priceEl.innerHTML = priceHtml;
-
-      const descEl = document.querySelector('.pd-description .paragraph-20px');
-      if (descEl && product.description) descEl.textContent = product.description;
-
-      const breadcrumbEl = document.querySelector('.product-breadcrumbs a[aria-current] .paragraph-14px');
-      if (breadcrumbEl && product.name) breadcrumbEl.textContent = product.name;
-      if (product.name) document.title = `${product.name} | The Lane4 Performance Store`;
-
-      // Update primary product images if available
-      if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-        const galleryImgs = document.querySelectorAll('.image-gallery .product-img, .product-hero .product-img');
-        product.images.forEach((imgObj, idx) => {
-          if (galleryImgs[idx] && imgObj && imgObj.url) {
-            let imgUrl = imgObj.url;
-            if (window.LANE4 && window.LANE4.resolveAssetUrl) imgUrl = window.LANE4.resolveAssetUrl(imgUrl);
-            if (!imgUrl.startsWith('http') && !imgUrl.startsWith('/') && !imgUrl.startsWith('../')) imgUrl = '../' + imgUrl;
-            galleryImgs[idx].src = imgUrl;
-            if (galleryImgs[idx].hasAttribute('srcset')) galleryImgs[idx].removeAttribute('srcset');
-            galleryImgs[idx].style.opacity = '1';
-          }
-        });
-      }
-
-      // Ensure all gallery images have opacity: 1 and a fallback to restore original src on error
-      document.querySelectorAll('.image-gallery img, .product-hero img, .product-img, .product-image').forEach(img => {
-        img.style.opacity = '1';
-        if (!img.dataset.origSrc) img.dataset.origSrc = img.getAttribute('src') || img.src;
-        img.onerror = function () {
-          if (this.dataset.origSrc && this.src !== this.dataset.origSrc) {
-            this.src = this.dataset.origSrc;
-          }
-        };
-      });
-
-      // Dynamic variants dropdown
-      if (product.variants && product.variants.length > 0) {
-        let variantContainer = form.querySelector('#lane4-variant-selector-wrapper');
-        if (!variantContainer) {
-          variantContainer = document.createElement('div');
-          variantContainer.id = 'lane4-variant-selector-wrapper';
-          variantContainer.style.margin = '14px 0';
-
-          const optionsHtml = product.variants.map((v, i) => `
-            <option value="${v.variantId}" ${i === 0 ? 'selected' : ''}>
-              ${v.size ? `Size: ${v.size}` : ''} ${v.color ? `· Color: ${v.color}` : ''} ${v.stockQuantity <= 3 ? `(Only ${v.stockQuantity} left!)` : ''}
-            </option>
-          `).join('');
-
-          variantContainer.innerHTML = `
-            <label style="display:block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;color:#0f172a;">
-              Select Option / Size / Color
-            </label>
-            <select id="lane4-variant-select" style="width:100%;max-width:320px;padding:10px 14px;border:1.5px solid #0f172a;border-radius:6px;font-size:14px;background:#fff;font-family:inherit;font-weight:700;">
-              ${optionsHtml}
-            </select>
-          `;
-
-          const btnWrapper = form.querySelector('.pd-buttons-wrapper, .buy-now-wrapper') || form.firstChild;
-          form.insertBefore(variantContainer, btnWrapper);
-        }
-      }
-
-      const handleAddToCart = async (e) => {
-        if (e) {
-          e.preventDefault();
-          e.stopPropagation();
-          e.stopImmediatePropagation();
-        }
-
-        // Login required to shop and add products to cart
-        const user = window.LANE4.getUser();
-        if (!user || !user.uid) {
-          if (window.LANE4_AUTH && window.LANE4_AUTH.open) {
-            window.LANE4_AUTH.open('login');
-            if (window.LANE4_AUTH.showAlert) {
-              window.LANE4_AUTH.showAlert('Please sign in or create an account to start shopping and add items to your cart.', 'info');
-            }
-          } else {
-            alert('Please sign in or create an account to start shopping and add items to your cart.');
-          }
-          return;
-        }
-
-        const submitBtn = form.querySelector('button, input[type="submit"], input[type="button"]');
-        const origVal = submitBtn ? ((submitBtn.textContent || submitBtn.value || '').trim() || 'Add to Bag') : 'Add to Bag';
-        if (submitBtn) {
-          if (submitBtn.tagName === 'INPUT') submitBtn.value = 'Adding to Bag...';
-          else submitBtn.textContent = 'Adding to Bag...';
-          submitBtn.setAttribute('aria-busy', 'true');
-          submitBtn.disabled = true;
-        }
-
-        try {
-          const select = form.querySelector('#lane4-variant-select');
-          const selectedVariantId = select ? select.value : (product.variants && product.variants[0] ? product.variants[0].variantId : 'default');
-          const guestId = window.LANE4.getGuestId();
-
-          const addRes = await window.lane4ApiRequest('/cart/items', {
-            method: 'POST',
-            body: JSON.stringify({
-              productId: product.id,
-              variantId: selectedVariantId,
-              quantity: 1,
-              guestId
-            })
-          });
-
-          activeCart = addRes.data;
-          updateCartBadge();
-          renderCartDrawer();
-          openCartDrawer();
-
-          if (submitBtn) {
-            if (submitBtn.tagName === 'INPUT') submitBtn.value = 'Added to Bag ✓';
-            else submitBtn.textContent = 'Added to Bag ✓';
-          }
-        } catch (err) {
-          alert(err.message || 'Unable to add product to cart.');
-        } finally {
-          setTimeout(() => {
-            if (submitBtn) {
-              if (submitBtn.tagName === 'INPUT') submitBtn.value = origVal;
-              else submitBtn.textContent = origVal;
-              submitBtn.setAttribute('aria-busy', 'false');
-              submitBtn.disabled = false;
-            }
-          }, 1200);
-        }
-      };
-
-      // Convert submit button to type="button" to prevent Webflow submit hijacking
-      const submitInput = form.querySelector('input[type="submit"]');
-      let buyBtn;
-      if (submitInput) {
-        buyBtn = document.createElement('button');
-        buyBtn.type = 'button';
-        buyBtn.className = submitInput.className;
-        buyBtn.id = 'lane4-buy-now-btn';
-        const label = (submitInput.value || '').trim() || 'Add to Bag';
-        buyBtn.textContent = label;
-        buyBtn.setAttribute('aria-label', label);
-        buyBtn.setAttribute('aria-busy', 'false');
-        buyBtn.style.color = '#ffffff';
-        buyBtn.style.backgroundColor = '#000000';
-        buyBtn.style.fontWeight = '700';
-        buyBtn.style.cursor = 'pointer';
-        submitInput.parentNode.replaceChild(buyBtn, submitInput);
-      } else {
-        buyBtn = form.querySelector('button, [data-node-type="commerce-add-to-cart-button"]');
-        if (buyBtn) {
-          buyBtn.type = 'button';
-          const label = (buyBtn.textContent || '').trim() || 'Add to Bag';
-          buyBtn.textContent = label;
-          buyBtn.setAttribute('aria-label', label);
-          buyBtn.setAttribute('aria-busy', 'false');
-          buyBtn.style.color = '#ffffff';
-          buyBtn.style.backgroundColor = '#000000';
-          buyBtn.style.fontWeight = '700';
-        }
-      }
-
-      form.removeAttribute('data-node-type');
-      form.onsubmit = (e) => {
+    const handleAddToCart = async (e) => {
+      if (e) {
         e.preventDefault();
         e.stopPropagation();
-        handleAddToCart(e);
-        return false;
-      };
-
-      if (buyBtn) {
-        buyBtn.addEventListener('click', handleAddToCart);
+        if (e.stopImmediatePropagation) e.stopImmediatePropagation();
       }
-      form.addEventListener('click', (e) => {
-        const clickedBuy = e.target.closest('.buy-now-wrapper, .w-commerce-commerceaddtocartbutton, #lane4-buy-now-btn');
-        if (clickedBuy) {
-          e.preventDefault();
-          e.stopPropagation();
-          handleAddToCart(e);
-        }
-      });
 
-      // Hydrate & Mount Product Reviews & Ratings
-      initProductReviews(product);
-    } catch (err) {
+      // Login required to shop and add products to cart
+      const user = window.LANE4.getUser();
+      if (!user || !user.uid) {
+        if (window.LANE4_AUTH && window.LANE4_AUTH.open) {
+          window.LANE4_AUTH.open('login');
+          if (window.LANE4_AUTH.showAlert) {
+            window.LANE4_AUTH.showAlert('Please sign in or create an account to start shopping and add items to your cart.', 'info');
+          }
+        } else {
+          alert('Please sign in or create an account to start shopping and add items to your cart.');
+        }
+        return;
+      }
+
+      if (!loadedProduct && productPromise) {
+        try {
+          await productPromise;
+        } catch (_) {}
+      }
+
+      const product = loadedProduct;
+      if (!product) {
+        alert('Product details are still loading. Please try again in a moment.');
+        return;
+      }
+
+      const submitBtn = form.querySelector('button, input[type="submit"], input[type="button"], #lane4-buy-now-btn');
+      const origVal = submitBtn ? ((submitBtn.textContent || submitBtn.value || '').trim() || 'Add to Bag') : 'Add to Bag';
+      if (submitBtn) {
+        if (submitBtn.tagName === 'INPUT') submitBtn.value = 'Adding to Bag...';
+        else submitBtn.textContent = 'Adding to Bag...';
+        submitBtn.setAttribute('aria-busy', 'true');
+        submitBtn.disabled = true;
+      }
+
+      try {
+        const select = form.querySelector('#lane4-variant-select');
+        const selectedVariantId = select ? select.value : (product.variants && product.variants[0] ? product.variants[0].variantId : 'default');
+        const guestId = window.LANE4.getGuestId();
+
+        const addRes = await window.lane4ApiRequest('/cart/items', {
+          method: 'POST',
+          body: JSON.stringify({
+            productId: product.id,
+            variantId: selectedVariantId,
+            quantity: 1,
+            guestId
+          })
+        });
+
+        activeCart = addRes.data;
+        updateCartBadge();
+        renderCartDrawer();
+        openCartDrawer();
+
+        if (submitBtn) {
+          if (submitBtn.tagName === 'INPUT') submitBtn.value = 'Added to Bag ✓';
+          else submitBtn.textContent = 'Added to Bag ✓';
+        }
+      } catch (err) {
+        alert(err.message || 'Unable to add product to cart.');
+      } finally {
+        setTimeout(() => {
+          if (submitBtn) {
+            if (submitBtn.tagName === 'INPUT') submitBtn.value = origVal;
+            else submitBtn.textContent = origVal;
+            submitBtn.setAttribute('aria-busy', 'false');
+            submitBtn.disabled = false;
+          }
+        }, 1200);
+      }
+    };
+
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+      handleAddToCart(e);
+      return false;
+    };
+
+    if (buyBtn) {
+      buyBtn.addEventListener('click', handleAddToCart, true);
+    }
+    form.addEventListener('click', (e) => {
+      const clickedBuy = e.target.closest('.buy-now-wrapper, .w-commerce-commerceaddtocartbutton, #lane4-buy-now-btn');
+      if (clickedBuy) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+        handleAddToCart(e);
+      }
+    }, true);
+
+    if (!effectiveSlug) return;
+
+    productPromise = (async () => {
+      try {
+        const res = await window.lane4ApiRequest(`/products/${encodeURIComponent(effectiveSlug)}`);
+        const product = res.data;
+        if (!product) return;
+        loadedProduct = product;
+
+        // Real-time product details hydration
+        const nameEl = document.querySelector('.pd-heading .title-h4');
+        if (nameEl && product.name) nameEl.textContent = product.name;
+
+        const shortDescEl = document.querySelector('.pd-heading .paragraph-18px');
+        if (shortDescEl && product.shortDescription) shortDescEl.textContent = product.shortDescription;
+
+        // Authoritative Selling Price Display
+        const regPaise = product.regularPricePaise || 0;
+        const hasSale = product.salePricePaise && product.salePricePaise > 0 && product.salePricePaise < regPaise;
+        let priceHtml = '';
+        if (hasSale) {
+          const saleFormatted = window.LANE4 ? `${window.LANE4.formatINR(product.salePricePaise)} INR` : `₹ ${(product.salePricePaise/100).toFixed(2)} INR`;
+          const regFormatted = window.LANE4 ? `${window.LANE4.formatINR(regPaise)} INR` : `₹ ${(regPaise/100).toFixed(2)} INR`;
+          priceHtml = `${saleFormatted} <span style="font-size:14px;text-decoration:line-through;color:#94a3b8;font-weight:normal;margin-left:8px;">${regFormatted}</span>`;
+        } else {
+          const primaryPaise = regPaise > 0 ? regPaise : (product.salePricePaise || 0);
+          priceHtml = window.LANE4 ? `${window.LANE4.formatINR(primaryPaise)} INR` : `₹ ${(primaryPaise/100).toFixed(2)} INR`;
+        }
+        const priceEl = document.querySelector('.pd-heading .title-h6, .pd-heading h6, h6[data-wf-sku-bindings]');
+        if (priceEl) priceEl.innerHTML = priceHtml;
+
+        const descEl = document.querySelector('.pd-description .paragraph-20px');
+        if (descEl && product.description) descEl.textContent = product.description;
+
+        const breadcrumbEl = document.querySelector('.product-breadcrumbs a[aria-current] .paragraph-14px');
+        if (breadcrumbEl && product.name) breadcrumbEl.textContent = product.name;
+        if (product.name) document.title = `${product.name} | The Lane4 Performance Store`;
+
+        // Update primary product images if available
+        if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+          const galleryImgs = document.querySelectorAll('.image-gallery .product-img, .product-hero .product-img');
+          product.images.forEach((imgObj, idx) => {
+            if (galleryImgs[idx] && imgObj && imgObj.url) {
+              let imgUrl = imgObj.url;
+              if (window.LANE4 && window.LANE4.resolveAssetUrl) imgUrl = window.LANE4.resolveAssetUrl(imgUrl);
+              if (!imgUrl.startsWith('http') && !imgUrl.startsWith('/') && !imgUrl.startsWith('../')) imgUrl = '../' + imgUrl;
+              galleryImgs[idx].src = imgUrl;
+              if (galleryImgs[idx].hasAttribute('srcset')) galleryImgs[idx].removeAttribute('srcset');
+              galleryImgs[idx].style.opacity = '1';
+            }
+          });
+        }
+
+        // Ensure all gallery images have opacity: 1 and a fallback to restore original src on error
+        document.querySelectorAll('.image-gallery img, .product-hero img, .product-img, .product-image').forEach(img => {
+          img.style.opacity = '1';
+          if (!img.dataset.origSrc) img.dataset.origSrc = img.getAttribute('src') || img.src;
+          img.onerror = function () {
+            if (this.dataset.origSrc && this.src !== this.dataset.origSrc) {
+              this.src = this.dataset.origSrc;
+            } else {
+              this.src = '../6424266ea05809dff501d86e/lane4-share.png';
+            }
+          };
+        });
+
+        // Dynamic variants dropdown
+        if (product.variants && product.variants.length > 0) {
+          let variantContainer = form.querySelector('#lane4-variant-selector-wrapper');
+          if (!variantContainer) {
+            variantContainer = document.createElement('div');
+            variantContainer.id = 'lane4-variant-selector-wrapper';
+            variantContainer.style.margin = '14px 0';
+
+            const optionsHtml = product.variants.map((v, i) => `
+              <option value="${v.variantId}" ${i === 0 ? 'selected' : ''}>
+                ${v.size ? `Size: ${v.size}` : ''} ${v.color ? `· Color: ${v.color}` : ''} ${v.stockQuantity <= 3 ? `(Only ${v.stockQuantity} left!)` : ''}
+              </option>
+            `).join('');
+
+            variantContainer.innerHTML = `
+              <label style="display:block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;color:#0f172a;">
+                Select Option / Size / Color
+              </label>
+              <select id="lane4-variant-select" style="width:100%;max-width:320px;padding:10px 14px;border:1.5px solid #0f172a;border-radius:6px;font-size:14px;background:#fff;font-family:inherit;font-weight:700;">
+                ${optionsHtml}
+              </select>
+            `;
+
+            const btnWrapper = form.querySelector('.pd-buttons-wrapper, .buy-now-wrapper') || form.firstChild;
+            form.insertBefore(variantContainer, btnWrapper);
+          }
+        }
+
+        // Hydrate & Mount Product Reviews & Ratings
+        initProductReviews(product);
+      } catch (err) {
+        console.warn('Could not load dynamic product variants:', err);
+      }
+    })();
+  }
       console.warn('Could not load dynamic product variants:', err);
     }
   }

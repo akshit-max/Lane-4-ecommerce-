@@ -8,6 +8,17 @@ const submitProofValidator = [
     .withMessage('Please enter a valid 12-digit numeric UPI Reference / UTR Number.')
 ];
 
+const approvePaymentValidator = [
+  param('id').notEmpty().withMessage('Payment ID is required'),
+  body().custom((b) => {
+    const note = (b.internalNote || b.approvalNote || b.note || '').trim();
+    if (!note || note.length < 3) {
+      throw new Error('A non-empty approval note (at least 3 characters) is required to approve payments.');
+    }
+    return true;
+  })
+];
+
 const rejectPaymentValidator = [
   param('id').notEmpty().withMessage('Payment ID is required'),
   body('reason').trim().notEmpty().withMessage('Reason for payment rejection is required')
@@ -15,6 +26,7 @@ const rejectPaymentValidator = [
 
 module.exports = {
   submitProofValidator,
+  approvePaymentValidator,
   rejectPaymentValidator
 };
 

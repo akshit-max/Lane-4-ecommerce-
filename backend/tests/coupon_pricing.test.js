@@ -56,11 +56,11 @@ describe('Coupon Validation & Pricing Calculation Test Suite', () => {
 
     expect(quoteRes.status).toBe(200);
     const p = quoteRes.body.data.pricing;
-    expect(p.subtotalPaise).toBe(149900);
-    expect(p.couponDiscountPaise).toBe(14990); // 10% of 149900
+    expect(p.subtotalPaise).toBe(139900);
+    expect(p.couponDiscountPaise).toBe(13990); // 10% of 139900
     expect(p.shippingChargesPaise).toBe(9900);  // Base shipping charge
-    // Final payable = 149900 - 14990 + 9900 = 144810 (₹ 1,448.10)
-    expect(p.finalPayablePaise).toBe(144810);
+    // Final payable = 139900 - 13990 + 9900 = 135810 (₹ 1,358.10)
+    expect(p.finalPayablePaise).toBe(135810);
   });
 });
 

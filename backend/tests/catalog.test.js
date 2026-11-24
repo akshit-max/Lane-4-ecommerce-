@@ -22,7 +22,7 @@ describe('Product & Category Catalog Test Suite', () => {
     expect(res.body.success).toBe(true);
     expect(res.body.data.name).toBe('Mirror Racing Goggles');
     expect(res.body.data.variants.length).toBeGreaterThan(0);
-    expect(res.body.data.salePricePaise).toBe(149900);
+    expect(res.body.data.salePricePaise).toBe(139900);
   });
 
   test('GET /api/categories returns all 5 published categories', async () => {

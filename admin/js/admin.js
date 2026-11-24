@@ -3,6 +3,10 @@
  * Complete management of Products Catalog, Categories, Coupons, Orders, Payments & Inventory.
  */
 
+// Globally export date formatters immediately before IIFE
+var formatDateTime = window.formatDateTime || function(val) { return val ? new Date(val).toLocaleString('en-IN') : '—'; };
+var formatDateString = window.formatDateString || formatDateTime;
+
 (function () {
   let activeAdmin = null;
 
@@ -1645,7 +1649,25 @@
     const submitBtn = document.getElementById('submit-approve-btn');
     if (submitBtn) {
       submitBtn.onclick = async () => {
-        const note = (document.getElementById('approve-note-input')?.value || '').trim() || 'Verified by admin staff';
+        const noteInput = document.getElementById('approve-note-input');
+        const note = (noteInput?.value || '').trim();
+        if (!note || note.length < 3) {
+          if (noteInput) {
+            noteInput.style.borderColor = '#dc2626';
+            noteInput.focus();
+          }
+          showToast('A mandatory verification note (at least 3 characters) is required to approve payments.', 'error');
+          return;
+        }
+        if (note.length > 500) {
+          if (noteInput) {
+            noteInput.style.borderColor = '#dc2626';
+            noteInput.focus();
+          }
+          showToast('Approval note cannot exceed 500 characters.', 'error');
+          return;
+        }
+
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span>Approving...</span>';
 
@@ -1928,6 +1950,14 @@
                           </td>
                           <td>
                             <strong style="font-size:14px;color:#0f172a;">${o.pricing ? o.pricing.finalPayableFormatted : ''}</strong>
+                            ${(o.pricing && o.pricing.couponCode) ? `
+                              <div style="margin-top:3px;">
+                                <span style="font-size:10.5px;font-weight:800;background:#dcfce7;color:#15803d;padding:2px 7px;border-radius:4px;display:inline-flex;align-items:center;gap:4px;" title="Coupon applied">
+                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                  <span>${escapeHtml(o.pricing.couponCode)} (-${o.pricing.couponDiscountFormatted || ('₹' + ((o.pricing.couponDiscountPaise || 0)/100).toFixed(2))})</span>
+                                </span>
+                              </div>
+                            ` : ''}
                           </td>
                           <td>
                             <select onchange="updateOrderStatus('${orderRefId}', this.value)" style="padding:6px 9px;border-radius:6px;border:1.5px solid ${isConfirmed ? '#16a34a' : '#cbd5e1'};background:#fff;font-weight:700;font-size:12px;color:#0f172a;">
@@ -1938,8 +1968,21 @@
                               <option value="shipped" ${o.status === 'shipped' ? 'selected' : ''}>Shipped</option>
                               <option value="out_for_delivery" ${o.status === 'out_for_delivery' ? 'selected' : ''}>Out For Delivery</option>
                               <option value="delivered" ${o.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                              <option value="returned" ${o.status === 'returned' ? 'selected' : ''}>Returned</option>
                               <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                              <option value="payment_rejected" ${o.status === 'payment_rejected' ? 'selected' : ''}>Payment Rejected</option>
                             </select>
+                            ${o.refundStatus === 'pending_refund' ? `
+                              <div style="margin-top:4px;">
+                                <button type="button" class="btn" style="background:#ef4444;color:#fff;font-size:10px;padding:3px 7px;border-radius:4px;font-weight:800;border:none;cursor:pointer;" onclick="openRefundModal('${orderRefId}')">
+                                  Process Refund
+                                </button>
+                              </div>
+                            ` : (o.refundStatus === 'refunded' ? `
+                              <div style="margin-top:4px;font-size:10.5px;color:#16a34a;font-weight:800;">
+                                Refunded ✓
+                              </div>
+                            ` : '')}
                           </td>
                           <td>
                             <span class="badge ${o.paymentStatus === 'verified' ? 'badge-verified' : (o.paymentStatus === 'rejected' ? 'badge-rejected' : 'badge-pending')}" style="font-size:11px;">

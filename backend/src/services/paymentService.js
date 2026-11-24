@@ -183,6 +183,17 @@ class PaymentService {
       throw err;
     }
 
+    // Check UTR ledger to prevent re-use of previously verified UTR
+    const ledgerDoc = await db.collection('utrLedger').doc(cleanUtr).get();
+    if (ledgerDoc.exists) {
+      const ledgerData = ledgerDoc.data();
+      if (ledgerData.orderId && ledgerData.orderId !== orderId) {
+        const err = new Error(`This UPI Reference / UTR Number (${cleanUtr}) has already been verified for order #${ledgerData.orderNumber || ledgerData.orderId}. Duplicate submissions are not accepted.`);
+        err.statusCode = 400;
+        throw err;
+      }
+    }
+
     // Locate order
     const orderRef = db.collection('orders').doc(orderId);
     const orderDoc = await orderRef.get();
@@ -375,18 +386,57 @@ class PaymentService {
       };
     }
 
-    // Server-side duplicate UTR validation across other verified payments
-    const utr = (paymentData.upiReferenceNumber || '').trim();
-    if (utr) {
+    const cleanNote = (internalNote || '').trim();
+    if (!cleanNote || cleanNote.length < 3) {
+      const err = new Error('A mandatory verification note (at least 3 characters) is required to approve payments.');
+      err.statusCode = 400;
+      throw err;
+    }
+    if (cleanNote.length > 500) {
+      const err = new Error('Approval note cannot exceed 500 characters.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const cleanUtr = (paymentData.upiReferenceNumber || '').replace(/[^0-9]/g, '').trim();
+
+    // Atomic server-side duplicate UTR check and ledger locking across all orders
+    if (cleanUtr) {
+      // 1. Check existing verified payments
       const existingVerifiedSnap = await db.collection('payments')
-        .where('upiReferenceNumber', '==', utr)
+        .where('upiReferenceNumber', '==', cleanUtr)
         .where('status', '==', 'verified')
         .get();
       const conflict = existingVerifiedSnap.docs.find(d => d.id !== paymentId && d.data().orderId !== paymentData.orderId);
       if (conflict) {
         const conflictData = conflict.data();
-        throw new Error(`Duplicate UTR: This UPI reference number (${utr}) has already been verified for order #${conflictData.orderNumber || conflictData.orderId}. Cannot approve duplicate.`);
+        const err = new Error(`Duplicate UTR: This UPI reference number (${cleanUtr}) has already been verified for order #${conflictData.orderNumber || conflictData.orderId}. Cannot approve duplicate.`);
+        err.statusCode = 409;
+        throw err;
       }
+
+      // 2. Atomic lock in utrLedger collection
+      const utrRef = db.collection('utrLedger').doc(cleanUtr);
+      await db.runTransaction(async (transaction) => {
+        const utrDoc = await transaction.get(utrRef);
+        if (utrDoc.exists) {
+          const ledgerData = utrDoc.data();
+          if (ledgerData.orderId && ledgerData.orderId !== paymentData.orderId) {
+            const err = new Error(`Duplicate UTR: UPI Reference Number ${cleanUtr} is already approved for order #${ledgerData.orderNumber || ledgerData.orderId}. Duplicate payment approval rejected.`);
+            err.statusCode = 409;
+            throw err;
+          }
+        }
+        transaction.set(utrRef, {
+          utr: cleanUtr,
+          orderId: paymentData.orderId,
+          orderNumber: paymentData.orderNumber || paymentData.orderId,
+          paymentId,
+          verifiedAt: new Date(),
+          verifiedByUid: adminUser.uid,
+          verifiedByName: adminUser.displayName || adminUser.email
+        });
+      });
     }
 
     const orderRef = db.collection('orders').doc(paymentData.orderId);
@@ -403,7 +453,7 @@ class PaymentService {
         verifiedAt: now,
         verifiedByUid: adminUser.uid,
         verifiedByName: adminUser.displayName || adminUser.email,
-        internalNotes: internalNote || 'Manually verified against bank records.'
+        internalNotes: cleanNote
       },
       updatedAt: now
     });

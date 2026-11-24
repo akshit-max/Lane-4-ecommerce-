@@ -4,15 +4,14 @@
  */
 
 (function () {
+(function () {
   async function hydrateCatalog() {
-    const productGrid = document.querySelector('.collection-list.w-dyn-items');
-    if (!productGrid) return;
-
     const isInSubfolder = /\/(product|category|blog|authors|utility-pages|category-blog)\//i.test(window.location.pathname);
-    const catMatch = window.location.pathname.match(/\/category\/([a-zA-Z0-9-]+)(?:\.html)?/);
+    const catMatch = window.location.pathname.match(/\/category\/([a-zA-Z0-9_-]+)(?:\.html)?/i);
     const queryCatSlug = new URLSearchParams(window.location.search).get('slug');
+    const docSlug = document.documentElement.getAttribute('data-wf-item-slug');
     const currentCatSlug = (catMatch && catMatch[1] !== 'detail') ? catMatch[1] : (
-      queryCatSlug || (window.location.pathname.includes('/category/') ? document.documentElement.getAttribute('data-wf-item-slug') : null)
+      queryCatSlug || (window.location.pathname.includes('/category/') ? docSlug : null)
     );
 
     if (currentCatSlug) {
@@ -20,7 +19,7 @@
         window.lane4ApiRequest(`/categories/${encodeURIComponent(currentCatSlug)}`).then(catRes => {
           if (catRes && catRes.data) {
             const cat = catRes.data;
-            const h1 = document.querySelector('h1, .heading-h1, .category-title');
+            const h1 = document.querySelector('h1, .heading-h1, .title-h1, .category-title');
             if (h1 && cat.name) h1.textContent = cat.name;
             const catDesc = document.querySelector('.paragraph-18px, .category-description');
             if (catDesc && cat.description) catDesc.textContent = cat.description;
@@ -35,105 +34,196 @@
       const products = (res && res.data && res.data.products) || (Array.isArray(res && res.data) ? res.data : []);
       if (!products.length) return;
 
-      // Extract existing product slugs in DOM
-      const existingSlugs = new Set();
-      productGrid.querySelectorAll('a[href*="product/"]').forEach(link => {
-        const match = link.getAttribute('href').match(/product\/([a-zA-Z0-9-]+)(?:\.html)?/);
-        if (match) existingSlugs.add(match[1]);
+      const productMap = new Map();
+      products.forEach(p => {
+        if (p.slug) productMap.set(p.slug.toLowerCase(), p);
+        if (p.name) productMap.set(p.name.toLowerCase().trim(), p);
       });
 
-      // Filter products if on a category-specific page
-      const visibleProducts = currentCatSlug
-        ? products.filter(p => (p.categorySlug === currentCatSlug || p.category === currentCatSlug || (p.category && p.category.toLowerCase().replace(/[^a-z0-9]+/g, '-') === currentCatSlug)))
-        : products;
+      // Find all product grids across storefront (Shop grid, Category grid, and "Discover other products" on product pages)
+      const allGrids = document.querySelectorAll(
+        '.collection-list-category.w-dyn-items, .collection-list.w-dyn-items, .collection-list-wrapper-category .w-dyn-items, .collection-list-product.w-dyn-items'
+      );
+      if (!allGrids.length) return;
 
-      // Real-time synchronization of visible products (both existing cards and newly created products)
-      visibleProducts.forEach(p => {
-        let rawImg = (p.images && p.images[0] && p.images[0].url) || '6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg';
-        let imgUrl = rawImg;
-        if (window.LANE4 && window.LANE4.resolveAssetUrl) {
-          imgUrl = window.LANE4.resolveAssetUrl(rawImg);
+      allGrids.forEach(productGrid => {
+        const isDiscoverOtherGrid = productGrid.classList.contains('collection-list-product');
+        const isCategoryGrid = Boolean(currentCatSlug) && (
+          productGrid.classList.contains('collection-list-category') ||
+          Boolean(productGrid.closest('.collection-list-wrapper-category'))
+        );
+
+        function matchesCat(p) {
+          if (!currentCatSlug) return true;
+          const pCat = (p.categorySlug || p.category || '').toLowerCase().trim();
+          const target = currentCatSlug.toLowerCase().trim();
+          if (pCat === target) return true;
+          const cleanP = pCat.replace(/[^a-z0-9]+/g, '-');
+          const cleanT = target.replace(/[^a-z0-9]+/g, '-');
+          return cleanP === cleanT;
         }
-        if (isInSubfolder && !imgUrl.startsWith('http') && !imgUrl.startsWith('/') && !imgUrl.startsWith('../')) {
-          imgUrl = '../' + imgUrl;
-        }
 
-        const regularPrice = p.regularPricePaise || 0;
-        const hasSale = p.salePricePaise && p.salePricePaise > 0 && p.salePricePaise < regularPrice;
-        let priceHtml = '';
-        if (hasSale) {
-          const saleFormatted = window.LANE4 ? `${window.LANE4.formatINR(p.salePricePaise)} INR` : `₹ ${(p.salePricePaise/100).toFixed(2)} INR`;
-          const regFormatted = window.LANE4 ? `${window.LANE4.formatINR(regularPrice)} INR` : `₹ ${(regularPrice/100).toFixed(2)} INR`;
-          priceHtml = `${saleFormatted} <span style="font-size:12px;text-decoration:line-through;color:#94a3b8;font-weight:normal;margin-left:6px;">${regFormatted}</span>`;
-        } else {
-          const primaryVal = regularPrice > 0 ? regularPrice : (p.salePricePaise || 0);
-          priceHtml = window.LANE4 ? `${window.LANE4.formatINR(primaryVal)} INR` : `₹ ${(primaryVal/100).toFixed(2)} INR`;
-        }
-        const linkHref = isInSubfolder ? `../product/${p.slug}.html` : `product/${p.slug}.html`;
+        // 1. Live update any existing cards in the grid (e.g. Discover Other Products or static catalog cards)
+        const matchedProductSlugsInGrid = new Set();
+        const existingItems = productGrid.querySelectorAll('.w-dyn-item, .collection-item');
 
-        const existingCardLink = productGrid.querySelector(`a[href*="product/${p.slug}"], a[href="${p.slug}.html"]`);
+        existingItems.forEach(item => {
+          const link = item.querySelector('a[href*="product/"], a[href$=".html"]');
+          if (!link) return;
+          const href = link.getAttribute('href') || '';
+          const match = href.match(/product\/([a-zA-Z0-9_-]+)(?:\.html)?/i) || href.match(/([a-zA-Z0-9_-]+)\.html/i);
+          const slug = match ? match[1].toLowerCase() : null;
+          const titleEl = item.querySelector('.paragraph-14px, .product-title, .sp-content .paragraph-14px');
+          const name = titleEl ? titleEl.textContent.trim().toLowerCase() : '';
 
-        // If product is unpublished or soft-deleted:
-        if (p.isPublished === false || p.isDeleted === true) {
-          if (existingCardLink) {
-            const wrapper = existingCardLink.closest('.collection-item') || existingCardLink.closest('.w-dyn-item') || existingCardLink.closest('.shop-product');
-            if (wrapper) wrapper.style.display = 'none';
+          const p = (slug && productMap.get(slug)) || (name && productMap.get(name));
+
+          // If this is a category grid, check if the static product actually belongs to this category!
+          if (isCategoryGrid && (!p || !matchesCat(p))) {
+            item.remove(); // Remove hardcoded mismatched template products from newly created categories
+            return;
           }
-          return;
-        }
 
-        if (existingCardLink) {
-          // Dynamic live update of existing DOM card
-          const wrapper = existingCardLink.closest('.collection-item') || existingCardLink.closest('.w-dyn-item') || existingCardLink.closest('.shop-product');
-          if (wrapper) wrapper.style.display = '';
+          if (p) {
+            matchedProductSlugsInGrid.add(p.slug.toLowerCase());
 
-          const productCard = existingCardLink.closest('.shop-product') || existingCardLink;
-          if (productCard) productCard.style.opacity = '1';
+            if (p.isPublished === false || p.isDeleted === true) {
+              item.style.display = 'none';
+              return;
+            }
 
-          // Update Title
-          const titleEl = productCard.querySelector('.sp-content .paragraph-14px');
-          if (titleEl && p.name) titleEl.textContent = p.name;
+            item.style.display = '';
+            item.style.opacity = '1';
 
-          // Update Short Description / Tagline
-          const shortDescEl = productCard.querySelector('.sp-content .paragraph-13px.grey, .sp-content .paragraph-13px');
-          if (shortDescEl) shortDescEl.textContent = p.shortDescription || 'Multiple options available';
+            // Resolve Image
+            let rawImg = (p.images && p.images[0] && p.images[0].url) || '6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg';
+            let imgUrl = rawImg;
+            if (window.LANE4 && window.LANE4.resolveAssetUrl) imgUrl = window.LANE4.resolveAssetUrl(rawImg);
+            if (isInSubfolder && !imgUrl.startsWith('http') && !imgUrl.startsWith('/') && !imgUrl.startsWith('../')) {
+              imgUrl = '../' + imgUrl;
+            }
 
-          // Update Price (Regular price by default, sale price + strikethrough if on sale)
-          const priceEl = productCard.querySelector('.sp-content .paragraph-16px, [data-wf-sku-bindings*="f_price_"]');
-          if (priceEl) priceEl.innerHTML = priceHtml;
+            // Update Image
+            const imgEl = item.querySelector('img');
+            if (imgEl && imgUrl) {
+              imgEl.src = imgUrl;
+              imgEl.alt = p.name;
+              if (imgEl.hasAttribute('srcset')) imgEl.removeAttribute('srcset');
+              imgEl.style.opacity = '1';
+            }
 
-          // Update Image
-          const imgEl = productCard.querySelector('.sp-image-wrapper img');
-          if (imgEl && imgUrl) {
-            imgEl.src = imgUrl;
-            imgEl.alt = p.name;
-            if (imgEl.hasAttribute('srcset')) imgEl.removeAttribute('srcset');
+            // Update Title
+            if (titleEl && p.name) titleEl.textContent = p.name;
+
+            // Update Short Description
+            const shortDescEl = item.querySelector('.paragraph-13px.grey, .paragraph-13px');
+            if (shortDescEl) shortDescEl.textContent = p.shortDescription || 'Multiple options available';
+
+            // Update Pricing (Regular price default, sale price + strikethrough if on sale)
+            const regularPrice = p.regularPricePaise || 0;
+            const hasSale = p.salePricePaise && p.salePricePaise > 0 && p.salePricePaise < regularPrice;
+            let priceHtml = '';
+            if (hasSale) {
+              const saleFormatted = window.LANE4 ? `${window.LANE4.formatINR(p.salePricePaise)} INR` : `₹ ${(p.salePricePaise / 100).toFixed(2)} INR`;
+              const regFormatted = window.LANE4 ? `${window.LANE4.formatINR(regularPrice)} INR` : `₹ ${(regularPrice / 100).toFixed(2)} INR`;
+              priceHtml = `${saleFormatted} <span style="font-size:12px;text-decoration:line-through;color:#94a3b8;font-weight:normal;margin-left:6px;">${regFormatted}</span>`;
+            } else {
+              const primaryVal = regularPrice > 0 ? regularPrice : (p.salePricePaise || 0);
+              priceHtml = window.LANE4 ? `${window.LANE4.formatINR(primaryVal)} INR` : `₹ ${(primaryVal / 100).toFixed(2)} INR`;
+            }
+
+            const priceEl = item.querySelector('.paragraph-16px, [data-wf-sku-bindings*="f_price_"]');
+            if (priceEl) priceEl.innerHTML = priceHtml;
+
+            // Update Link
+            const linkHref = isInSubfolder ? `../product/${p.slug}.html` : `product/${p.slug}.html`;
+            if (link) link.setAttribute('href', linkHref);
           }
-        } else {
-          // Append newly added product from DB
-          const itemEl = document.createElement('div');
-          itemEl.setAttribute('role', 'listitem');
-          itemEl.className = 'collection-item w-dyn-item';
-          itemEl.setAttribute('data-category', p.categorySlug || p.category || '');
-          itemEl.innerHTML = `
-            <div style="opacity: 1;" class="shop-product">
-              <a href="${linkHref}" class="sp-image-wrapper w-inline-block">
-                <img alt="${p.name}" src="${imgUrl}" class="image" style="width:100%;height:100%;object-fit:cover;" />
-              </a>
-              <div class="sp-content">
-                <p class="paragraph-14px">${p.name}</p>
-                <p class="paragraph-13px grey">${p.shortDescription || 'Pool-tested performance gear'}</p>
-                <p class="paragraph-16px">${priceHtml}</p>
-              </div>
-            </div>
-          `;
-          productGrid.appendChild(itemEl);
-        }
-      });
+        });
 
-      // Ensure all cards are visible
-      productGrid.querySelectorAll('.shop-product').forEach(el => {
-        el.style.opacity = '1';
+        // 2. If this is not the recommended/discover grid, append newly created products that belong here
+        if (!isDiscoverOtherGrid) {
+          const eligibleProducts = isCategoryGrid
+            ? products.filter(p => p.isPublished !== false && !p.isDeleted && matchesCat(p))
+            : products.filter(p => p.isPublished !== false && !p.isDeleted);
+
+          eligibleProducts.forEach(p => {
+            if (matchedProductSlugsInGrid.has(p.slug.toLowerCase())) return;
+
+            let rawImg = (p.images && p.images[0] && p.images[0].url) || '6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg';
+            let imgUrl = rawImg;
+            if (window.LANE4 && window.LANE4.resolveAssetUrl) imgUrl = window.LANE4.resolveAssetUrl(rawImg);
+            if (isInSubfolder && !imgUrl.startsWith('http') && !imgUrl.startsWith('/') && !imgUrl.startsWith('../')) {
+              imgUrl = '../' + imgUrl;
+            }
+
+            const regularPrice = p.regularPricePaise || 0;
+            const hasSale = p.salePricePaise && p.salePricePaise > 0 && p.salePricePaise < regularPrice;
+            let priceHtml = '';
+            if (hasSale) {
+              const saleFormatted = window.LANE4 ? `${window.LANE4.formatINR(p.salePricePaise)} INR` : `₹ ${(p.salePricePaise / 100).toFixed(2)} INR`;
+              const regFormatted = window.LANE4 ? `${window.LANE4.formatINR(regularPrice)} INR` : `₹ ${(regularPrice / 100).toFixed(2)} INR`;
+              priceHtml = `${saleFormatted} <span style="font-size:12px;text-decoration:line-through;color:#94a3b8;font-weight:normal;margin-left:6px;">${regFormatted}</span>`;
+            } else {
+              const primaryVal = regularPrice > 0 ? regularPrice : (p.salePricePaise || 0);
+              priceHtml = window.LANE4 ? `${window.LANE4.formatINR(primaryVal)} INR` : `₹ ${(primaryVal / 100).toFixed(2)} INR`;
+            }
+            const linkHref = isInSubfolder ? `../product/${p.slug}.html` : `product/${p.slug}.html`;
+
+            const itemEl = document.createElement('div');
+            itemEl.setAttribute('role', 'listitem');
+            itemEl.className = isCategoryGrid ? 'w-dyn-item' : 'collection-item w-dyn-item';
+            itemEl.setAttribute('data-category', p.categorySlug || p.category || '');
+
+            if (isCategoryGrid) {
+              itemEl.innerHTML = `
+                <div class="cr-grid">
+                  <div class="product-card" style="opacity: 1;">
+                    <a href="${linkHref}" class="sp-image-wrapper w-inline-block">
+                      <img alt="${p.name}" src="${imgUrl}" class="image" style="width:100%;height:100%;object-fit:cover;" />
+                    </a>
+                    <div class="product-text-wrapper">
+                      <div class="paragraph-14px">${p.name}</div>
+                      <div class="paragraph-13px grey">${p.shortDescription || 'Pool-tested performance gear'}</div>
+                      <div class="paragraph-16px">${priceHtml}</div>
+                    </div>
+                  </div>
+                </div>
+              `;
+            } else {
+              itemEl.innerHTML = `
+                <div style="opacity: 1;" class="shop-product">
+                  <a href="${linkHref}" class="sp-image-wrapper w-inline-block">
+                    <img alt="${p.name}" src="${imgUrl}" class="image" style="width:100%;height:100%;object-fit:cover;" />
+                  </a>
+                  <div class="sp-content">
+                    <p class="paragraph-14px">${p.name}</p>
+                    <p class="paragraph-13px grey">${p.shortDescription || 'Pool-tested performance gear'}</p>
+                    <p class="paragraph-16px">${priceHtml}</p>
+                  </div>
+                </div>
+              `;
+            }
+            productGrid.appendChild(itemEl);
+            matchedProductSlugsInGrid.add(p.slug.toLowerCase());
+          });
+
+          // Empty state on category pages
+          if (isCategoryGrid && productGrid.children.length === 0) {
+            const emptyEl = document.createElement('div');
+            emptyEl.style.cssText = 'text-align:center;padding:48px 16px;grid-column:1/-1;color:#64748b;font-size:14px;width:100%;';
+            emptyEl.innerHTML = `
+              <p style="font-weight:700;font-size:16px;color:#0f172a;margin-bottom:6px;">No products found in this category</p>
+              <p>New gear is on the way. Explore our complete collection in the <a href="${isInSubfolder ? '../shop.html' : 'shop.html'}" style="color:#0f172a;text-decoration:underline;">Shop</a>.</p>
+            `;
+            productGrid.appendChild(emptyEl);
+          }
+        }
+
+        // Ensure all cards are visible
+        productGrid.querySelectorAll('.shop-product, .product-card').forEach(el => {
+          el.style.opacity = '1';
+        });
       });
 
     } catch (err) {

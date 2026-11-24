@@ -187,8 +187,9 @@ class OrderService {
     const db = getDb();
     if (!db) throw new Error('Database unavailable');
 
-    const customerId = customer ? customer.uid : null;
-    const customerEmail = data.customerEmail || (customer ? customer.email : null);
+    const isCustomerUser = customer && (customer.role === 'customer' || !customer.role);
+    let customerId = isCustomerUser ? customer.uid : null;
+    const customerEmail = data.customerEmail || (isCustomerUser ? customer.email : null);
     const customerPhone = data.customerPhone || '';
 
     if (!customerEmail || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(customerEmail)) {
@@ -200,6 +201,19 @@ class OrderService {
     }
     if (!data.shippingAddress || !data.shippingAddress.addressLine1) {
       throw new Error('Complete shipping address is required.');
+    }
+
+    // Auto-link customerId if an account already exists with this email
+    if (!customerId && customerEmail) {
+      try {
+        const existingUserSnap = await db.collection('users')
+          .where('email', '==', customerEmail.toLowerCase().trim())
+          .limit(1)
+          .get();
+        if (!existingUserSnap.empty) {
+          customerId = existingUserSnap.docs[0].id;
+        }
+      } catch (_) {}
     }
 
     // Server-side recalculation & validation
@@ -222,8 +236,10 @@ class OrderService {
     } : null;
 
     // Transaction to reserve inventory and persist immutable order snapshot
+    // CRITICAL: Firestore transactions strictly require ALL reads before ANY writes
     await db.runTransaction(async (transaction) => {
-      // 1. Check stock for each variant
+      // 1. Read and validate all inventory records first
+      const inventoryUpdates = [];
       for (const item of quote.items) {
         const invRef = db.collection('inventory').doc(item.sku);
         const invDoc = await transaction.get(invRef);
@@ -235,17 +251,24 @@ class OrderService {
             throw new Error(`Insufficient stock for "${item.name} (${item.sku})". Only ${currentAvailable} left.`);
           }
 
-          // Decrement available, increment reserved
-          transaction.update(invRef, {
-            availableQuantity: currentAvailable - item.quantity,
-            reservedQuantity: (invData.reservedQuantity || 0) + item.quantity,
-            isOutOfStock: (currentAvailable - item.quantity) <= 0,
-            updatedAt: now
+          inventoryUpdates.push({
+            ref: invRef,
+            update: {
+              availableQuantity: currentAvailable - item.quantity,
+              reservedQuantity: (invData.reservedQuantity || 0) + item.quantity,
+              isOutOfStock: (currentAvailable - item.quantity) <= 0,
+              updatedAt: now
+            }
           });
         }
       }
 
-      // 2. Write Order Record
+      // 2. Execute all inventory writes after reads are complete
+      for (const { ref, update } of inventoryUpdates) {
+        transaction.update(ref, update);
+      }
+
+      // 3. Write Order Record
       const orderDocument = {
         orderId,
         orderNumber,
@@ -353,6 +376,7 @@ class OrderService {
     if (!db || (!customerId && !customerEmail)) return [];
 
     const orderMap = new Map();
+    const cleanEmail = customerEmail ? customerEmail.toLowerCase().trim() : null;
 
     // 1. Fetch orders tied to registered customerId
     if (customerId) {
@@ -361,17 +385,20 @@ class OrderService {
         .get();
       snap.docs.forEach(d => {
         const data = d.data();
-        orderMap.set(data.orderNumber || d.id, {
-          ...data,
-          id: d.id,
-          orderId: data.orderId || d.id
-        });
+        const ordEmail = data.customerEmail ? data.customerEmail.toLowerCase().trim() : '';
+        // Strict customer privacy isolation: only include orders matching this customer's email
+        if (!cleanEmail || !ordEmail || ordEmail === cleanEmail) {
+          orderMap.set(data.orderNumber || d.id, {
+            ...data,
+            id: d.id,
+            orderId: data.orderId || d.id
+          });
+        }
       });
     }
 
     // 2. Also fetch and auto-link any guest orders placed before signup with this email
-    if (customerEmail) {
-      const cleanEmail = customerEmail.toLowerCase().trim();
+    if (cleanEmail) {
       const snap = await db.collection('orders')
         .where('customerEmail', '==', cleanEmail)
         .get();
@@ -539,6 +566,15 @@ class OrderService {
       if (orderData.paymentStatus === 'verified') {
         orderUpdates.refundStatus = 'pending_refund';
         orderUpdates.financialStatus = 'cancelled_refund_pending';
+        orderUpdates.refundDetails = {
+          refundId: 'ref_' + Date.now(),
+          originalAmountPaise: (orderData.pricing && orderData.pricing.finalPayablePaise) || 0,
+          refundAmountPaise: (orderData.pricing && orderData.pricing.finalPayablePaise) || 0,
+          status: 'pending_refund',
+          initiatedAt: now,
+          initiatedBy: adminUser.email || adminUser.uid,
+          reason: 'Order cancelled by administrator'
+        };
       }
 
       // Revert coupon redemption usage count
@@ -565,6 +601,52 @@ class OrderService {
           }
 
           // 2. Restore products collection variants & total stock
+          let pSnap = await db.collection('products').where('slug', '==', item.slug || item.productId).limit(1).get();
+          if (pSnap.empty && item.productId) {
+            const pDocDirect = await db.collection('products').doc(item.productId).get();
+            if (pDocDirect.exists) pSnap = { empty: false, docs: [pDocDirect] };
+          }
+          if (!pSnap.empty) {
+            const pDoc = pSnap.docs[0];
+            const pData = pDoc.data();
+            const variants = (pData.variants || []).map(v => {
+              if (v.sku === item.sku || v.variantId === item.variantId) {
+                return { ...v, stockQuantity: (v.stockQuantity || 0) + item.quantity };
+              }
+              return v;
+            });
+            const totalStock = variants.length > 0
+              ? variants.reduce((s, v) => s + (v.stockQuantity || 0), 0)
+              : (pData.stockQuantity || 0) + item.quantity;
+            await pDoc.ref.update({
+              variants,
+              stockQuantity: totalStock,
+              updatedAt: now
+            });
+          }
+        } catch (_) {}
+      }
+    }
+
+    // If order is returned, restore stock and update inspection status
+    if (newStatus === 'returned' && currentStatus !== 'returned') {
+      orderUpdates.returnedAt = now;
+      orderUpdates.returnedBy = adminUser.email || adminUser.uid;
+      orderUpdates.financialStatus = 'returned_inspection_pending';
+
+      for (const item of orderData.items || []) {
+        try {
+          const invRef = db.collection('inventory').doc(item.sku);
+          const invDoc = await invRef.get();
+          if (invDoc.exists) {
+            const inv = invDoc.data();
+            await invRef.update({
+              availableQuantity: (inv.availableQuantity || 0) + item.quantity,
+              isOutOfStock: false,
+              updatedAt: now
+            });
+          }
+
           let pSnap = await db.collection('products').where('slug', '==', item.slug || item.productId).limit(1).get();
           if (pSnap.empty && item.productId) {
             const pDocDirect = await db.collection('products').doc(item.productId).get();
@@ -714,6 +796,68 @@ class OrderService {
       tracking: fulfillment,
       status: 'shipped',
       orderStatus: 'shipped'
+    };
+  }
+
+  async processRefund(orderId, adminUser, { refundReference, notes = '' } = {}) {
+    const db = getDb();
+    let orderRef = db.collection('orders').doc(orderId);
+    let orderDoc = await orderRef.get();
+    if (!orderDoc.exists) {
+      const cleanNum = orderId.toString().trim().replace(/^#/, '');
+      const snap = await db.collection('orders').where('orderNumber', '==', cleanNum).limit(1).get();
+      if (!snap.empty) {
+        orderDoc = snap.docs[0];
+        orderRef = orderDoc.ref;
+      } else {
+        throw new Error('Order not found');
+      }
+    }
+
+    const orderData = orderDoc.data();
+    if (orderData.refundStatus === 'refunded') {
+      return { orderId, status: orderData.status, refundStatus: 'refunded', alreadyRefunded: true };
+    }
+
+    const cleanRef = (refundReference || '').trim();
+    if (!cleanRef || cleanRef.length < 3) {
+      const err = new Error('A valid bank/gateway refund transaction reference is required.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const now = new Date();
+    const refundDetails = {
+      ...(orderData.refundDetails || {}),
+      refundReference: cleanRef,
+      status: 'refunded',
+      completedAt: now,
+      completedBy: adminUser.email || adminUser.uid,
+      notes: notes.trim()
+    };
+
+    await orderRef.update({
+      refundStatus: 'refunded',
+      financialStatus: 'refunded',
+      refundDetails,
+      updatedAt: now
+    });
+
+    await db.collection('adminActivityLogs').add({
+      adminUid: adminUser.uid,
+      adminEmail: adminUser.email,
+      action: 'refund_processed',
+      resourceType: 'orders',
+      resourceId: orderId,
+      details: refundDetails,
+      timestamp: now
+    });
+
+    return {
+      orderId,
+      orderNumber: orderData.orderNumber || orderId,
+      refundStatus: 'refunded',
+      refundDetails
     };
   }
 }

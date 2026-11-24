@@ -277,6 +277,16 @@ window.INDIAN_STATES = [
         transform: translateY(-1px);
         box-shadow: 0 4px 14px rgba(0,0,0,0.15);
       }
+      .lane4-auth-submit-btn:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: none !important;
+      }
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
       .lane4-auth-submit-btn:active {
         transform: translateY(0);
       }
@@ -687,25 +697,46 @@ window.INDIAN_STATES = [
       };
     });
 
+    // Tab switching and alert isolation
+    let currentAuthTab = 'login';
+
+    function switchAuthTab(tab) {
+      currentAuthTab = tab;
+      resetPasswordFields(wrapper);
+      wrapper.querySelectorAll('.lane4-auth-tab-btn').forEach(b => {
+        if (b.getAttribute('data-tab') === tab) {
+          b.classList.add('active');
+        } else {
+          b.classList.remove('active');
+        }
+      });
+      const loginForm = document.getElementById('lane4-login-form');
+      const regForm = document.getElementById('lane4-register-form');
+      const trackForm = document.getElementById('lane4-track-form');
+      const forgotForm = document.getElementById('lane4-forgot-form');
+      const accPanel = document.getElementById('lane4-account-panel');
+      const orderDetailsPanel = document.getElementById('lane4-order-details-panel');
+
+      if (loginForm) loginForm.style.display = tab === 'login' ? 'block' : 'none';
+      if (regForm) regForm.style.display = tab === 'register' ? 'block' : 'none';
+      if (trackForm) trackForm.style.display = tab === 'track' ? 'block' : 'none';
+      if (forgotForm) forgotForm.style.display = 'none';
+      if (accPanel) accPanel.style.display = 'none';
+      if (orderDetailsPanel) orderDetailsPanel.style.display = 'none';
+      hideAlert();
+    }
+
     // Tab switching
     wrapper.querySelectorAll('.lane4-auth-tab-btn').forEach(btn => {
       btn.onclick = () => {
-        resetPasswordFields(wrapper);
-        wrapper.querySelectorAll('.lane4-auth-tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
         const tab = btn.getAttribute('data-tab');
-        document.getElementById('lane4-login-form').style.display = tab === 'login' ? 'block' : 'none';
-        document.getElementById('lane4-register-form').style.display = tab === 'register' ? 'block' : 'none';
-        document.getElementById('lane4-track-form').style.display = tab === 'track' ? 'block' : 'none';
-        document.getElementById('lane4-forgot-form').style.display = 'none';
-        document.getElementById('lane4-account-panel').style.display = 'none';
-        document.getElementById('lane4-order-details-panel').style.display = 'none';
-        hideAlert();
+        switchAuthTab(tab);
       };
     });
 
     // Forgot password link
     document.getElementById('lane4-forgot-link').onclick = () => {
+      currentAuthTab = 'forgot';
       document.getElementById('lane4-auth-tabs').style.display = 'none';
       document.getElementById('lane4-login-form').style.display = 'none';
       document.getElementById('lane4-register-form').style.display = 'none';
@@ -717,10 +748,7 @@ window.INDIAN_STATES = [
     // Back to login from forgot password
     document.getElementById('lane4-back-to-login').onclick = () => {
       document.getElementById('lane4-auth-tabs').style.display = 'flex';
-      document.getElementById('lane4-forgot-form').style.display = 'none';
-      document.getElementById('lane4-track-form').style.display = 'none';
-      document.getElementById('lane4-login-form').style.display = 'block';
-      hideAlert();
+      switchAuthTab('login');
     };
 
     // Handle Forgot Password Form
@@ -839,7 +867,9 @@ window.INDIAN_STATES = [
     initAddressForm();
 
     // Handle Login Form
-    document.getElementById('lane4-login-form').onsubmit = async (e) => {
+    const loginFormEl = document.getElementById('lane4-login-form');
+    const loginSubmitBtn = loginFormEl.querySelector('.lane4-auth-submit-btn');
+    loginFormEl.onsubmit = async (e) => {
       e.preventDefault();
       const form = e.target;
       const email = form.email.value.trim().toLowerCase();
@@ -860,6 +890,12 @@ window.INDIAN_STATES = [
         return;
       }
 
+      const origLoginBtnHtml = loginSubmitBtn.innerHTML;
+      loginSubmitBtn.disabled = true;
+      loginSubmitBtn.innerHTML = `
+        <span style="display:inline-block;width:12px;height:12px;border:2px solid #ffffff;border-top-color:transparent;border-radius:50%;animation:spin 0.6s linear infinite;margin-right:6px;"></span>
+        <span>AUTHENTICATING...</span>
+      `;
       showAlert('Authenticating swimmer credentials...', 'info');
 
       try {
@@ -900,12 +936,54 @@ window.INDIAN_STATES = [
           window.location.reload();
         }, 600);
       } catch (err) {
-        showAlert(err.message || 'Login failed. Please check credentials.', 'error');
+        // Tab-isolated alert: only display on the login tab
+        if (currentAuthTab === 'login') {
+          const errMsg = err.message || 'Login failed. Please check credentials.';
+          const isNotFound = errMsg.toLowerCase().includes('no customer account') || 
+                             errMsg.toLowerCase().includes('not found') || 
+                             (err.code === 'USER_NOT_FOUND');
+
+          if (isNotFound) {
+            const alertEl = document.getElementById('lane4-auth-alert');
+            if (alertEl) {
+              alertEl.className = 'lane4-auth-alert error';
+              alertEl.innerHTML = `
+                <div style="font-size:12.5px;line-height:1.4;margin-bottom:8px;">
+                  No customer account found with <strong>${email}</strong>.
+                </div>
+                <button type="button" id="lane4-btn-quick-create" style="background:#000000;color:#ffffff;border:none;border-radius:6px;padding:7px 14px;font-size:11.5px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px;letter-spacing:0.5px;">
+                  <span>CREATE ACCOUNT WITH THIS EMAIL &rarr;</span>
+                </button>
+              `;
+              alertEl.style.display = 'block';
+
+              const quickBtn = document.getElementById('lane4-btn-quick-create');
+              if (quickBtn) {
+                quickBtn.onclick = () => {
+                  switchAuthTab('register');
+                  const regForm = document.getElementById('lane4-register-form');
+                  if (regForm) {
+                    if (regForm.email) regForm.email.value = email;
+                    if (regForm.password) regForm.password.value = password;
+                    if (regForm.displayName) regForm.displayName.focus();
+                  }
+                };
+              }
+            }
+          } else {
+            showAlert(errMsg, 'error');
+          }
+        }
+      } finally {
+        loginSubmitBtn.disabled = false;
+        loginSubmitBtn.innerHTML = origLoginBtnHtml;
       }
     };
 
     // Handle Register Form
-    document.getElementById('lane4-register-form').onsubmit = async (e) => {
+    const regFormEl = document.getElementById('lane4-register-form');
+    const regSubmitBtn = regFormEl.querySelector('.lane4-auth-submit-btn');
+    regFormEl.onsubmit = async (e) => {
       e.preventDefault();
       const form = e.target;
       const email = form.email.value.trim().toLowerCase();
@@ -935,6 +1013,12 @@ window.INDIAN_STATES = [
         return;
       }
 
+      const origRegBtnHtml = regSubmitBtn.innerHTML;
+      regSubmitBtn.disabled = true;
+      regSubmitBtn.innerHTML = `
+        <span style="display:inline-block;width:12px;height:12px;border:2px solid #ffffff;border-top-color:transparent;border-radius:50%;animation:spin 0.6s linear infinite;margin-right:6px;"></span>
+        <span>CREATING ACCOUNT...</span>
+      `;
       showAlert('Setting up your swimmer account...', 'info');
 
       try {
@@ -981,7 +1065,12 @@ window.INDIAN_STATES = [
           window.location.reload();
         }, 700);
       } catch (err) {
-        showAlert(err.message || 'Registration failed.', 'error');
+        if (currentAuthTab === 'register') {
+          showAlert(err.message || 'Registration failed.', 'error');
+        }
+      } finally {
+        regSubmitBtn.disabled = false;
+        regSubmitBtn.innerHTML = origRegBtnHtml;
       }
     };
 
@@ -1066,6 +1155,7 @@ window.INDIAN_STATES = [
 
       loadCustomerOrders();
     } else {
+      currentAuthTab = view;
       tabs.style.display = 'flex';
       accPanel.style.display = 'none';
       const orderDetailsPanel = document.getElementById('lane4-order-details-panel');
@@ -1083,10 +1173,28 @@ window.INDIAN_STATES = [
       loginForm.style.display = view === 'login' ? 'block' : 'none';
       regForm.style.display = view === 'register' ? 'block' : 'none';
       if (trackForm) trackForm.style.display = view === 'track' ? 'block' : 'none';
+      hideAlert();
     }
   }
 
   let customerOrdersCache = [];
+
+  const statusDisplayMap = {
+    'pending_payment': 'Pending Payment',
+    'payment_verification': 'Payment Verification',
+    'confirmed': 'Confirmed (Ready to Pack)',
+    'processing': 'Processing',
+    'shipped': 'Shipped',
+    'out_for_delivery': 'Out For Delivery',
+    'delivered': 'Delivered',
+    'cancelled': 'Cancelled',
+    'payment_rejected': 'Payment Rejected'
+  };
+
+  function getOrderStatusBadge(st) {
+    if (!st) return 'Pending Payment';
+    return statusDisplayMap[st] || st.replace(/_/g, ' ');
+  }
 
   function formatOrderTimestamp(val) {
     if (!val) return '—';
@@ -1125,9 +1233,15 @@ window.INDIAN_STATES = [
 
     const orderNum = ord.orderNumber || ord.orderId || 'Order';
     const isVerified = ord.paymentStatus === 'verified';
-    const isShipped = ord.status === 'shipped' || ord.status === 'out_for_delivery' || ord.status === 'delivered';
-    const isDelivered = ord.status === 'delivered';
-    const isProcessing = ord.status === 'confirmed' || ord.status === 'processing' || isShipped;
+    const isRejected = ord.paymentStatus === 'payment_rejected' || ord.status === 'payment_rejected';
+
+    const st = ord.status || '';
+    const isCancelled = st === 'cancelled';
+    const isDelivered = st === 'delivered';
+    const isOutForDelivery = st === 'out_for_delivery';
+    const isShipped = st === 'shipped' || isOutForDelivery || isDelivered;
+    const isProcessing = st === 'processing';
+    const isConfirmed = st === 'confirmed';
 
     const items = ord.items || [];
     const pricing = ord.pricing || {};
@@ -1136,12 +1250,18 @@ window.INDIAN_STATES = [
     const fulfillment = ord.fulfillment || {};
 
     const itemsHtml = items.map(it => {
-      let rawImg = it.image || '6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg';
+      let rawImg = it.imageUrl || it.image || '6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg';
       let imgUrl = rawImg;
       if (window.LANE4 && window.LANE4.resolveAssetUrl) imgUrl = window.LANE4.resolveAssetUrl(rawImg);
       const variantDesc = [it.size ? `Size: ${it.size}` : '', it.color ? `Color: ${it.color}` : ''].filter(Boolean).join(' · ');
-      const unitPriceFormatted = it.priceFormatted || (window.LANE4 && it.pricePaise ? window.LANE4.formatINR(it.pricePaise) : `₹${((it.pricePaise || 0)/100).toFixed(2)}`);
-      const itemSubtotalFormatted = it.subtotalFormatted || (window.LANE4 && it.subtotalPaise ? window.LANE4.formatINR(it.subtotalPaise) : (window.LANE4 && it.pricePaise ? window.LANE4.formatINR(it.pricePaise * (it.quantity || 1)) : `₹${(((it.pricePaise || 0) * (it.quantity || 1))/100).toFixed(2)}`));
+
+      // Robust unit and subtotal calculation matching backend quote
+      const unitPaise = it.unitPricePaise !== undefined ? it.unitPricePaise : (it.pricePaise !== undefined ? it.pricePaise : (it.price ? Math.round(parseFloat(it.price) * 100) : 0));
+      const unitPriceFormatted = it.unitPriceFormatted || it.priceFormatted || (window.LANE4 && unitPaise ? window.LANE4.formatINR(unitPaise) : `₹${((unitPaise || 0)/100).toFixed(2)}`);
+
+      const qty = it.quantity || 1;
+      const itemSubtotalPaise = it.totalPricePaise !== undefined ? it.totalPricePaise : (it.subtotalPaise !== undefined ? it.subtotalPaise : (unitPaise * qty));
+      const itemSubtotalFormatted = it.totalPriceFormatted || it.subtotalFormatted || (window.LANE4 && itemSubtotalPaise ? window.LANE4.formatINR(itemSubtotalPaise) : `₹${((itemSubtotalPaise || 0)/100).toFixed(2)}`);
 
       return `
         <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f1f5f9;">
@@ -1150,7 +1270,7 @@ window.INDIAN_STATES = [
             <div style="font-size:13.5px;font-weight:800;color:#0f172a;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${it.name || 'Lane4 Item'}</div>
             ${variantDesc ? `<div style="font-size:11.5px;color:#64748b;margin-top:2px;">${variantDesc}</div>` : ''}
             <div style="font-size:12px;color:#475569;margin-top:4px;">
-              <span>Qty: <strong>${it.quantity}</strong> &times; ${unitPriceFormatted}</span>
+              <span>Qty: <strong>${qty}</strong> &times; ${unitPriceFormatted}</span>
             </div>
           </div>
           <div style="font-size:13.5px;font-weight:800;color:#0f172a;text-align:right;white-space:nowrap;">
@@ -1186,10 +1306,10 @@ window.INDIAN_STATES = [
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <span style="font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:4px;background:#e2e8f0;color:#334155;text-transform:uppercase;">
-            ${(ord.status || 'pending').replace(/_/g, ' ')}
+            ${getOrderStatusBadge(ord.status)}
           </span>
-          <span style="font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:4px;background:${isVerified ? '#dcfce7' : '#fef3c7'};color:${isVerified ? '#15803d' : '#92400e'};text-transform:uppercase;">
-            ${isVerified ? 'Payment Verified' : (ord.paymentStatus || 'Awaiting Verification').replace(/_/g, ' ')}
+          <span style="font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:4px;background:${isVerified ? '#dcfce7' : (isRejected ? '#fee2e2' : '#fef3c7')};color:${isVerified ? '#15803d' : (isRejected ? '#b91c1c' : '#92400e')};text-transform:uppercase;">
+            ${isVerified ? 'Payment Verified' : (isRejected ? 'Payment Rejected' : (ord.paymentStatus || 'Awaiting Verification').replace(/_/g, ' '))}
           </span>
         </div>
       </div>
@@ -1198,42 +1318,44 @@ window.INDIAN_STATES = [
       <div style="background:#ffffff;border:1.5px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:14px;">
         <div style="font-size:11px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Order &amp; Fulfillment Progress</div>
         <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:800;text-align:center;">
-          <div style="color:${ord.status !== 'pending_payment' ? '#16a34a' : '#0f172a'};">
+          <div style="color:#16a34a;">
             <div>✓ 1. Placed</div>
           </div>
           <div style="color:#cbd5e1;">&rarr;</div>
-          <div style="color:${isVerified ? '#16a34a' : '#94a3b8'};">
-            <div>${isVerified ? '✓ ' : ''}2. Verified</div>
+          <div style="color:${isVerified ? '#16a34a' : (isRejected ? '#dc2626' : '#d97706')};">
+            <div>${isVerified ? '✓ 2. Verified' : (isRejected ? '✕ 2. Rejected' : '● 2. Awaiting Payment')}</div>
           </div>
           <div style="color:#cbd5e1;">&rarr;</div>
-          <div style="color:${isProcessing ? '#16a34a' : '#94a3b8'};">
-            <div>${isProcessing ? '✓ ' : ''}3. Processing</div>
+          <div>
+            ${isShipped
+              ? '<span style="color:#16a34a;">✓ 3. Packed</span>'
+              : (isProcessing
+                ? '<span style="color:#0284c7;font-weight:900;">● 3. Processing</span>'
+                : (isConfirmed
+                  ? '<span style="color:#0284c7;font-weight:900;">● 3. Confirmed (Ready to Pack)</span>'
+                  : (isCancelled
+                    ? '<span style="color:#dc2626;">✕ 3. Cancelled</span>'
+                    : '<span style="color:#94a3b8;">3. Ready to Pack</span>'
+                  )
+                )
+              )
+            }
           </div>
           <div style="color:#cbd5e1;">&rarr;</div>
-          <div style="color:${isShipped ? '#16a34a' : '#94a3b8'};">
-            <div>${isDelivered ? '✓ ' : ''}4. ${isDelivered ? 'Delivered' : 'Shipped'}</div>
+          <div>
+            ${isDelivered
+              ? '<span style="color:#16a34a;">✓ 4. Delivered</span>'
+              : (isOutForDelivery
+                ? '<span style="color:#0284c7;font-weight:900;">● 4. Out For Delivery</span>'
+                : (isShipped
+                  ? '<span style="color:#0284c7;font-weight:900;">● 4. Shipped</span>'
+                  : '<span style="color:#94a3b8;">4. Shipped</span>'
+                )
+              )
+            }
           </div>
         </div>
       </div>
-
-      <!-- Live Courier Tracking Box -->
-      ${fulfillment.trackingNumber ? `
-        <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:14px;margin-bottom:14px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-            <div style="font-size:11px;font-weight:800;color:#166534;text-transform:uppercase;letter-spacing:0.5px;">Live Courier Dispatch</div>
-            <span style="font-size:10px;font-weight:800;padding:2px 7px;border-radius:4px;background:#dcfce7;color:#15803d;text-transform:uppercase;">In Transit</span>
-          </div>
-          <div style="font-size:13px;font-weight:800;color:#0f172a;margin-bottom:8px;">
-            Courier: <strong>${fulfillment.courierName || 'DTDC'}</strong> &bull; AWB: <code>${fulfillment.trackingNumber}</code>
-          </div>
-          <div>
-            <a href="${fulfillment.trackingUrl || `https://www.google.com/search?q=${encodeURIComponent((fulfillment.courierName || '') + ' ' + fulfillment.trackingNumber)}`}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;background:#000000;color:#ffffff;padding:8px 14px;border-radius:6px;font-size:11.5px;font-weight:800;text-decoration:none;">
-              <span>TRACK LIVE PACKAGE</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            </a>
-          </div>
-        </div>
-      ` : ''}
 
       <!-- Products Done (What Products Done) -->
       <div style="background:#ffffff;border:1.5px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:14px;">
@@ -1714,10 +1836,10 @@ window.INDIAN_STATES = [
           </div>
           <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
             <span style="font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;background:#e2e8f0;color:#334155;text-transform:uppercase;">
-              ${(ord.status || 'pending').replace(/_/g, ' ')}
+              ${getOrderStatusBadge(ord.status)}
             </span>
-            <span style="font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;background:${isVerified ? '#dcfce7' : '#fef3c7'};color:${isVerified ? '#15803d' : '#92400e'};text-transform:uppercase;">
-              ${isVerified ? 'Payment Verified' : 'Awaiting Verification'}
+            <span style="font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;background:${isVerified ? '#dcfce7' : (ord.paymentStatus === 'payment_rejected' ? '#fee2e2' : '#fef3c7')};color:${isVerified ? '#15803d' : (ord.paymentStatus === 'payment_rejected' ? '#b91c1c' : '#92400e')};text-transform:uppercase;">
+              ${isVerified ? 'Payment Verified' : (ord.paymentStatus === 'payment_rejected' ? 'Payment Rejected' : 'Awaiting Verification')}
             </span>
           </div>
           ${ord.fulfillment && ord.fulfillment.trackingNumber ? `
