@@ -83,24 +83,51 @@ class CouponService {
       throw new Error(`Coupon "${cleanCode}" has expired.`);
     }
 
-    if (subtotalPaise < coupon.minOrderValuePaise) {
-      const minRequired = formatINR(coupon.minOrderValuePaise);
+    // Min Order Value check (handling both minOrderValuePaise and minOrderValue in rupees)
+    const minOrderPaise = coupon.minOrderValuePaise !== undefined 
+      ? coupon.minOrderValuePaise 
+      : (coupon.minOrderValue ? rupeesToPaise(coupon.minOrderValue) : 0);
+
+    if (subtotalPaise < minOrderPaise) {
+      const minRequired = formatINR(minOrderPaise);
       throw new Error(`Coupon requires a minimum order value of ${minRequired}.`);
+    }
+
+    // Max Order Value check (if coupon specifies an upper ceiling for order eligibility)
+    const maxOrderPaise = coupon.maxOrderValuePaise !== undefined
+      ? coupon.maxOrderValuePaise
+      : (coupon.maxOrderValue ? rupeesToPaise(coupon.maxOrderValue) : null);
+
+    if (maxOrderPaise && subtotalPaise > maxOrderPaise) {
+      const maxAllowed = formatINR(maxOrderPaise);
+      throw new Error(`Coupon is valid only for orders up to ${maxAllowed}.`);
     }
 
     if (coupon.totalUsageLimit && coupon.usedCount >= coupon.totalUsageLimit) {
       throw new Error(`Coupon "${cleanCode}" usage limit has been reached.`);
     }
 
+    // Resolve max discount cap in paise
+    let maxCapPaise = null;
+    if (coupon.maxDiscountPaise !== undefined && coupon.maxDiscountPaise !== null) {
+      maxCapPaise = coupon.maxDiscountPaise;
+    } else if (coupon.maxDiscount !== undefined && coupon.maxDiscount !== null && coupon.maxDiscount !== '') {
+      maxCapPaise = typeof coupon.maxDiscount === 'number' && coupon.maxDiscount > 1000 ? coupon.maxDiscount : rupeesToPaise(coupon.maxDiscount);
+    }
+
     // Calculate discount in Paise
     let discountPaise = 0;
     if (coupon.discountType === 'percentage') {
       discountPaise = Math.round((subtotalPaise * coupon.discountValue) / 100);
-      if (coupon.maxDiscountPaise && discountPaise > coupon.maxDiscountPaise) {
-        discountPaise = coupon.maxDiscountPaise;
+      if (maxCapPaise && discountPaise > maxCapPaise) {
+        discountPaise = maxCapPaise;
       }
     } else if (coupon.discountType === 'fixed_amount') {
-      discountPaise = Math.min(coupon.discountValue, subtotalPaise);
+      const fixedPaise = coupon.discountValuePaise || (coupon.discountValue > 1000 ? coupon.discountValue : rupeesToPaise(coupon.discountValue));
+      discountPaise = Math.min(fixedPaise, subtotalPaise);
+      if (maxCapPaise && discountPaise > maxCapPaise) {
+        discountPaise = maxCapPaise;
+      }
     }
 
     // Absolute cap: discount cannot exceed subtotal
@@ -188,10 +215,23 @@ class CouponService {
     const cleanCode = code.toUpperCase().trim();
     const db = getDb();
     const docRef = db.collection('coupons').doc(cleanCode);
-    await docRef.update({
+    const updates = {
       ...data,
       updatedAt: new Date()
-    });
+    };
+    if (data.minOrderValue !== undefined) {
+      updates.minOrderValuePaise = rupeesToPaise(data.minOrderValue || 0);
+    }
+    if (data.maxDiscount !== undefined) {
+      updates.maxDiscountPaise = data.maxDiscount ? rupeesToPaise(data.maxDiscount) : null;
+    }
+    if (data.maxOrderValue !== undefined) {
+      updates.maxOrderValuePaise = data.maxOrderValue ? rupeesToPaise(data.maxOrderValue) : null;
+    }
+    if (data.discountValue !== undefined && data.discountType !== 'percentage') {
+      updates.discountValue = rupeesToPaise(data.discountValue);
+    }
+    await docRef.update(updates);
     const updated = await docRef.get();
     return updated.data();
   }

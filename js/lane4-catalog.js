@@ -58,9 +58,12 @@
           const pCat = (p.categorySlug || p.category || '').toLowerCase().trim();
           const target = currentCatSlug.toLowerCase().trim();
           if (pCat === target) return true;
-          const cleanP = pCat.replace(/[^a-z0-9]+/g, '-');
-          const cleanT = target.replace(/[^a-z0-9]+/g, '-');
-          return cleanP === cleanT;
+          const cleanP = pCat.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+          const cleanT = target.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+          if (cleanP === cleanT) return true;
+          if (cleanP + 's' === cleanT || cleanT + 's' === cleanP) return true;
+          if (cleanP.replace(/s$/, '') === cleanT.replace(/s$/, '')) return true;
+          return false;
         }
 
         // 1. Live update any existing cards in the grid (e.g. Discover Other Products or static catalog cards)

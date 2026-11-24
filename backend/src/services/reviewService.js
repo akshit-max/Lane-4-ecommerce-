@@ -1,5 +1,14 @@
 const { getDb } = require('../config/firebaseAdmin');
 
+function normalizeDate(val) {
+  if (!val) return new Date().toISOString();
+  if (typeof val.toDate === 'function') return val.toDate().toISOString();
+  if (val._seconds) return new Date(val._seconds * 1000).toISOString();
+  if (val.seconds) return new Date(val.seconds * 1000).toISOString();
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+}
+
 class ReviewService {
   async getProductReviews(productId) {
     const db = getDb();
@@ -10,7 +19,13 @@ class ReviewService {
       .where('status', '==', 'approved')
       .get();
 
-    let reviews = snap.docs.map(d => d.data());
+    let reviews = snap.docs.map(d => {
+      const data = d.data();
+      return {
+        ...data,
+        createdAt: normalizeDate(data.createdAt)
+      };
+    });
 
     if (reviews.length === 0) {
       try {
@@ -20,7 +35,13 @@ class ReviewService {
             .where('productId', '==', prodDoc.data().slug)
             .where('status', '==', 'approved')
             .get();
-          reviews = altSnap.docs.map(d => d.data());
+          reviews = altSnap.docs.map(d => {
+            const data = d.data();
+            return {
+              ...data,
+              createdAt: normalizeDate(data.createdAt)
+            };
+          });
         } else {
           const prodBySlug = await db.collection('products').where('slug', '==', productId).limit(1).get();
           if (!prodBySlug.empty && prodBySlug.docs[0].id !== productId) {
@@ -28,7 +49,13 @@ class ReviewService {
               .where('productId', '==', prodBySlug.docs[0].id)
               .where('status', '==', 'approved')
               .get();
-            reviews = altSnap.docs.map(d => d.data());
+            reviews = altSnap.docs.map(d => {
+              const data = d.data();
+              return {
+                ...data,
+                createdAt: normalizeDate(data.createdAt)
+              };
+            });
           }
         }
       } catch (_) {}

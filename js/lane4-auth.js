@@ -234,6 +234,7 @@ window.INDIAN_STATES = [
         right: 8px;
         top: 50%;
         transform: translateY(-50%);
+        z-index: 2;
         background: transparent;
         border: none;
         padding: 6px;

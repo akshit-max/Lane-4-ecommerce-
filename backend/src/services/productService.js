@@ -30,9 +30,17 @@ function generateProductHtmlPage(product) {
       /<div class="pd-heading"><h4 class="title-h4">.*?<\/h4><div class="paragraph-18px">.*?<\/div><h6[^>]*class="title-h6">.*?<\/h6><\/div>/,
       `<div class="pd-heading"><h4 class="title-h4">${product.name}</h4><div class="paragraph-18px">${product.shortDescription || 'Pool-tested performance'}</div><h6 class="title-h6">${priceFormatted}</h6></div>`
     );
-    // Replace primary product images
+    // Replace primary and secondary gallery product images so no template fins bleed through
     html = html.replace(/src="\.\.\/6424266ea05809dff501d86e\/lane4-6dbhNuWa5oI-640x640\.jpg"/g, `src="${primaryImg}"`);
     html = html.replace(/srcset="[^"]*lane4-6dbhNuWa5oI[^"]*"/g, `srcset="${primaryImg} 640w"`);
+    html = html.replace(/src="\.\.\/6424266ea05809dff501d86e\/lane4-X8RgOcqugtQ-640x960\.jpg"/g, `src="${primaryImg}"`);
+    html = html.replace(/srcset="[^"]*lane4-X8RgOcqugtQ[^"]*"/g, `srcset="${primaryImg} 640w"`);
+    html = html.replace(/src="\.\.\/6424266ea05809dff501d86e\/lane4-fCM6ZvTgD9A-1080x1080\.jpg"/g, `src="${primaryImg}"`);
+    html = html.replace(/srcset="[^"]*lane4-fCM6ZvTgD9A[^"]*"/g, `srcset="${primaryImg} 640w"`);
+    html = html.replace(/"url":\s*"\.\.\/6424266ea05809dff501d86e\/lane4-fCM6ZvTgD9A-1600\.jpg"/g, `"url": "${primaryImg}"`);
+    html = html.replace(/src="\.\.\/6424266ea05809dff501d86e\/lane4-FfUSN9pawTU-1080x1620\.jpg"/g, `src="${primaryImg}"`);
+    html = html.replace(/srcset="[^"]*lane4-FfUSN9pawTU[^"]*"/g, `srcset="${primaryImg} 640w"`);
+    html = html.replace(/"url":\s*"\.\.\/6424266ea05809dff501d86e\/lane4-FfUSN9pawTU-1600\.jpg"/g, `"url": "${primaryImg}"`);
 
     // Replace product description if present
     if (product.description) {
@@ -470,8 +478,9 @@ class ProductService {
     const productId = docRef.id;
 
     const regularPricePaise = data.regularPricePaise || rupeesToPaise(data.regularPrice || 0);
-    const salePricePaise = data.salePricePaise !== undefined ? data.salePricePaise : (data.salePrice ? rupeesToPaise(data.salePrice) : null);
-    const effectivePricePaise = salePricePaise || regularPricePaise;
+    const parsedSalePaise = data.salePrice ? rupeesToPaise(data.salePrice) : (data.salePricePaise || null);
+    const salePricePaise = (parsedSalePaise && parsedSalePaise > 0 && parsedSalePaise < regularPricePaise) ? parsedSalePaise : null;
+    const effectivePricePaise = regularPricePaise;
     const variants = (data.variants && data.variants.length > 0)
       ? data.variants.map((v, i) => ({
           variantId: v.variantId || `var_${i + 1}`,
@@ -479,8 +488,8 @@ class ProductService {
           size: v.size || '',
           color: v.color || '',
           colorHex: v.colorHex || '',
-          pricePaise: v.pricePaise || (v.price ? rupeesToPaise(v.price) : effectivePricePaise),
-          salePricePaise: v.salePricePaise !== undefined ? (v.salePricePaise ? rupeesToPaise(v.salePricePaise) : null) : (salePricePaise || null),
+          pricePaise: regularPricePaise,
+          salePricePaise: (v.salePricePaise && v.salePricePaise < regularPricePaise) ? v.salePricePaise : (salePricePaise || null),
           stockQuantity: parseInt(v.stockQuantity, 10) || 0,
           lowStockThreshold: parseInt(v.lowStockThreshold, 10) || 5,
           isActive: v.isActive !== false
@@ -491,7 +500,7 @@ class ProductService {
           size: 'Standard',
           color: 'Default',
           colorHex: '',
-          pricePaise: effectivePricePaise,
+          pricePaise: regularPricePaise,
           salePricePaise: salePricePaise || null,
           stockQuantity: parseInt(data.stockQuantity, 10) || 50,
           lowStockThreshold: 5,
@@ -534,8 +543,10 @@ class ProductService {
       status,
       description: data.description || '',
       shortDescription: data.shortDescription || '',
+      category: data.category || data.categorySlug || 'swimming',
       categoryId: data.categoryId || '',
-      categorySlug: data.categorySlug || 'swimming',
+      categorySlug: data.categorySlug || data.category || 'swimming',
+      pricePaise: regularPricePaise,
       regularPricePaise,
       salePricePaise,
       hasVariants: Boolean(data.hasVariants && data.variants && data.variants.length),
@@ -614,22 +625,27 @@ class ProductService {
       delete updates.salePrice;
     }
 
-    // Determine the effective selling price after updates
+    // Determine the regular and sale prices after updates
     const resolvedSale = updates.salePricePaise !== undefined ? updates.salePricePaise : existingData.salePricePaise;
-    const resolvedRegular = updates.regularPricePaise !== undefined ? updates.regularPricePaise : existingData.regularPricePaise;
-    const effectiveSellingPrice = (typeof resolvedSale === 'number' && resolvedSale > 0) ? resolvedSale : resolvedRegular;
+    const resolvedRegular = updates.regularPricePaise !== undefined ? updates.regularPricePaise : (existingData.regularPricePaise || existingData.pricePaise);
+    updates.pricePaise = resolvedRegular;
+
+    if (data.category || data.categorySlug) {
+      updates.category = data.category || data.categorySlug;
+      updates.categorySlug = data.categorySlug || data.category;
+    }
 
     // Keep variants pricing synchronized with updated product prices
     if (!updates.variants && existingData.variants && existingData.variants.length > 0) {
       updates.variants = existingData.variants.map(v => ({
         ...v,
-        pricePaise: effectiveSellingPrice,
+        pricePaise: resolvedRegular,
         salePricePaise: resolvedSale || null
       }));
     } else if (updates.variants && updates.variants.length > 0) {
       updates.variants = updates.variants.map(v => ({
         ...v,
-        pricePaise: v.pricePaise || (v.price ? rupeesToPaise(v.price) : effectiveSellingPrice),
+        pricePaise: resolvedRegular,
         salePricePaise: v.salePricePaise !== undefined ? v.salePricePaise : (resolvedSale || null)
       }));
     }

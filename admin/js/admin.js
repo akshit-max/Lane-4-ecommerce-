@@ -2713,7 +2713,7 @@ var formatDateString = window.formatDateString || formatDateTime;
               method: 'POST',
               body: formData
             });
-            updatedImageUrl = uploadRes.data && uploadRes.data.url;
+            updatedImageUrl = uploadRes.data && (uploadRes.data.secureUrl || uploadRes.data.url);
           } else {
             const directUrl = document.getElementById('edit-prod-image-url').value.trim();
             if (directUrl && directUrl !== img) {
@@ -3004,10 +3004,6 @@ var formatDateString = window.formatDateString || formatDateTime;
         if (orderDiff !== 0) return orderDiff;
         return (a.name || '').localeCompare(b.name || '');
       });
-      // Resequence cleanly so each category gets a unique ascending order number (#1, #2, #3, ...) without duplicate #6
-      cats.forEach((c, idx) => {
-        c.computedOrder = idx + 1;
-      });
       window.currentCategories = cats;
 
       container.innerHTML = `
@@ -3034,9 +3030,9 @@ var formatDateString = window.formatDateString || formatDateTime;
                 </thead>
                 <tbody>
                   ${cats.length === 0 ? '<tr><td colspan="6" style="text-align:center;padding:24px;color:#888;">No categories found.</td></tr>' :
-                    cats.map(c => `
+                    cats.map((c, idx) => `
                       <tr>
-                        <td><strong>#${c.computedOrder || c.displayOrder}</strong></td>
+                        <td><strong>#${c.displayOrder !== undefined && c.displayOrder !== null ? c.displayOrder : (idx + 1)}</strong></td>
                         <td><strong style="color:#0f172a;">${c.name}</strong></td>
                         <td><code>${c.slug}</code></td>
                         <td style="color:#64748b;font-size:13px;max-width:300px;">${c.description || '—'}</td>

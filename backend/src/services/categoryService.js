@@ -22,6 +22,9 @@ function generateCategoryHtmlPage(category) {
     // Replace breadcrumb or category title
     html = html.replace(/<a href="training-gear\.html"[^>]*>.*?<\/a>/g, `<a href="${category.slug}.html" class="w-inline-block"><div class="paragraph-14px">${category.name}</div></a>`);
 
+    // Empty out hardcoded static products inside .collection-list-category so newly created categories start clean
+    html = html.replace(/(<div class="collection-list-category w-dyn-items">)[\s\S]*?(<\/div>\s*<div class="w-dyn-empty")/i, '$1$2');
+
     // Ensure lane4-catalog.js is present
     if (!html.includes('lane4-catalog.js')) {
       html = html.replace('</body>', '<script src="../js/lane4-catalog.js"></script>\n</body>');

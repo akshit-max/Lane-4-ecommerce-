@@ -16,6 +16,9 @@
     isValidPincode: function (pin) {
       return /^[1-9][0-9]{5}$/.test(String(pin).trim());
     },
+    isValidPostalCode: function (pin) {
+      return /^[1-9][0-9]{5}$/.test(String(pin).trim());
+    },
     cleanPhone: function (phone) {
       let clean = String(phone).replace(/[\s\-\(\)]/g, '');
       if (clean.startsWith('+91')) clean = clean.substring(3);
@@ -28,6 +31,15 @@
     // 1. Newsletter Forms
     const newsletterForms = document.querySelectorAll('form.form-footer, form#email-form, form#wf-form-Newsletter, form.newsletter-contact-cta, [data-name="Newsletter"]');
     newsletterForms.forEach(form => {
+      // Unbind Webflow's legacy form submit handlers so Webflow doesn't trigger "Oops!"
+      form.setAttribute('onsubmit', 'return false;');
+      if (window.jQuery) {
+        try {
+          window.jQuery(form).off('submit');
+          window.jQuery(document).off('submit', form);
+        } catch (_) {}
+      }
+
       // Avoid binding twice
       if (form.getAttribute('data-lane4-bound')) return;
       form.setAttribute('data-lane4-bound', 'true');
@@ -39,14 +51,15 @@
 
         e.preventDefault();
         e.stopPropagation();
-        e.stopImmediatePropagation();
-
-        const email = emailInput.value.trim();
-        const submitBtn = form.querySelector('input[type="submit"], button[type="submit"]');
+        if (e.stopImmediatePropagation) e.stopImmediatePropagation();
 
         const wrapper = form.closest('.w-form') || form.parentElement;
         const successMsg = wrapper ? wrapper.querySelector('.w-form-done, .success-message, .success-message-2') : null;
         const failMsg = wrapper ? wrapper.querySelector('.w-form-fail, .error-message') : null;
+        if (failMsg) failMsg.style.display = 'none';
+
+        const email = emailInput.value.trim();
+        const submitBtn = form.querySelector('input[type="submit"], button[type="submit"]');
 
         if (!window.LANE4_VALIDATION.isValidEmail(email)) {
           if (failMsg) {
@@ -103,13 +116,20 @@
 
     contactModals.forEach((modal, index) => {
       const form = modal.querySelector('form');
-      if (!form || form.getAttribute('data-lane4-bound')) return;
+      if (!form) return;
+      form.setAttribute('onsubmit', 'return false;');
+      if (window.jQuery) {
+        try { window.jQuery(form).off('submit'); } catch (_) {}
+      }
+      if (form.getAttribute('data-lane4-bound')) return;
       form.setAttribute('data-lane4-bound', 'true');
 
       const enquiryType = modalTypeMap[index] || 'general';
 
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        e.stopPropagation();
+        if (e.stopImmediatePropagation) e.stopImmediatePropagation();
 
         // Extract inputs
         const nameInput = form.querySelector('input[name^="name"], input[type="text"]');
@@ -120,6 +140,7 @@
         const submitBtn = form.querySelector('input[type="submit"], button[type="submit"]');
         const successMsg = form.parentElement?.querySelector('.w-form-done, .success-message');
         const failMsg = form.parentElement?.querySelector('.w-form-fail, .error-message');
+        if (failMsg) failMsg.style.display = 'none';
 
         const payload = {
           type: enquiryType,
@@ -158,7 +179,7 @@
         } finally {
           if (submitBtn) submitBtn.disabled = false;
         }
-      });
+      }, true);
     });
   }
 

@@ -820,15 +820,28 @@
 
         // Update primary product images if available
         if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-          const galleryImgs = document.querySelectorAll('.image-gallery .product-img, .product-hero .product-img');
-          product.images.forEach((imgObj, idx) => {
-            if (galleryImgs[idx] && imgObj && imgObj.url) {
+          const galleryImgs = document.querySelectorAll('.image-gallery-row img, .image-gallery img.product-img, .image-gallery img.product-image, .image-gallery .multi-images img, .product-hero .product-img');
+          galleryImgs.forEach((imgEl, idx) => {
+            const imgObj = product.images[idx] || product.images[0];
+            if (imgObj && imgObj.url) {
               let imgUrl = imgObj.url;
               if (window.LANE4 && window.LANE4.resolveAssetUrl) imgUrl = window.LANE4.resolveAssetUrl(imgUrl);
               if (!imgUrl.startsWith('http') && !imgUrl.startsWith('/') && !imgUrl.startsWith('../')) imgUrl = '../' + imgUrl;
-              galleryImgs[idx].src = imgUrl;
-              if (galleryImgs[idx].hasAttribute('srcset')) galleryImgs[idx].removeAttribute('srcset');
-              galleryImgs[idx].style.opacity = '1';
+              imgEl.src = imgUrl;
+              if (imgEl.hasAttribute('srcset')) imgEl.removeAttribute('srcset');
+              imgEl.style.opacity = '1';
+              imgEl.dataset.origSrc = imgUrl;
+
+              const lightboxLink = imgEl.closest('a.w-lightbox');
+              if (lightboxLink) {
+                lightboxLink.setAttribute('href', imgUrl);
+                const jsonScript = lightboxLink.querySelector('script.w-json');
+                if (jsonScript) {
+                  try {
+                    jsonScript.textContent = JSON.stringify({ items: [{ url: imgUrl, type: 'image' }], group: '' });
+                  } catch (_) {}
+                }
+              }
             }
           });
         }
@@ -1021,7 +1034,7 @@
     toggleBtn.onclick = () => {
       const user = window.LANE4 ? window.LANE4.getUser() : null;
       if (user && authorInput && !authorInput.value) {
-        authorInput.value = user.displayName || user.email.split('@')[0];
+        authorInput.value = user.displayName || user.name || user.fullName || (user.email ? user.email.split('@')[0] : '');
       }
       container.style.display = container.style.display === 'none' ? 'block' : 'none';
       if (container.style.display === 'block') authorInput?.focus();
@@ -1139,9 +1152,25 @@
         quickRatingText.textContent = `${avg.toFixed(1)} (${reviews.length})`;
       }
 
+      function formatReviewDate(val) {
+        if (!val) return '';
+        let d = null;
+        if (typeof val === 'object') {
+          if (val._seconds) d = new Date(val._seconds * 1000);
+          else if (val.seconds) d = new Date(val.seconds * 1000);
+          else if (val instanceof Date) d = val;
+        } else if (typeof val === 'number') {
+          d = new Date(val);
+        } else if (typeof val === 'string') {
+          d = new Date(val);
+        }
+        if (!d || isNaN(d.getTime())) return '';
+        return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      }
+
       listContainer.innerHTML = reviews.map(r => {
         const starStr = '★'.repeat(r.rating || 5) + '☆'.repeat(5 - (r.rating || 5));
-        const dateStr = r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+        const dateStr = formatReviewDate(r.createdAt);
 
         return `
           <div style="border-bottom:1px solid #f1f5f9;padding:16px 0;">

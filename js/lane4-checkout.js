@@ -86,9 +86,12 @@
     const user = window.LANE4.getUser();
     if (user) {
       const emailInput = document.querySelector('input[name="email"], #wf-ecom-email');
-      if (emailInput) emailInput.value = user.email;
+      if (emailInput && !emailInput.value) emailInput.value = user.email || '';
       const nameInput = document.querySelector('input[name="name"], .w-commerce-commercecheckoutshippingfullname');
-      if (nameInput && user.displayName) nameInput.value = user.displayName;
+      const candidateName = user.displayName || user.name || user.fullName || (user.email ? user.email.split('@')[0].charAt(0).toUpperCase() + user.email.split('@')[0].slice(1) : '');
+      if (nameInput && !nameInput.value && candidateName) nameInput.value = candidateName;
+      const phoneInput = document.querySelector('#lane4-checkout-phone, input[type="tel"]');
+      if (phoneInput && !phoneInput.value && user.phoneNumber) phoneInput.value = user.phoneNumber;
     } else {
       setTimeout(() => {
         if (window.LANE4_AUTH && window.LANE4_AUTH.open) {
@@ -737,10 +740,10 @@
       if (!errEl) {
         errEl = document.createElement('div');
         errEl.className = 'lane4-field-inline-error';
-        errEl.style.cssText = 'color:#dc2626;font-size:12px;font-weight:600;margin-top:4px;display:flex;align-items:center;gap:4px;';
+        errEl.style.cssText = 'color:#dc2626;font-size:12px;font-weight:600;margin-top:4px;line-height:1.4;';
         parent.appendChild(errEl);
       }
-      errEl.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> <span>${message}</span>`;
+      errEl.innerHTML = `<span>${message}</span>`;
     }
 
     inputEl.addEventListener('input', () => clearFieldError(inputEl), { once: true });
@@ -766,12 +769,9 @@
         : `<div style="font-size:13px;color:#b91c1c;margin-top:4px;">${messages}</div>`;
 
       alertBox.innerHTML = `
-        <div style="display:flex;align-items:flex-start;gap:10px;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.2" style="flex-shrink:0;margin-top:2px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-          <div style="flex:1;">
-            <div style="font-weight:700;font-size:13.5px;color:#991b1b;">${title}</div>
-            ${listHtml}
-          </div>
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:13.5px;color:#991b1b;">${title}</div>
+          ${listHtml}
         </div>
       `;
     }

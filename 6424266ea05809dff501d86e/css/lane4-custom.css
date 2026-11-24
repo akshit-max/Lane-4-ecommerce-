@@ -152,3 +152,12 @@ body, button, input, select, textarea {
 .hero-about {
   background-image: url("../lane4-W2oKzevjPwA-1920.jpg");
 }
+
+/* Ensure LANE4 PAN India Shipping is always visible and suppress Webflow's empty state */
+.w-commerce-commercecheckoutshippingmethodsemptystate {
+  display: none !important;
+}
+.w-commerce-commercecheckoutshippingmethodslist {
+  display: block !important;
+}
+
