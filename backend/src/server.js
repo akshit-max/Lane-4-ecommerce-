@@ -1,3 +1,4 @@
+// Server version: 1.0.1 (Production: GST Invoicing, RBAC, Customer Portal, UPI verification)
 const app = require('./app');
 const { config } = require('./config/environment');
 const { logger } = require('./utils/logger');
