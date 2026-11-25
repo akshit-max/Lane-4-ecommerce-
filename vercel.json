@@ -1,6 +1,7 @@
 {
   "version": 2,
   "cleanUrls": true,
+  "outputDirectory": ".",
   "rewrites": [
     { "source": "/health", "destination": "https://lane-4-ecommerce.onrender.com/health" },
     { "source": "/api/(.*)", "destination": "https://lane-4-ecommerce.onrender.com/api/$1" },
