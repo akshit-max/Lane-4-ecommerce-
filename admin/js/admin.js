@@ -4483,13 +4483,15 @@ var formatDateString = window.formatDateString || formatDateTime;
   };
 
   // --- RETURNS & REFUNDS MANAGEMENT ---
-  async function loadReturns() {
+  async function loadReturns(isQuiet = false) {
     const container = document.getElementById('view-returns');
     if (!container) return;
-    if (!container.children.length) {
-      container.innerHTML = getSkeletonHtml('table');
+    if (!isQuiet) {
+      if (!container.children.length) {
+        container.innerHTML = getSkeletonHtml('table');
+      }
+      showTopLoader();
     }
-    showTopLoader();
 
     try {
       const res = await window.lane4ApiRequest('/admin/returns');
@@ -4501,9 +4503,12 @@ var formatDateString = window.formatDateString || formatDateTime;
           <div class="card-header" style="flex-wrap:wrap;gap:12px;">
             <div>
               <div class="card-title">Returns &amp; Exchange Requests (${returns.length})</div>
-              <div style="font-size:12px;color:#64748b;margin-top:2px;">Moderate customer return requests, inspect return reasons, and issue UPI refunds.</div>
+              <div style="font-size:12px;color:#64748b;margin-top:2px;">Moderate customer return requests, inspect return reasons, and issue UPI refunds in real time.</div>
             </div>
-            <button class="btn btn-outline" style="font-size:12px;padding:6px 12px;" onclick="loadReturns()">Refresh</button>
+            <button class="btn btn-outline" style="font-size:12px;padding:6px 12px;display:inline-flex;align-items:center;gap:6px;" onclick="loadReturns()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              <span>Refresh</span>
+            </button>
           </div>
           <div class="card-body" style="padding:0;">
             <div class="table-responsive">
@@ -4521,7 +4526,7 @@ var formatDateString = window.formatDateString || formatDateTime;
                   </tr>
                 </thead>
                 <tbody>
-                  ${returns.length === 0 ? '<tr><td colspan="8" style="text-align:center;padding:24px;color:#888;">No return requests received yet.</td></tr>' :
+                  ${returns.length === 0 ? '<tr><td colspan="8" style="text-align:center;padding:28px 14px;color:#64748b;font-size:13px;">No return requests received yet.</td></tr>' :
                     returns.map(ret => {
                       const returnDocId = ret.docId || ret.id;
                       return `
@@ -4529,20 +4534,20 @@ var formatDateString = window.formatDateString || formatDateTime;
                           <td><strong>${escapeHtml(ret.returnId || 'RET-001')}</strong></td>
                           <td><code>#${escapeHtml(ret.orderNumber || ret.orderId)}</code></td>
                           <td>${escapeHtml(ret.customerEmail || '—')}</td>
-                          <td style="max-width:280px;font-size:12.5px;color:#334155;">${escapeHtml(ret.reason || '—')}</td>
+                          <td style="max-width:280px;font-size:12.5px;color:#334155;word-break:break-word;">${escapeHtml(ret.reason || '—')}</td>
                           <td><code style="background:#f1f5f9;padding:3px 6px;border-radius:4px;font-weight:600;">${escapeHtml(ret.customerUpiId || '—')}</code></td>
                           <td style="font-size:12px;color:#64748b;white-space:nowrap;">${formatDateTime(ret.createdAt, true)}</td>
                           <td><span class="badge ${ret.status === 'approved' ? 'badge-active' : (ret.status === 'refunded' ? 'badge-delivered' : (ret.status === 'rejected' ? 'badge-cancelled' : 'badge-pending'))}">${escapeHtml(ret.status || 'requested')}</span></td>
                           <td>
-                            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
                               ${ret.status === 'requested' ? `
-                                <button class="btn btn-success" style="padding:4px 8px;font-size:11px;" onclick="updateReturnStatus('${returnDocId}', 'approved')">Approve</button>
-                                <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#dc2626;" onclick="updateReturnStatus('${returnDocId}', 'rejected')">Reject</button>
+                                <button type="button" class="btn btn-success" style="padding:4px 8px;font-size:11px;" onclick="updateReturnStatus('${returnDocId}', 'approved')">Approve</button>
+                                <button type="button" class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#dc2626;" onclick="updateReturnStatus('${returnDocId}', 'rejected')">Reject</button>
                               ` : ''}
                               ${ret.status === 'approved' ? `
-                                <button class="btn btn-primary" style="background:#000;color:#fff;padding:4px 8px;font-size:11px;" onclick="updateReturnStatus('${returnDocId}', 'refunded')">Mark Refunded</button>
+                                <button type="button" class="btn btn-primary" style="background:#dc2626;color:#fff;padding:5px 10px;font-size:11px;font-weight:700;border:none;border-radius:4px;cursor:pointer;" onclick="updateReturnStatus('${returnDocId}', 'refunded')">Issue Refund</button>
                               ` : ''}
-                              ${ret.status === 'refunded' ? '<span style="font-size:12px;color:#16a34a;font-weight:600;">Refund Completed</span>' : ''}
+                              ${ret.status === 'refunded' ? '<span style="font-size:11.5px;color:#16a34a;font-weight:700;display:inline-flex;align-items:center;gap:3px;">✓ Refund Issued</span>' : ''}
                             </div>
                           </td>
                         </tr>
@@ -4557,19 +4562,40 @@ var formatDateString = window.formatDateString || formatDateTime;
     } catch (err) {
       container.innerHTML = `<p style="color:#ef4444;padding:20px;">Error loading returns: ${err.message}</p>`;
     } finally {
-      hideTopLoader();
+      if (!isQuiet) hideTopLoader();
     }
   }
   window.loadReturns = loadReturns;
 
   window.updateReturnStatus = async function (returnDocId, status) {
+    let refundReference = '';
+    if (status === 'refunded') {
+      const ret = (window.currentReturns || []).find(r => (r.docId === returnDocId || r.id === returnDocId));
+      const orderRef = ret ? (ret.orderNumber || ret.orderId) : '';
+      const promptVal = window.prompt(
+        `Confirm UPI Refund for Order #${orderRef}\nCustomer UPI Handle: ${(ret && ret.customerUpiId) || '—'}\n\nPlease enter the bank/UPI transaction reference ID:`,
+        'UPI-REF-' + Date.now().toString().slice(-6)
+      );
+      if (promptVal === null) return;
+      refundReference = promptVal.trim() || ('UPI-REF-' + Date.now());
+    }
+
     try {
-      await window.lane4ApiRequest(`/admin/returns/${returnDocId}`, {
+      const res = await window.lane4ApiRequest(`/admin/returns/${returnDocId}`, {
         method: 'PATCH',
-        body: JSON.stringify({ status })
+        body: JSON.stringify({ status, refundReference })
       });
       showToast(`Return status updated to ${status}.`, 'success');
-      loadReturns();
+      const orderId = (res && res.data && res.data.orderId) || null;
+      notifyOrderUpdated(orderId);
+      if (adminOrderSyncChannel) {
+        adminOrderSyncChannel.postMessage({ type: 'return_updated', docId: returnDocId, status, timestamp: Date.now() });
+      }
+      try {
+        localStorage.setItem('lane4_return_updated', JSON.stringify({ docId: returnDocId, status, timestamp: Date.now() }));
+      } catch (_) {}
+      loadReturns(true);
+      quietRefreshOrders();
     } catch (err) {
       showToast(err.message || 'Failed to update return', 'error');
     }
