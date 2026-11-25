@@ -427,11 +427,49 @@
           if (successMsg) {
             successMsg.style.display = 'block';
             successMsg.innerHTML = `
-              <div style="padding:16px 12px;text-align:center;">
-                <div style="font-size:18px;font-weight:900;color:#16a34a;margin-bottom:6px;">✓ Message Received!</div>
-                <div style="font-size:13px;color:#334155;line-height:1.4;">Thank you, <strong>${nameVal}</strong>! Your message has been sent to the LANE4 Nagpur team. We will get back to you shortly.</div>
+              <div style="position:relative;background:#ffffff;padding:32px 24px 24px 24px;border-radius:12px;box-shadow:0 20px 40px rgba(0,0,0,0.18);text-align:center;max-width:440px;margin:0 auto;box-sizing:border-box;">
+                <button type="button" class="lane4-modal-close-cross" aria-label="Close modal" style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:24px;line-height:1;color:#64748b;cursor:pointer;padding:4px 8px;border-radius:6px;transition:color 0.15s,background-color 0.15s;">&times;</button>
+                <div style="font-size:20px;font-weight:900;color:#16a34a;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:6px;">
+                  <span>✓ Message Received!</span>
+                </div>
+                <div style="font-size:14px;color:#334155;line-height:1.5;margin-bottom:20px;">
+                  Thank you, <strong>${nameVal}</strong>! Your message has been sent to the LANE4 Nagpur team. We will get back to you shortly.
+                </div>
+                <button type="button" class="lane4-modal-close-btn" style="background:#0f172a;color:#ffffff;border:none;padding:10px 24px;border-radius:6px;font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;transition:background 0.15s;">
+                  Close
+                </button>
               </div>
             `;
+
+            const handleClose = () => {
+              modal.style.display = 'none';
+              modal.style.opacity = '0';
+              document.querySelectorAll('.mask-modal').forEach(m => {
+                m.style.display = 'none';
+                m.style.opacity = '0';
+              });
+              try {
+                const origClose = modal.querySelector('.close-button');
+                if (origClose && typeof origClose.click === 'function') origClose.click();
+              } catch (_) {}
+              clearAllFormErrors(form);
+              form.reset();
+              form.style.display = 'block';
+              successMsg.style.display = 'none';
+            };
+
+            const crossBtn = successMsg.querySelector('.lane4-modal-close-cross');
+            const closeBtn = successMsg.querySelector('.lane4-modal-close-btn');
+            if (crossBtn) {
+              crossBtn.onmouseenter = () => { crossBtn.style.color = '#0f172a'; crossBtn.style.backgroundColor = '#f1f5f9'; };
+              crossBtn.onmouseleave = () => { crossBtn.style.color = '#64748b'; crossBtn.style.backgroundColor = 'transparent'; };
+              crossBtn.onclick = handleClose;
+            }
+            if (closeBtn) {
+              closeBtn.onmouseenter = () => { closeBtn.style.backgroundColor = '#1e293b'; };
+              closeBtn.onmouseleave = () => { closeBtn.style.backgroundColor = '#0f172a'; };
+              closeBtn.onclick = handleClose;
+            }
           }
         } catch (err) {
           if (failMsg) {
@@ -452,6 +490,47 @@
           }
         }
       }, true);
+    });
+
+    // Global listener for mask click and Escape key on contact modals
+    document.querySelectorAll('.mask-modal').forEach(mask => {
+      mask.addEventListener('click', () => {
+        contactModals.forEach(modal => {
+          modal.style.display = 'none';
+          modal.style.opacity = '0';
+          const form = modal.querySelector('form');
+          if (form) {
+            clearAllFormErrors(form);
+            form.style.display = 'block';
+          }
+          const success = modal.querySelector('.w-form-done, .success-message');
+          if (success) success.style.display = 'none';
+        });
+        mask.style.display = 'none';
+        mask.style.opacity = '0';
+      });
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        contactModals.forEach(modal => {
+          if (modal.style.display !== 'none') {
+            modal.style.display = 'none';
+            modal.style.opacity = '0';
+            const form = modal.querySelector('form');
+            if (form) {
+              clearAllFormErrors(form);
+              form.style.display = 'block';
+            }
+            const success = modal.querySelector('.w-form-done, .success-message');
+            if (success) success.style.display = 'none';
+          }
+        });
+        document.querySelectorAll('.mask-modal').forEach(mask => {
+          mask.style.display = 'none';
+          mask.style.opacity = '0';
+        });
+      }
     });
   }
 

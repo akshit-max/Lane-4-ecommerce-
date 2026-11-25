@@ -275,6 +275,12 @@ class PaymentService {
       updatedAt: new Date()
     });
 
+    // Ensure cart is cleared upon payment proof submission
+    try {
+      const cartService = require('./cartService');
+      await cartService.clearCart(orderData.customerId, orderData.guestId);
+    } catch (_) {}
+
     // Create admin notification
     await db.collection('notifications').add({
       type: 'payment_submitted',

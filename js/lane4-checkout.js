@@ -965,6 +965,18 @@
 
         const createdOrder = orderRes.data;
 
+        // Immediately clear cart upon order placement
+        try {
+          if (window.LANE4_CART && typeof window.LANE4_CART.clear === 'function') {
+            await window.LANE4_CART.clear();
+          } else {
+            await window.lane4ApiRequest(`/cart?guestId=${encodeURIComponent(guestId)}`, {
+              method: 'DELETE'
+            });
+          }
+          window.dispatchEvent(new CustomEvent('lane4:cart-cleared'));
+        } catch (_) {}
+
         // 2. Upload Payment Proof
         const formData = new FormData();
         formData.append('orderId', createdOrder.orderId);
@@ -977,9 +989,15 @@
         });
 
         // 3. Clear cart cache and render order success receipt
-        if (window.LANE4_CART && window.LANE4_CART.refresh) {
+        if (window.LANE4_CART && typeof window.LANE4_CART.clear === 'function') {
+          await window.LANE4_CART.clear();
+        } else if (window.LANE4_CART && window.LANE4_CART.refresh) {
           window.LANE4_CART.refresh();
         }
+        window.dispatchEvent(new CustomEvent('lane4:cart-cleared'));
+        const badges = document.querySelectorAll('.cart-quantity, .w-commerce-commercecartopenlinkcount, #lane4-cart-badge');
+        badges.forEach(b => { b.textContent = '0'; });
+
         renderOrderSuccess(createdOrder, utr);
       } catch (err) {
         placeOrderBtn.disabled = false;

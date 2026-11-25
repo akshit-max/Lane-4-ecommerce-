@@ -67,5 +67,66 @@ describe('Shopping Cart & Variant Operations Test Suite', () => {
     expect(res.body.data.items.length).toBe(0);
     expect(res.body.data.subtotalPaise).toBe(0);
   });
+
+  test('DELETE /api/cart clears the entire guest cart', async () => {
+    const variant = sampleProduct.variants[0];
+
+    // Add item first
+    await request(app)
+      .post('/api/cart/items')
+      .send({
+        productId: sampleProduct.id,
+        variantId: variant.variantId,
+        quantity: 2,
+        guestId: 'gst_to_clear_1'
+      });
+
+    const delRes = await request(app)
+      .delete('/api/cart?guestId=gst_to_clear_1');
+
+    expect(delRes.status).toBe(200);
+    expect(delRes.body.data.items.length).toBe(0);
+    expect(delRes.body.data.totalItemsCount).toBe(0);
+
+    const checkRes = await request(app)
+      .get('/api/cart?guestId=gst_to_clear_1');
+    expect(checkRes.body.data.items.length).toBe(0);
+  });
+
+  test('cartService.clearCart clears BOTH user and guest carts simultaneously', async () => {
+    const cartService = require('../src/services/cartService');
+    const variant = sampleProduct.variants[0];
+    const dualUserId = 'usr_dual_test_1';
+    const dualGuestId = 'gst_dual_test_1';
+
+    // Add to user cart
+    await cartService.addItem(dualUserId, null, {
+      productId: sampleProduct.id,
+      variantId: variant.variantId,
+      quantity: 1
+    });
+
+    // Add to guest cart
+    await cartService.addItem(null, dualGuestId, {
+      productId: sampleProduct.id,
+      variantId: variant.variantId,
+      quantity: 1
+    });
+
+    // Verify both have items
+    const userCartBefore = await cartService.getCart(dualUserId, null);
+    const guestCartBefore = await cartService.getCart(null, dualGuestId);
+    expect(userCartBefore.items.length).toBe(1);
+    expect(guestCartBefore.items.length).toBe(1);
+
+    // Call clearCart with both IDs
+    await cartService.clearCart(dualUserId, dualGuestId);
+
+    // Verify both are now cleared
+    const userCartAfter = await cartService.getCart(dualUserId, null);
+    const guestCartAfter = await cartService.getCart(null, dualGuestId);
+    expect(userCartAfter.items.length).toBe(0);
+    expect(guestCartAfter.items.length).toBe(0);
+  });
 });
 

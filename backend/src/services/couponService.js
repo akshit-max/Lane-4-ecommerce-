@@ -70,8 +70,14 @@ class CouponService {
 
     const coupon = doc.data();
 
-    if (!coupon.isActive) {
-      throw new Error(`Coupon "${cleanCode}" is no longer active.`);
+    const isExhausted = Boolean(coupon.totalUsageLimit && (coupon.usedCount || 0) >= coupon.totalUsageLimit);
+    if (!coupon.isActive || isExhausted) {
+      if (isExhausted && coupon.isActive) {
+        try {
+          await doc.ref.update({ isActive: false, deactivatedReason: 'redemptions_exhausted', updatedAt: new Date() });
+        } catch (_) {}
+      }
+      throw new Error(`Coupon "${cleanCode}" is no longer active (all redemptions used).`);
     }
 
     const now = new Date();
@@ -151,9 +157,13 @@ class CouponService {
     const docRef = db.collection('coupons').doc(cleanCode);
     const doc = await docRef.get();
     if (doc.exists) {
-      const current = doc.data().usedCount || 0;
+      const data = doc.data();
+      const current = (data.usedCount || 0) + 1;
+      const totalLimit = data.totalUsageLimit;
+      const isExhausted = Boolean(totalLimit && current >= totalLimit);
       await docRef.update({
-        usedCount: current + 1,
+        usedCount: current,
+        ...(isExhausted ? { isActive: false, deactivatedReason: 'redemptions_exhausted' } : {}),
         updatedAt: new Date()
       });
     }
@@ -166,9 +176,13 @@ class CouponService {
     const docRef = db.collection('coupons').doc(cleanCode);
     const doc = await docRef.get();
     if (doc.exists) {
-      const current = doc.data().usedCount || 0;
+      const data = doc.data();
+      const current = Math.max(0, (data.usedCount || 0) - 1);
+      const totalLimit = data.totalUsageLimit;
+      const canReactivate = Boolean(totalLimit && current < totalLimit && data.deactivatedReason === 'redemptions_exhausted');
       await docRef.update({
-        usedCount: Math.max(0, current - 1),
+        usedCount: current,
+        ...(canReactivate ? { isActive: true, deactivatedReason: null } : {}),
         updatedAt: new Date()
       });
     }
@@ -177,12 +191,30 @@ class CouponService {
   async listCoupons() {
     const db = getDb();
     const snap = await db.collection('coupons').get();
-    return snap.docs.map(d => ({
-      code: d.id,
-      ...d.data(),
-      minOrderFormatted: formatINR(d.data().minOrderValuePaise || 0),
-      maxDiscountFormatted: d.data().maxDiscountPaise ? formatINR(d.data().maxDiscountPaise) : null
-    }));
+    const results = [];
+    for (const d of snap.docs) {
+      const data = d.data();
+      const totalLimit = data.totalUsageLimit;
+      const used = data.usedCount || 0;
+      let isActive = data.isActive !== false;
+      if (totalLimit && used >= totalLimit) {
+        isActive = false;
+        if (data.isActive !== false) {
+          try {
+            await d.ref.update({ isActive: false, deactivatedReason: 'redemptions_exhausted', updatedAt: new Date() });
+          } catch (_) {}
+        }
+      }
+      results.push({
+        code: d.id,
+        ...data,
+        isActive,
+        isExhausted: Boolean(totalLimit && used >= totalLimit),
+        minOrderFormatted: formatINR(data.minOrderValuePaise || 0),
+        maxDiscountFormatted: data.maxDiscountPaise ? formatINR(data.maxDiscountPaise) : null
+      });
+    }
+    return results;
   }
 
   async createCoupon(data) {

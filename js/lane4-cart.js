@@ -1377,12 +1377,37 @@
     modal.style.display = 'flex';
   }
 
+  async function clearCart() {
+    activeCart = { items: [], subtotalPaise: 0, totalItemsCount: 0, subtotalFormatted: '₹0.00' };
+    updateCartBadge();
+    renderCartDrawer();
+    try {
+      const guestId = window.LANE4 ? window.LANE4.getGuestId() : null;
+      if (guestId) {
+        await window.lane4ApiRequest(`/cart?guestId=${encodeURIComponent(guestId)}`, {
+          method: 'DELETE'
+        });
+      }
+    } catch (e) {
+      console.warn('Could not clear cart on server:', e);
+    }
+    try {
+      const newGuestId = 'gst_' + Math.random().toString(36).substring(2, 12) + Date.now().toString(36);
+      localStorage.setItem('lane4_guest_id', newGuestId);
+    } catch (_) {}
+  }
+
   // Export public methods for cross-module usage
   window.LANE4_CART = {
     open: openCartDrawer,
     close: closeCartDrawer,
-    refresh: refreshCart
+    refresh: refreshCart,
+    clear: clearCart
   };
+
+  window.addEventListener('lane4:cart-cleared', () => {
+    clearCart();
+  });
 
   function initCart() {
     createCartDrawerDOM();

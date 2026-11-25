@@ -61,20 +61,22 @@ window.LANE4_CONFIG = window.LANE4_CONFIG || {
   }
 })();
 
-// Universal Background Pre-Warming: Wakes up Render container immediately on page load
+// Universal Background Pre-Warming: Keeps backend active & prewarms immediately on page load
 (function prewarmBackend() {
   if (typeof window === 'undefined' || !window.location) return;
   try {
     const baseUrl = (window.LANE4_CONFIG && window.LANE4_CONFIG.API_BASE_URL) || '/api';
-    const healthUrl = `${baseUrl}/health`;
-    fetch(healthUrl, { method: 'GET', keepalive: true, cache: 'no-store' }).catch(() => {});
+    fetch(`${baseUrl}/health`, { method: 'GET', keepalive: true, cache: 'no-store' }).catch(() => {});
+    if (window.location.hostname && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+      fetch('https://lane4-backend.onrender.com/api/health', { method: 'GET', mode: 'cors', keepalive: true, cache: 'no-store' }).catch(() => {});
+    }
   } catch (_) {}
 })();
 
 /**
  * Universal API Request Function
  * Automatically attaches Firebase ID Token and Guest ID header.
- * Features automated retry with exponential backoff for Render free-tier cold-start 502/503/504 errors.
+ * Features automated retry with progressive backoff for seamless server connectivity.
  */
 async function lane4ApiRequest(endpoint, options = {}) {
   const baseUrl = window.LANE4_CONFIG.API_BASE_URL;
@@ -106,7 +108,7 @@ async function lane4ApiRequest(endpoint, options = {}) {
     headers['Content-Type'] = 'application/json';
   }
 
-  const MAX_RETRIES = 3;
+  const MAX_RETRIES = 7;
   let lastError = null;
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
@@ -116,10 +118,10 @@ async function lane4ApiRequest(endpoint, options = {}) {
         headers
       });
 
-      // Handle Render cold start 502, 503, 504 Bad Gateway / Gateway Timeout
+      // Handle 502 Bad Gateway, 503 Service Unavailable, 504 Gateway Timeout during spinup
       if ((response.status === 502 || response.status === 503 || response.status === 504) && attempt < MAX_RETRIES) {
-        const waitSec = (attempt + 1) * 3;
-        console.warn(`[LANE4 API] Gateway status ${response.status} (backend cold-starting). Retrying in ${waitSec}s (attempt ${attempt + 1}/${MAX_RETRIES})...`);
+        const waitSec = Math.min(3 + attempt * 2, 8);
+        console.warn(`[LANE4 API] Gateway status ${response.status}. Retrying connection in ${waitSec}s (attempt ${attempt + 1}/${MAX_RETRIES})...`);
         window.dispatchEvent(new CustomEvent('lane4:server-waking-up', {
           detail: { attempt: attempt + 1, maxRetries: MAX_RETRIES, waitSec }
         }));
@@ -144,10 +146,8 @@ async function lane4ApiRequest(endpoint, options = {}) {
 
         let errorMsg = (data.error && data.error.message) || data.message;
         if (!errorMsg) {
-          if (response.status === 502 || response.status === 504) {
-            errorMsg = 'Backend server is waking up from standby. Please retry in a few moments.';
-          } else if (response.status === 503) {
-            errorMsg = 'Backend service is temporarily unavailable. Please retry in a moment.';
+          if (response.status === 502 || response.status === 503 || response.status === 504) {
+            errorMsg = 'Service is temporarily unavailable. Please try again shortly.';
           } else {
             errorMsg = 'Network request failed';
           }
@@ -167,10 +167,10 @@ async function lane4ApiRequest(endpoint, options = {}) {
       if (err.status && err.status < 500) {
         throw err;
       }
-      // If network fetch failed before receiving headers (e.g. connection timeout during Render container spin-up)
+      // If network fetch failed before receiving response headers
       if (attempt < MAX_RETRIES && (!err.status || err.status >= 500)) {
-        const waitSec = (attempt + 1) * 3;
-        console.warn(`[LANE4 API] Connection error (${err.message}). Retrying in ${waitSec}s (attempt ${attempt + 1}/${MAX_RETRIES})...`);
+        const waitSec = Math.min(3 + attempt * 2, 8);
+        console.warn(`[LANE4 API] Connection pending (${err.message}). Retrying in ${waitSec}s (attempt ${attempt + 1}/${MAX_RETRIES})...`);
         window.dispatchEvent(new CustomEvent('lane4:server-waking-up', {
           detail: { attempt: attempt + 1, maxRetries: MAX_RETRIES, waitSec }
         }));

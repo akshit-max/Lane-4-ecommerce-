@@ -263,16 +263,43 @@ class CartService {
 
   async clearCart(customerId, guestId) {
     const db = getDb();
-    const cartKey = this._getCartKey(customerId, guestId);
-    await db.collection('carts').doc(cartKey).set({
-      cartId: cartKey,
-      customerId: customerId || null,
-      guestId: guestId || null,
-      items: [],
-      subtotalPaise: 0,
-      totalItemsCount: 0,
-      updatedAt: new Date()
-    });
+    const tasks = [];
+
+    if (customerId) {
+      const userKey = `user_${customerId}`;
+      tasks.push(
+        db.collection('carts').doc(userKey).set({
+          cartId: userKey,
+          customerId,
+          guestId: guestId || null,
+          items: [],
+          subtotalPaise: 0,
+          totalItemsCount: 0,
+          updatedAt: new Date()
+        })
+      );
+    }
+
+    if (guestId) {
+      const guestKey = `guest_${guestId}`;
+      tasks.push(
+        db.collection('carts').doc(guestKey).set({
+          cartId: guestKey,
+          customerId: customerId || null,
+          guestId,
+          items: [],
+          subtotalPaise: 0,
+          totalItemsCount: 0,
+          updatedAt: new Date()
+        })
+      );
+    }
+
+    if (tasks.length === 0) {
+      throw new Error('Either customerId or guestId must be provided to access cart.');
+    }
+
+    await Promise.all(tasks);
     return { items: [], subtotalPaise: 0, totalItemsCount: 0, subtotalFormatted: formatINR(0) };
   }
 

@@ -9,10 +9,10 @@
     { "source": "/graphql", "destination": "https://lane4-backend.onrender.com/graphql" },
     { "source": "/admin", "destination": "/admin/index.html" },
     { "source": "/admin/", "destination": "/admin/index.html" },
-    { "source": "/product/:slug.html", "destination": "/product/detail.html?slug=:slug" },
-    { "source": "/product/:slug", "destination": "/product/detail.html?slug=:slug" },
-    { "source": "/category/:slug.html", "destination": "/category/detail.html?slug=:slug" },
-    { "source": "/category/:slug", "destination": "/category/detail.html?slug=:slug" }
+    { "source": "/product/:slug.html", "destination": "/product/detail.html" },
+    { "source": "/product/:slug", "destination": "/product/detail.html" },
+    { "source": "/category/:slug.html", "destination": "/category/detail.html" },
+    { "source": "/category/:slug", "destination": "/category/detail.html" }
   ],
   "headers": [
     {
