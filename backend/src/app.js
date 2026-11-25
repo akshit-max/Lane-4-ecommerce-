@@ -4,7 +4,8 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
 
-const { config } = require('./config/environment');
+const { config, checkEnvironmentStatus } = require('./config/environment');
+const { sendSuccess } = require('./utils/response');
 const { generalLimiter } = require('./middleware/rateLimiter');
 const { errorHandler } = require('./middleware/errorHandler');
 const { notFound } = require('./middleware/notFound');
@@ -75,6 +76,18 @@ app.use('/api', (req, res, next) => {
   delete req.headers['if-none-match'];
   delete req.headers['if-modified-since'];
   next();
+});
+
+// Root health check endpoint (supports uptime bots pinging /health or /ping directly)
+app.get(['/health', '/ping'], (req, res) => {
+  const envStatus = checkEnvironmentStatus();
+  return sendSuccess(res, {
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptimeSeconds: Math.floor(process.uptime()),
+    nodeVersion: process.version,
+    integrations: envStatus
+  });
 });
 
 // Apply rate limiting to all /api routes
