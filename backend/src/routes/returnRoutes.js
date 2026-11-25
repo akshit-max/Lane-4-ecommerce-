@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const returnController = require('../controllers/returnController');
-const { authenticate } = require('../middleware/authenticate');
+const { authenticate, optionalAuthenticate } = require('../middleware/authenticate');
 const { body } = require('express-validator');
 const { validateRequest } = require('../middleware/validateRequest');
 
 router.post(
   '/',
-  authenticate,
+  optionalAuthenticate,
   [
     body('orderId').notEmpty().withMessage('Order ID is required'),
     body('reason').notEmpty().withMessage('Return reason is required'),

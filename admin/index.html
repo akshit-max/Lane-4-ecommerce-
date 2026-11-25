@@ -170,6 +170,10 @@
       0%, 100% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.5; transform: scale(0.998); }
     }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
 
     /* Login Overlay & Premium Form Styling */
     #admin-login-screen { 
@@ -869,9 +873,9 @@
     </div>
   </div>
 
-  <script src="../shared/frontend-api-config.js?v=5.2"></script>
-  <script src="../js/lane4-api.js?v=5.2"></script>
-  <script src="js/admin.js?v=7.1"></script>
+  <script src="../shared/frontend-api-config.js?v=6.0"></script>
+  <script src="../js/lane4-api.js?v=6.0"></script>
+  <script src="js/admin.js?v=8.0"></script>
 </body>
 </html>
 

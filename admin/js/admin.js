@@ -569,9 +569,20 @@ var formatDateString = window.formatDateString || formatDateTime;
         alertEl.style.display = 'block';
         alertEl.style.background = '#eff6ff';
         alertEl.style.color = '#1d4ed8';
-        alertEl.textContent = 'Authenticating staff credentials with database...';
+        alertEl.innerHTML = `
+          <span style="display:inline-flex;align-items:center;gap:8px;">
+            <span style="display:inline-block;width:12px;height:12px;border:2px solid #1d4ed8;border-top-color:transparent;border-radius:50%;animation:spin 0.6s linear infinite;"></span>
+            <span>Authenticating staff credentials...</span>
+          </span>
+        `;
       }
-      if (submitBtn) submitBtn.disabled = true;
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `
+          <span style="display:inline-block;width:13px;height:13px;border:2px solid #ffffff;border-top-color:transparent;border-radius:50%;animation:spin 0.6s linear infinite;margin-right:8px;vertical-align:middle;"></span>
+          <span>AUTHENTICATING...</span>
+        `;
+      }
 
       try {
         const res = await window.lane4ApiRequest('/auth/admin/login', {
@@ -616,14 +627,24 @@ var formatDateString = window.formatDateString || formatDateTime;
           alertEl.style.display = 'block';
           alertEl.style.background = '#fef2f2';
           alertEl.style.color = '#b91c1c';
-          if (err.status === 502 || err.status === 503 || err.status === 504) {
-            alertEl.innerHTML = 'Backend server was waking up from standby (free-tier cold start). It is ready now — please click <strong>SIGN IN TO CONSOLE</strong> again.';
+          if (err.status === 401 || err.status === 403) {
+            alertEl.textContent = 'Access denied. Invalid administrator email or password.';
           } else {
-            alertEl.textContent = err.message || 'Access denied. Invalid administrator credentials.';
+            let msg = err.message || '';
+            if (!msg || msg.toLowerCase().includes('standby') || msg.toLowerCase().includes('waking') || msg.toLowerCase().includes('cold start') || msg.toLowerCase().includes('network') || err.status === 502 || err.status === 503 || err.status === 504) {
+              msg = 'Unable to establish a secure connection with the operations server. Please check your network connection and try again.';
+            }
+            alertEl.textContent = msg;
           }
         }
       } finally {
-        if (submitBtn) submitBtn.disabled = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `
+            <span>SIGN IN TO CONSOLE</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          `;
+        }
       }
     };
   }
@@ -683,14 +704,20 @@ var formatDateString = window.formatDateString || formatDateTime;
     if (backdrop) backdrop.onclick = closeDrawer;
   }
 
-  window.addEventListener('lane4:server-waking-up', (e) => {
+  window.addEventListener('lane4:server-waking-up', () => {
     const alertEl = document.getElementById('admin-login-alert');
-    if (alertEl) {
+    const loginScreen = document.getElementById('admin-login-screen');
+    // Only display status message on the login screen if it is currently visible
+    if (alertEl && loginScreen && window.getComputedStyle(loginScreen).display !== 'none') {
       alertEl.style.display = 'block';
-      alertEl.style.background = '#fef3c7';
-      alertEl.style.color = '#92400e';
-      const detail = e.detail || {};
-      alertEl.innerHTML = `Connecting to server (waking up from standby, attempt ${detail.attempt || 1} of ${detail.maxRetries || 3})...`;
+      alertEl.style.background = '#eff6ff';
+      alertEl.style.color = '#1d4ed8';
+      alertEl.innerHTML = `
+        <span style="display:inline-flex;align-items:center;gap:8px;">
+          <span style="display:inline-block;width:12px;height:12px;border:2px solid #1d4ed8;border-top-color:transparent;border-radius:50%;animation:spin 0.6s linear infinite;"></span>
+          <span>Connecting securely to operations console...</span>
+        </span>
+      `;
     }
   });
 
@@ -1216,14 +1243,30 @@ var formatDateString = window.formatDateString || formatDateTime;
       const res = await window.lane4ApiRequest('/admin/orders');
       const allOrders = res.data || [];
       allOrders.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
-      const prevDigest = (window.currentOrders || []).map(o => `${o.orderId || o.id}_${o.status}_${o.paymentStatus}_${o.fulfillment && o.fulfillment.trackingNumber}`).join('|');
-      const newDigest = allOrders.map(o => `${o.orderId || o.id}_${o.status}_${o.paymentStatus}_${o.fulfillment && o.fulfillment.trackingNumber}`).join('|');
+      const prevDigest = (window.currentOrders || []).map(o => `${o.orderId || o.id}_${o.status}_${o.paymentStatus}_${o.refundStatus}_${o.fulfillment && o.fulfillment.trackingNumber}`).join('|');
+      const newDigest = allOrders.map(o => `${o.orderId || o.id}_${o.status}_${o.paymentStatus}_${o.refundStatus}_${o.fulfillment && o.fulfillment.trackingNumber}`).join('|');
       if (prevDigest !== newDigest) {
         window.currentOrders = allOrders;
         loadOrders(true);
       }
     } catch (_) {}
   }
+
+  async function quietRefreshReturns() {
+    try {
+      const res = await window.lane4ApiRequest('/admin/returns');
+      const allReturns = res.data || [];
+      const prevDigest = (window.currentReturns || []).map(r => `${r.docId || r.id}_${r.status}_${r.adminNotes}`).join('|');
+      const newDigest = allReturns.map(r => `${r.docId || r.id}_${r.status}_${r.adminNotes}`).join('|');
+      if (prevDigest !== newDigest) {
+        window.currentReturns = allReturns;
+        if (typeof loadReturns === 'function') {
+          loadReturns(true);
+        }
+      }
+    } catch (_) {}
+  }
+  window.quietRefreshReturns = quietRefreshReturns;
 
   function startPaymentPolling() {
     if (paymentPollingTimer) clearInterval(paymentPollingTimer);
@@ -1235,8 +1278,10 @@ var formatDateString = window.formatDateString || formatDateTime;
       const active = currentView || window.currentView;
       if (active === 'orders') {
         quietRefreshOrders();
+      } else if (active === 'returns') {
+        quietRefreshReturns();
       }
-    }, 6000);
+    }, 4000);
   }
 
   // Immediately refresh on tab focus when returning from another tab
@@ -1247,10 +1292,33 @@ var formatDateString = window.formatDateString || formatDateTime;
         const active = currentView || window.currentView;
         if (active === 'orders') {
           quietRefreshOrders();
+        } else if (active === 'returns') {
+          quietRefreshReturns();
         }
       }
     });
   }
+
+  if (adminOrderSyncChannel) {
+    adminOrderSyncChannel.onmessage = function (event) {
+      if (event && event.data) {
+        if (event.data.type === 'order_updated') {
+          quietRefreshOrders();
+          quietRefreshReturns();
+        } else if (event.data.type === 'return_submitted' || event.data.type === 'return_updated') {
+          quietRefreshReturns();
+          quietRefreshOrders();
+          showToast('A return or refund request was updated.', 'info', 'RETURNS & REFUNDS');
+        }
+      }
+    };
+  }
+  window.addEventListener('storage', function (e) {
+    if (e.key === 'lane4_order_updated' || e.key === 'lane4_return_updated') {
+      quietRefreshOrders();
+      quietRefreshReturns();
+    }
+  });
 
   function stopPaymentPolling() {
     if (paymentPollingTimer) {
@@ -3992,6 +4060,9 @@ var formatDateString = window.formatDateString || formatDateTime;
 
                       const expiryStr = cp.expiryDate ? formatDateTime(cp.expiryDate, true) : 'No expiry';
 
+                      const isExhausted = Boolean(cp.isExhausted || (cp.totalUsageLimit && (cp.usedCount || 0) >= cp.totalUsageLimit));
+                      const isEffectiveActive = Boolean(cp.isActive && !isExhausted);
+
                       return `
                         <tr>
                           <td><code style="background:#f1f5f9;padding:4px 8px;border-radius:4px;font-weight:900;letter-spacing:1px;color:#0f172a;">${cp.code}</code></td>
@@ -3999,7 +4070,7 @@ var formatDateString = window.formatDateString || formatDateTime;
                           <td>${cp.minOrderFormatted || '₹ 0.00'}</td>
                           <td>${cp.usedCount || 0} / ${cp.totalUsageLimit || '∞'} redemptions</td>
                           <td style="font-size:12px;color:#64748b;">${expiryStr}</td>
-                          <td><span class="badge ${cp.isActive ? 'badge-active' : 'badge-rejected'}">${cp.isActive ? 'Active' : 'Inactive'}</span></td>
+                          <td><span class="badge ${isEffectiveActive ? 'badge-active' : 'badge-rejected'}">${isEffectiveActive ? 'Active' : (isExhausted ? 'Inactive (Exhausted)' : 'Inactive')}</span></td>
                           <td>
                             <button class="btn btn-danger btn-del-coupon" data-code="${cp.code}" style="padding:5px 9px;font-size:11px;display:inline-flex;align-items:center;gap:4px;">
                               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
@@ -4240,11 +4311,53 @@ var formatDateString = window.formatDateString || formatDateTime;
           <div class="card-header"><div class="card-title">Support &amp; Contact Enquiries (${enqs.length})</div></div>
           <div class="card-body" style="padding:0;">
             <div class="table-responsive">
-              <table>
-                <thead><tr><th>Type</th><th>Name</th><th>Email</th><th>Message</th><th>Date</th></tr></thead>
+              <table style="width:100%;border-collapse:collapse;">
+                <thead>
+                  <tr>
+                    <th style="width:110px;">Type</th>
+                    <th style="width:150px;">Name</th>
+                    <th style="width:200px;">Email</th>
+                    <th style="min-width:300px;">Message</th>
+                    <th style="width:120px;text-align:right;">Date</th>
+                  </tr>
+                </thead>
                 <tbody>
                   ${enqs.length === 0 ? '<tr><td colspan="5" style="text-align:center;padding:24px;color:#888;">No support enquiries submitted.</td></tr>' :
-                    enqs.map(eq => `<tr><td><span class="badge badge-pending">${eq.type || 'General'}</span></td><td><strong>${eq.name}</strong></td><td>${eq.email}</td><td>${eq.message}</td><td style="font-size:12px;color:#666;">${formatDateTime(eq.createdAt, true)}</td></tr>`).join('')}
+                    enqs.map(eq => {
+                      const rawType = (eq.type || 'General').toUpperCase();
+                      let typeBadgeBg = '#f1f5f9';
+                      let typeBadgeColor = '#475569';
+                      if (rawType.includes('IDEA')) {
+                        typeBadgeBg = '#fef9c3';
+                        typeBadgeColor = '#854d0e';
+                      } else if (rawType.includes('PRESS')) {
+                        typeBadgeBg = '#dbeafe';
+                        typeBadgeColor = '#1e40af';
+                      } else if (rawType.includes('COMPLAINT')) {
+                        typeBadgeBg = '#fee2e2';
+                        typeBadgeColor = '#991b1b';
+                      }
+
+                      return `
+                        <tr>
+                          <td style="vertical-align:top;">
+                            <span style="font-size:10px;font-weight:800;letter-spacing:0.5px;padding:3px 7px;border-radius:4px;background:${typeBadgeBg};color:${typeBadgeColor};text-transform:uppercase;display:inline-block;">
+                              ${escapeHtml(rawType)}
+                            </span>
+                          </td>
+                          <td style="vertical-align:top;font-size:13px;"><strong style="color:#0f172a;">${escapeHtml(eq.name || 'Anonymous')}</strong></td>
+                          <td style="vertical-align:top;font-size:12.5px;color:#475569;">
+                            ${eq.email ? `<a href="mailto:${escapeHtml(eq.email)}" style="color:#2563eb;text-decoration:none;">${escapeHtml(eq.email)}</a>` : '—'}
+                          </td>
+                          <td style="vertical-align:top;max-width:440px;min-width:240px;">
+                            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:12.5px;color:#334155;line-height:1.55;max-height:130px;overflow-y:auto;overflow-x:hidden;word-break:break-word;overflow-wrap:anywhere;white-space:pre-wrap;">${escapeHtml(eq.message || '—')}</div>
+                          </td>
+                          <td style="vertical-align:top;font-size:11.5px;color:#64748b;white-space:nowrap;text-align:right;">
+                            ${formatDateTime(eq.createdAt, true)}
+                          </td>
+                        </tr>
+                      `;
+                    }).join('')}
                 </tbody>
               </table>
             </div>

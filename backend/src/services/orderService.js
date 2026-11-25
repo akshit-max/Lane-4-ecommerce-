@@ -609,6 +609,25 @@ class OrderService {
       } catch (_) {}
     }
 
+    // If order is returned, track financial & refund state
+    if (newStatus === 'returned' && currentStatus !== 'returned') {
+      orderUpdates.returnedAt = now;
+      orderUpdates.returnedBy = adminUser.email || adminUser.uid;
+      if (orderData.paymentStatus === 'verified' && orderData.refundStatus !== 'refunded') {
+        orderUpdates.refundStatus = 'pending_refund';
+        orderUpdates.financialStatus = 'returned_refund_pending';
+        orderUpdates.refundDetails = {
+          refundId: 'ref_ret_' + Date.now(),
+          originalAmountPaise: (orderData.pricing && orderData.pricing.finalPayablePaise) || 0,
+          refundAmountPaise: (orderData.pricing && orderData.pricing.finalPayablePaise) || 0,
+          status: 'pending_refund',
+          initiatedAt: now,
+          initiatedBy: adminUser.email || adminUser.uid,
+          reason: 'Order marked returned by administrator - refund pending'
+        };
+      }
+    }
+
     // If order is cancelled, restore stock across inventory and product catalogs
     if (newStatus === 'cancelled' && currentStatus !== 'cancelled') {
       orderUpdates.cancelledAt = now;
@@ -894,6 +913,21 @@ class OrderService {
       refundDetails,
       updatedAt: now
     });
+
+    // Also update any matching returns request in returns collection
+    try {
+      const retSnap = await db.collection('returns').where('orderId', '==', orderDoc.id).get();
+      for (const rDoc of retSnap.docs) {
+        if (rDoc.data().status !== 'refunded') {
+          await rDoc.ref.update({
+            status: 'refunded',
+            refundReference: cleanRef,
+            adminNotes: notes.trim() || 'Refund processed via admin portal',
+            updatedAt: now
+          });
+        }
+      }
+    } catch (_) {}
 
     await db.collection('adminActivityLogs').add({
       adminUid: adminUser.uid,

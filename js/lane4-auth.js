@@ -1546,6 +1546,15 @@ window.INDIAN_STATES = [
         });
 
         const ret = res.data;
+
+        // Broadcast real-time return submission to admin portal with zero latency
+        if (orderSyncChannel) {
+          orderSyncChannel.postMessage({ type: 'return_submitted', orderId: ord.orderId || orderRef, returnId: ret.returnId, timestamp: Date.now() });
+        }
+        try {
+          localStorage.setItem('lane4_return_updated', JSON.stringify({ orderId: ord.orderId || orderRef, returnId: ret.returnId, timestamp: Date.now() }));
+        } catch (_) {}
+
         returnForm.style.display = 'none';
         if (returnSuccess) {
           returnSuccess.style.display = 'block';
