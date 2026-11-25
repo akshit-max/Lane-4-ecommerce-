@@ -68,7 +68,7 @@ window.LANE4_CONFIG = window.LANE4_CONFIG || {
     const baseUrl = (window.LANE4_CONFIG && window.LANE4_CONFIG.API_BASE_URL) || '/api';
     fetch(`${baseUrl}/health`, { method: 'GET', keepalive: true, cache: 'no-store' }).catch(() => {});
     if (window.location.hostname && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
-      fetch('https://lane4-backend.onrender.com/api/health', { method: 'GET', mode: 'cors', keepalive: true, cache: 'no-store' }).catch(() => {});
+      fetch('https://lane-4-ecommerce.onrender.com/api/health', { method: 'GET', mode: 'cors', keepalive: true, cache: 'no-store' }).catch(() => {});
     }
   } catch (_) {}
 })();
