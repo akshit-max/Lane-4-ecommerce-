@@ -95,7 +95,7 @@ var formatDateString = window.formatDateString || formatDateTime;
 
     return `
       <div style="display:flex;flex-direction:column;gap:3px;">
-        <div style="font-weight:700;font-size:13px;color:#0f172a;display:inline-flex;align-items:center;gap:6px;">
+        <div style="font-weight:700;font-size:13px;color:#111111;display:inline-flex;align-items:center;gap:6px;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           <span>${escapeHtml(dateStr)}</span>
         </div>
@@ -148,7 +148,7 @@ var formatDateString = window.formatDateString || formatDateTime;
       icon = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>';
     }
 
-    return `<span style="display:inline-flex;align-items:center;background:#f8fafc;border:1px solid #e2e8f0;padding:3px 8px;border-radius:4px;font-family:monospace;font-size:11px;font-weight:600;color:#334155;" title="${escapeHtml(`${resType}/${resId}`)}">${icon}${escapeHtml(`${resType}/${shortId}`)}</span>`;
+    return `<span style="display:inline-flex;align-items:center;background:#f8fafc;border:1px solid #e2e8f0;padding:3px 8px;border-radius:0px;font-family:monospace;font-size:11px;font-weight:600;color:#334155;" title="${escapeHtml(`${resType}/${resId}`)}">${icon}${escapeHtml(`${resType}/${shortId}`)}</span>`;
   }
 
   function formatLogDetails(action, details, resourceType, resourceId) {
@@ -163,11 +163,11 @@ var formatDateString = window.formatDateString || formatDateTime;
       return `
         <div style="display:flex;flex-direction:column;gap:5px;max-width:520px;">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-            <span style="font-weight:700;color:#0f172a;font-size:13px;display:inline-flex;align-items:center;gap:4px;">
+            <span style="font-weight:700;color:#111111;font-size:13px;display:inline-flex;align-items:center;gap:4px;">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
               ${escapeHtml(d.courierName || 'Courier')}
             </span>
-            <span style="background:#f1f5f9;color:#0f172a;padding:2px 8px;border-radius:4px;font-family:monospace;font-size:12px;font-weight:700;border:1px solid #e2e8f0;">
+            <span style="background:#f1f5f9;color:#111111;padding:2px 8px;border-radius:0px;font-family:monospace;font-size:12px;font-weight:700;border:1px solid #e2e8f0;">
               AWB: ${escapeHtml(d.trackingNumber || '—')}
             </span>
           </div>
@@ -179,11 +179,11 @@ var formatDateString = window.formatDateString || formatDateTime;
     if (action === 'admin_login') {
       return `
         <div style="display:inline-flex;align-items:center;gap:8px;font-size:12px;">
-          <span style="display:inline-flex;align-items:center;gap:4px;color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0;padding:2px 8px;border-radius:4px;font-weight:700;">
+          <span style="display:inline-flex;align-items:center;gap:4px;color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0;padding:2px 8px;border-radius:0px;font-weight:700;">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             Authenticated Session
           </span>
-          <span style="font-family:monospace;font-size:11px;color:#64748b;background:#f8fafc;border:1px solid #e2e8f0;padding:2px 6px;border-radius:4px;">
+          <span style="font-family:monospace;font-size:11px;color:#64748b;background:#f8fafc;border:1px solid #e2e8f0;padding:2px 6px;border-radius:0px;">
             IP: ${escapeHtml(d.ip || '127.0.0.1')}
           </span>
         </div>
@@ -196,7 +196,7 @@ var formatDateString = window.formatDateString || formatDateTime;
       const next = (d.newStatus || '—').replace(/_/g, ' ').toUpperCase();
       return `
         <div style="display:inline-flex;align-items:center;gap:8px;font-size:12px;">
-          <span style="color:#64748b;background:#f1f5f9;padding:2px 8px;border-radius:4px;font-weight:600;text-decoration:line-through;">${escapeHtml(prev)}</span>
+          <span style="color:#64748b;background:#f1f5f9;padding:2px 8px;border-radius:0px;font-weight:600;text-decoration:line-through;">${escapeHtml(prev)}</span>
           <span style="color:#94a3b8;font-weight:800;">&rarr;</span>
           <span class="badge badge-${escapeHtml(d.newStatus || 'active')}" style="padding:3px 9px;">${escapeHtml(next)}</span>
         </div>
@@ -210,8 +210,8 @@ var formatDateString = window.formatDateString || formatDateTime;
         <div style="display:flex;flex-direction:column;gap:4px;max-width:520px;">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <span style="color:#16a34a;font-weight:700;font-size:12px;">Payment Approved</span>
-            ${amount ? `<span style="font-weight:800;color:#0f172a;font-size:12px;">${amount}</span>` : ''}
-            ${d.upiReferenceNumber ? `<span style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:11px;color:#334155;border:1px solid #e2e8f0;">UTR: ${escapeHtml(d.upiReferenceNumber)}</span>` : ''}
+            ${amount ? `<span style="font-weight:800;color:#111111;font-size:12px;">${amount}</span>` : ''}
+            ${d.upiReferenceNumber ? `<span style="background:#f1f5f9;padding:2px 6px;border-radius:0px;font-family:monospace;font-size:11px;color:#334155;border:1px solid #e2e8f0;">UTR: ${escapeHtml(d.upiReferenceNumber)}</span>` : ''}
           </div>
           ${d.internalNote ? `<div style="font-size:11px;color:#64748b;font-style:italic;">Note: "${escapeHtml(d.internalNote)}"</div>` : ''}
         </div>
@@ -223,7 +223,7 @@ var formatDateString = window.formatDateString || formatDateTime;
       return `
         <div style="display:flex;flex-direction:column;gap:4px;max-width:520px;">
           <span style="color:#dc2626;font-weight:700;font-size:12px;">Payment Rejected</span>
-          ${d.reason ? `<div style="font-size:11px;color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;padding:4px 8px;border-radius:4px;">Reason: ${escapeHtml(d.reason)}</div>` : ''}
+          ${d.reason ? `<div style="font-size:11px;color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;padding:4px 8px;border-radius:0px;">Reason: ${escapeHtml(d.reason)}</div>` : ''}
         </div>
       `;
     }
@@ -233,8 +233,8 @@ var formatDateString = window.formatDateString || formatDateTime;
       const diff = d.difference !== undefined ? d.difference : (d.newAvailable - d.previousAvailable);
       return `
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;">
-          <code style="background:#f1f5f9;border:1px solid #e2e8f0;padding:2px 6px;border-radius:4px;font-weight:700;">${escapeHtml(d.sku || '')}</code>
-          <span>Stock: ${d.previousAvailable ?? '—'} &rarr; <strong style="color:#0f172a;">${d.newAvailable ?? '—'}</strong></span>
+          <code style="background:#f1f5f9;border:1px solid #e2e8f0;padding:2px 6px;border-radius:0px;font-weight:700;">${escapeHtml(d.sku || '')}</code>
+          <span>Stock: ${d.previousAvailable ?? '—'} &rarr; <strong style="color:#111111;">${d.newAvailable ?? '—'}</strong></span>
           ${diff !== undefined && !isNaN(diff) ? `<span style="color:${diff >= 0 ? '#16a34a' : '#dc2626'};font-weight:700;">(${diff > 0 ? '+' : ''}${diff})</span>` : ''}
           ${d.reason ? `<span style="font-size:11px;color:#64748b;font-style:italic;">"${escapeHtml(d.reason)}"</span>` : ''}
         </div>
@@ -259,9 +259,9 @@ var formatDateString = window.formatDateString || formatDateTime;
           let displayVal = typeof v === 'object' ? JSON.stringify(v) : String(v);
           if (displayVal.length > 50) displayVal = displayVal.slice(0, 47) + '...';
           return `
-            <span style="display:inline-flex;align-items:center;gap:4px;background:#f8fafc;border:1px solid #e2e8f0;padding:3px 8px;border-radius:4px;font-size:11px;">
+            <span style="display:inline-flex;align-items:center;gap:4px;background:#f8fafc;border:1px solid #e2e8f0;padding:3px 8px;border-radius:0px;font-size:11px;">
               <span style="color:#64748b;font-weight:500;">${escapeHtml(label)}:</span>
-              <strong style="color:#0f172a;font-weight:700;">${escapeHtml(displayVal)}</strong>
+              <strong style="color:#111111;font-weight:700;">${escapeHtml(displayVal)}</strong>
             </span>
           `;
         }).join('')}
@@ -402,18 +402,76 @@ var formatDateString = window.formatDateString || formatDateTime;
     } catch (_) {}
   }
 
+  const VIEW_PERMISSIONS = {
+    dashboard: 'dashboard:read',
+    payments: 'payments:read',
+    orders: 'orders:read',
+    inventory: 'inventory:read',
+    products: 'products:read',
+    categories: 'categories:read',
+    coupons: 'coupons:read',
+    customers: 'customers:read',
+    enquiries: 'enquiries:read',
+    reviews: 'reviews:read',
+    returns: 'returns:read',
+    settings: 'settings:read',
+    logs: 'super_admin'
+  };
+
+  function hasAdminPermission(perm) {
+    if (!activeAdmin) {
+      try {
+        const stored = localStorage.getItem('lane4_admin_user');
+        if (stored) activeAdmin = JSON.parse(stored);
+      } catch (_) {}
+    }
+    if (!activeAdmin) return false;
+    if (activeAdmin.role === 'super_admin') return true;
+    if (perm === 'super_admin') return activeAdmin.role === 'super_admin';
+    const permissions = Array.isArray(activeAdmin.permissions) ? activeAdmin.permissions : [];
+    return permissions.includes(perm);
+  }
+  window.hasAdminPermission = hasAdminPermission;
+
+  function applyRoleAwareNavigation() {
+    if (!activeAdmin) return;
+    const navItems = document.querySelectorAll('.sidebar-nav .nav-item[data-view]');
+    navItems.forEach(item => {
+      const view = item.getAttribute('data-view');
+      const requiredPerm = VIEW_PERMISSIONS[view];
+      if (requiredPerm && !hasAdminPermission(requiredPerm)) {
+        item.style.display = 'none';
+        item.setAttribute('aria-hidden', 'true');
+      } else {
+        item.style.display = '';
+        item.removeAttribute('aria-hidden');
+      }
+    });
+
+    if (currentView && VIEW_PERMISSIONS[currentView] && !hasAdminPermission(VIEW_PERMISSIONS[currentView])) {
+      const permittedItem = Array.from(navItems).find(el => el.style.display !== 'none');
+      const fallbackView = permittedItem ? permittedItem.getAttribute('data-view') : 'dashboard';
+      if (typeof switchView === 'function') {
+        switchView(fallbackView, true);
+      }
+    }
+  }
+  window.applyRoleAwareNavigation = applyRoleAwareNavigation;
+
   function updateAdminUserDisplay(admin) {
     const userDisplay = document.getElementById('admin-user-display');
     if (!userDisplay) return;
     const email = (admin && admin.email) || 'admin@lane4swim.in';
+    const roleText = (admin && admin.role) ? admin.role.replace(/_/g, ' ').toUpperCase() : 'STAFF';
     userDisplay.innerHTML = `
-      <div style="font-weight:700;color:#f8fafc;font-size:12px;line-height:1.2;">Staff: Chief Admin</div>
+      <div style="font-weight:700;color:#f8fafc;font-size:12px;line-height:1.2;">Staff: ${escapeHtml(roleText)}</div>
       <div style="font-size:11px;color:#94a3b8;line-height:1.2;margin-top:2px;">${escapeHtml(email)}</div>
       <div style="font-size:10px;color:#64748b;margin-top:4px;display:flex;align-items:center;gap:4px;">
         <span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#22c55e;"></span>
         <span>Secure Session (15m auto-lock)</span>
       </div>
     `;
+    applyRoleAwareNavigation();
   }
 
   async function checkAdminAuth() {
@@ -746,6 +804,14 @@ var formatDateString = window.formatDateString || formatDateTime;
 
   function switchView(viewName, skipHash) {
     if (!viewName) viewName = 'dashboard';
+
+    // Defensive role and permission check
+    const requiredPerm = VIEW_PERMISSIONS[viewName];
+    if (requiredPerm && !hasAdminPermission(requiredPerm)) {
+      showToast('Access restricted: You do not have permission to view this section.', 'warning');
+      return;
+    }
+
     currentView = viewName;
     window.currentView = viewName;
     if (!skipHash) {
@@ -851,14 +917,14 @@ var formatDateString = window.formatDateString || formatDateTime;
       return `
         <div style="animation:adminPulse 1.2s ease-in-out infinite;">
           <div class="metrics-grid">
-            <div class="stat-card" style="height:115px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;"></div>
-            <div class="stat-card" style="height:115px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;"></div>
-            <div class="stat-card" style="height:115px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;"></div>
-            <div class="stat-card" style="height:115px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;"></div>
+            <div class="stat-card" style="height:115px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:0px;"></div>
+            <div class="stat-card" style="height:115px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:0px;"></div>
+            <div class="stat-card" style="height:115px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:0px;"></div>
+            <div class="stat-card" style="height:115px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:0px;"></div>
           </div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:24px;margin-top:24px;">
-            <div class="card" style="height:320px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;"></div>
-            <div class="card" style="height:320px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;"></div>
+            <div class="card" style="height:320px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:0px;"></div>
+            <div class="card" style="height:320px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:0px;"></div>
           </div>
         </div>
       `;
@@ -866,23 +932,23 @@ var formatDateString = window.formatDateString || formatDateTime;
     if (type === 'settings') {
       return `
         <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));gap:24px;animation:adminPulse 1.2s ease-in-out infinite;">
-          <div class="card" style="height:380px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;"></div>
-          <div class="card" style="height:380px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;"></div>
+          <div class="card" style="height:380px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:0px;"></div>
+          <div class="card" style="height:380px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:0px;"></div>
         </div>
       `;
     }
     // Table view skeleton (orders, payments, products, inventory, coupons, etc.)
     return `
-      <div class="card" style="border:1px solid #e2e8f0;border-radius:12px;background:#ffffff;animation:adminPulse 1.2s ease-in-out infinite;">
+      <div class="card" style="border:1px solid #e2e8f0;border-radius:0px;background:#ffffff;animation:adminPulse 1.2s ease-in-out infinite;">
         <div class="card-header" style="height:60px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;padding:0 24px;">
-          <div style="height:18px;width:190px;background:#e2e8f0;border-radius:4px;"></div>
+          <div style="height:18px;width:190px;background:#e2e8f0;border-radius:0px;"></div>
         </div>
         <div style="padding:24px;">
-          <div style="height:38px;background:#f1f5f9;border-radius:6px;margin-bottom:14px;"></div>
-          <div style="height:34px;background:#f8fafc;border-radius:6px;margin-bottom:10px;"></div>
-          <div style="height:34px;background:#f8fafc;border-radius:6px;margin-bottom:10px;"></div>
-          <div style="height:34px;background:#f8fafc;border-radius:6px;margin-bottom:10px;"></div>
-          <div style="height:34px;background:#f8fafc;border-radius:6px;margin-bottom:10px;"></div>
+          <div style="height:38px;background:#f1f5f9;border-radius:0px;margin-bottom:14px;"></div>
+          <div style="height:34px;background:#f8fafc;border-radius:0px;margin-bottom:10px;"></div>
+          <div style="height:34px;background:#f8fafc;border-radius:0px;margin-bottom:10px;"></div>
+          <div style="height:34px;background:#f8fafc;border-radius:0px;margin-bottom:10px;"></div>
+          <div style="height:34px;background:#f8fafc;border-radius:0px;margin-bottom:10px;"></div>
         </div>
       </div>
     `;
@@ -903,7 +969,7 @@ var formatDateString = window.formatDateString || formatDateTime;
     }
 
     modalBody.innerHTML = `
-      <div style="font-size:18px;font-weight:900;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;letter-spacing:-0.2px;color:#0f172a;">
+      <div style="font-size:18px;font-weight:900;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;letter-spacing:-0.2px;color:#111111;">
         <span>${title}</span>
       </div>
       <div>${bodyHtml}</div>
@@ -958,6 +1024,274 @@ var formatDateString = window.formatDateString || formatDateTime;
     });
   }
 
+  // --- AUTHENTICATED CSV EXPORTS ---
+  async function downloadAdminCsv(endpoint, defaultFilename) {
+    showTopLoader();
+    const token = localStorage.getItem('lane4_admin_token');
+    if (!token) {
+      showToast('Authentication required. Please sign in.', 'error');
+      return;
+    }
+    const baseUrl = (window.LANE4_CONFIG && window.LANE4_CONFIG.API_BASE_URL) || '/api';
+    const url = `${baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        let errorMsg = `Export failed with status ${response.status}`;
+        try {
+          const errJson = await response.json();
+          if (errJson && errJson.message) errorMsg = errJson.message;
+        } catch (_) {}
+        showToast(errorMsg, 'error');
+        return;
+      }
+
+      const blob = await response.blob();
+      if (!blob || blob.size === 0) {
+        showToast('No records found to export.', 'info');
+        return;
+      }
+
+      let filename = defaultFilename;
+      const disposition = response.headers.get('Content-Disposition');
+      if (disposition && disposition.includes('filename=')) {
+        const match = disposition.match(/filename=["']?([^"';]+)["']?/);
+        if (match && match[1]) filename = match[1];
+      }
+
+      const objectUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(objectUrl);
+
+      showToast(`Export downloaded: ${filename}`, 'success');
+    } catch (err) {
+      showToast(`Export error: ${err.message}`, 'error');
+    } finally {
+      hideTopLoader();
+    }
+  }
+
+  window.downloadAdminCsv = downloadAdminCsv;
+  window.exportOrdersCsv = () => downloadAdminCsv('/admin/exports/orders', 'lane4_orders.csv');
+  window.exportInventoryCsv = () => downloadAdminCsv('/admin/exports/inventory', 'lane4_inventory.csv');
+  window.exportCustomersCsv = () => {
+    if (!hasAdminPermission('customers:export')) {
+      showToast('Access restricted: Customer export permission required.', 'warning');
+      return;
+    }
+    downloadAdminCsv('/admin/exports/customers', 'lane4_customers.csv');
+  };
+
+  // --- GST TAX INVOICE VIEWER & DOWNLOAD ---
+  window.viewAdminInvoice = async function(orderId) {
+    showTopLoader();
+    try {
+      const res = await window.lane4ApiRequest(`/admin/orders/${encodeURIComponent(orderId)}/invoice`);
+      if (!res || !res.data) {
+        throw new Error((res && res.message) || 'Could not retrieve tax invoice.');
+      }
+      renderInvoiceModal(res.data);
+    } catch (err) {
+      showToast(`Invoice retrieval error: ${err.message}`, 'error');
+    } finally {
+      hideTopLoader();
+    }
+  };
+
+  function renderInvoiceModal(inv) {
+    const isInterState = inv.placeOfSupply && inv.placeOfSupply.taxType && inv.placeOfSupply.taxType.includes('INTER_STATE');
+    const isProvisional = !inv.seller.isCertifiedGstin || inv.isProvisionalDraft || !inv.seller.gstin;
+    const itemsHtml = (inv.items || []).map((it, idx) => `
+      <tr style="border-bottom:1px solid #e2e8f0;font-size:12px;">
+        <td style="padding:8px 6px;text-align:center;">${idx + 1}</td>
+        <td style="padding:8px 6px;">
+          <strong>${escapeHtml(it.description || it.name || 'Item')}</strong>
+          ${it.variantName ? `<div style="font-size:10.5px;color:#64748b;">${escapeHtml(it.variantName)}</div>` : ''}
+        </td>
+        <td style="padding:8px 6px;text-align:center;"><code>${escapeHtml(it.hsnCode || '—')}</code></td>
+        <td style="padding:8px 6px;text-align:center;">${it.quantity}</td>
+        <td style="padding:8px 6px;text-align:right;">₹${it.taxableAmountFormatted}</td>
+        ${!isInterState ? `
+          <td style="padding:8px 6px;text-align:right;">₹${it.cgstAmountFormatted} <span style="font-size:10px;color:#64748b;">(${it.cgstRate || ((it.gstRate||18)/2)}%)</span></td>
+          <td style="padding:8px 6px;text-align:right;">₹${it.sgstAmountFormatted} <span style="font-size:10px;color:#64748b;">(${it.sgstRate || ((it.gstRate||18)/2)}%)</span></td>
+        ` : `
+          <td style="padding:8px 6px;text-align:right;" colspan="2">₹${it.igstAmountFormatted} <span style="font-size:10px;color:#64748b;">(${it.igstRate || it.gstRate || 18}%)</span></td>
+        `}
+        <td style="padding:8px 6px;text-align:right;font-weight:700;">₹${it.lineTotalFormatted}</td>
+      </tr>
+    `).join('');
+
+    const shippingRow = inv.shipping && inv.shipping.chargesPaise > 0 ? `
+      <tr style="border-bottom:1px solid #e2e8f0;font-size:12px;background:#f8fafc;">
+        <td style="padding:8px 6px;text-align:center;">#</td>
+        <td style="padding:8px 6px;"><strong>PAN India Express Delivery</strong></td>
+        <td style="padding:8px 6px;text-align:center;"><code>${inv.shipping.sacCode || '9968'}</code></td>
+        <td style="padding:8px 6px;text-align:center;">1</td>
+        <td style="padding:8px 6px;text-align:right;">₹${inv.shipping.taxableFormatted}</td>
+        ${!isInterState ? `
+          <td style="padding:8px 6px;text-align:right;">₹${(inv.shipping.cgstPaise / 100).toFixed(2)}</td>
+          <td style="padding:8px 6px;text-align:right;">₹${(inv.shipping.sgstPaise / 100).toFixed(2)}</td>
+        ` : `
+          <td style="padding:8px 6px;text-align:right;" colspan="2">₹${(inv.shipping.igstPaise / 100).toFixed(2)}</td>
+        `}
+        <td style="padding:8px 6px;text-align:right;font-weight:700;">₹${inv.shipping.chargesFormatted}</td>
+      </tr>
+    ` : '';
+
+    const modalHtml = `
+      <div id="lane4-printable-invoice" style="font-family:'General Sans',sans-serif;color:#111111;line-height:1.4;">
+        ${isProvisional ? `
+          <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:0px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.5" style="flex-shrink:0;margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div>
+              <div style="font-size:12px;font-weight:800;color:#92400e;">PROVISIONAL ESTIMATE / DRAFT — NOT A CERTIFIED TAX INVOICE</div>
+              <div style="font-size:11px;color:#b45309;margin-top:2px;line-height:1.4;">Store GSTIN registration is pending client confirmation. This document is an uncertified operational estimate and must not be used as official tax documentation.</div>
+            </div>
+          </div>
+        ` : ''}
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #111111;padding-bottom:12px;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+          <div>
+            <div style="font-size:18px;font-weight:900;letter-spacing:-0.5px;text-transform:uppercase;">${escapeHtml(inv.seller.legalName || 'The Lane4 Performance Store')}</div>
+            <div style="font-size:11.5px;color:#475569;">${escapeHtml(typeof inv.seller.address === 'string' ? inv.seller.address : ((inv.seller.address && inv.seller.address.street) || 'Nagpur, Maharashtra, India'))}</div>
+            <div style="font-size:11.5px;color:#111111;margin-top:2px;">
+              <strong>GSTIN:</strong> ${inv.seller.gstin && inv.seller.isCertifiedGstin ? `<code>${escapeHtml(inv.seller.gstin)}</code>` : `<span style="color:#b45309;font-weight:700;">Unregistered / Pending Client GSTIN</span>`} &bull; <strong>State Code:</strong> ${escapeHtml(inv.seller.stateCode || '27')}
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:13px;font-weight:800;color:${isProvisional ? '#d97706' : '#0284c7'};text-transform:uppercase;letter-spacing:1px;">${isProvisional ? 'Provisional Draft Invoice' : 'Tax Invoice'}</div>
+            <div style="font-size:15px;font-weight:900;color:#111111;margin-top:2px;">${escapeHtml(inv.invoiceNumber)}</div>
+            <div style="font-size:11.5px;color:#64748b;">Date: ${formatDateTime(inv.invoiceDate, true)}</div>
+            <div style="font-size:11.5px;color:#64748b;">Order Ref: #${escapeHtml(inv.orderNumber)}</div>
+          </div>
+        </div>
+
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:0px;padding:10px 14px;margin-bottom:14px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:12px;">
+          <div>
+            <div style="font-size:10.5px;font-weight:800;color:#64748b;text-transform:uppercase;margin-bottom:2px;">Billed &amp; Shipped To:</div>
+            <div style="font-weight:800;color:#111111;font-size:13px;">${escapeHtml(inv.buyer.name)}</div>
+            <div>${escapeHtml(inv.buyer.addressLine1 || '')} ${escapeHtml(inv.buyer.addressLine2 || '')}</div>
+            <div>${escapeHtml(inv.buyer.city || '')}, ${escapeHtml(inv.buyer.state || '')} — PIN ${escapeHtml(inv.buyer.postalCode || '')}</div>
+            <div>Phone: ${escapeHtml(inv.buyer.phone || '—')} &bull; Email: ${escapeHtml(inv.buyer.email || '—')}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:10.5px;font-weight:800;color:#64748b;text-transform:uppercase;margin-bottom:2px;">Place of Supply:</div>
+            <div style="font-weight:700;">${escapeHtml(inv.placeOfSupply.state)} (${escapeHtml(inv.placeOfSupply.stateCode)})</div>
+            <div style="font-size:11px;color:#0284c7;font-weight:700;">${escapeHtml(inv.placeOfSupply.taxType)}</div>
+            <div style="font-size:11px;color:#16a34a;margin-top:4px;">Payment: ${(inv.paymentStatus || 'paid').toUpperCase()} (${escapeHtml(inv.paymentMethod || 'UPI')})</div>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;margin-bottom:14px;">
+          <table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;">
+            <thead>
+              <tr style="background:#111111;color:#ffffff;font-size:11px;text-transform:uppercase;">
+                <th style="padding:8px 6px;text-align:center;">#</th>
+                <th style="padding:8px 6px;text-align:left;">Item Description</th>
+                <th style="padding:8px 6px;text-align:center;">HSN</th>
+                <th style="padding:8px 6px;text-align:center;">Qty</th>
+                <th style="padding:8px 6px;text-align:right;">Taxable Val</th>
+                ${!isInterState ? `
+                  <th style="padding:8px 6px;text-align:right;">CGST</th>
+                  <th style="padding:8px 6px;text-align:right;">SGST</th>
+                ` : `
+                  <th style="padding:8px 6px;text-align:right;" colspan="2">IGST</th>
+                `}
+                <th style="padding:8px 6px;text-align:right;">Total (₹)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+              ${shippingRow}
+            </tbody>
+          </table>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+          <div style="width:280px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:0px;padding:10px 14px;font-size:12px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+              <span>Total Taxable Amount:</span>
+              <span style="font-weight:700;">₹${inv.summary.totalTaxableFormatted}</span>
+            </div>
+            ${!isInterState ? `
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px;color:#475569;">
+                <span>Total CGST:</span>
+                <span>₹${inv.summary.totalCgstFormatted}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px;color:#475569;">
+                <span>Total SGST:</span>
+                <span>₹${inv.summary.totalSgstFormatted}</span>
+              </div>
+            ` : `
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px;color:#475569;">
+                <span>Total IGST:</span>
+                <span>₹${inv.summary.totalIgstFormatted}</span>
+              </div>
+            `}
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;color:#0284c7;font-weight:700;">
+              <span>Total Tax:</span>
+              <span>₹${inv.summary.totalTaxFormatted}</span>
+            </div>
+            <div style="border-top:1.5px solid #111111;padding-top:6px;display:flex;justify-content:space-between;font-size:14px;font-weight:900;color:#111111;">
+              <span>Grand Total:</span>
+              <span>₹${inv.summary.grandTotalFormatted}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#f1f5f9;border-left:3px solid ${isProvisional ? '#d97706' : '#0284c7'};padding:8px 12px;font-size:11px;color:#64748b;margin-bottom:14px;">
+          <div><strong>Digital Integrity Seal:</strong> <code>${(inv.integrity && inv.integrity.fingerprint) ? inv.integrity.fingerprint.slice(0, 32) + '...' : (inv.sha256Fingerprint ? inv.sha256Fingerprint.slice(0, 32) + '...' : 'AUTHENTIC_VERIFIED')}</code></div>
+          ${!isProvisional ? `
+            <div>Computer-generated tax invoice issued in compliance with the Central Goods and Services Tax (CGST) Act, 2017.</div>
+          ` : `
+            <div style="color:#b45309;font-weight:600;margin-top:2px;">Provisional operational estimate. Commercial tax invoice issuance requires certified GST registration.</div>
+          `}
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:10px;border-top:1px solid #e2e8f0;">
+          <button type="button" class="btn btn-outline" style="font-size:12px;padding:7px 14px;cursor:pointer;" onclick="window.downloadInvoiceJson('${inv.invoiceNumber}')">
+            📥 Download JSON
+          </button>
+          <button type="button" class="btn btn-primary" style="background:#111111;color:#fff;font-size:12px;padding:7px 16px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" onclick="window.printInvoice()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            <span>Print Invoice</span>
+          </button>
+        </div>
+      </div>
+    `;
+
+    window.currentInvoiceData = inv;
+    showModal(`GST Tax Invoice — ${inv.invoiceNumber}`, modalHtml);
+  }
+
+  window.printInvoice = function() {
+    window.print();
+  };
+
+  window.downloadInvoiceJson = function(invoiceNumber) {
+    if (!window.currentInvoiceData) return;
+    const blob = new Blob([JSON.stringify(window.currentInvoiceData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `invoice_${invoiceNumber || 'gst'}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   function showThemedConfirm({ title, message, confirmText = 'Confirm', cancelText = 'Cancel', isDanger = true }) {
     return new Promise((resolve) => {
       const modal = document.getElementById('admin-modal');
@@ -973,7 +1307,7 @@ var formatDateString = window.formatDateString || formatDateTime;
 
       modalBody.innerHTML = `
         <div style="display:flex;flex-direction:column;gap:18px;">
-          <div style="background:${isDanger ? '#fef2f2' : '#f8fafc'};border:1px solid ${isDanger ? '#fee2e2' : '#e2e8f0'};border-radius:10px;padding:16px;display:flex;align-items:flex-start;gap:14px;">
+          <div style="background:${isDanger ? '#fef2f2' : '#f8fafc'};border:1px solid ${isDanger ? '#fee2e2' : '#e2e8f0'};border-radius:0px;padding:16px;display:flex;align-items:flex-start;gap:14px;">
             <div style="width:38px;height:38px;border-radius:50%;background:${isDanger ? '#fee2e2' : '#e0f2fe'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
               ${isDanger ? `
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -990,7 +1324,7 @@ var formatDateString = window.formatDateString || formatDateTime;
               `}
             </div>
             <div>
-              <div style="font-size:16px;font-weight:800;color:${isDanger ? '#991b1b' : '#0f172a'};margin-bottom:4px;">${title}</div>
+              <div style="font-size:16px;font-weight:800;color:${isDanger ? '#991b1b' : '#111111'};margin-bottom:4px;">${title}</div>
               <div style="font-size:13.5px;color:${isDanger ? '#7f1d1d' : '#475569'};line-height:1.5;">${message}</div>
             </div>
           </div>
@@ -1104,7 +1438,7 @@ var formatDateString = window.formatDateString || formatDateTime;
       background: #ffffff;
       border: 1px solid #e2e8f0;
       border-left: 4px solid ${statusConfig.accentBorder};
-      border-radius: 8px;
+      border-radius:0px;
       box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
       padding: 13px 16px;
       display: flex;
@@ -1126,11 +1460,11 @@ var formatDateString = window.formatDateString || formatDateTime;
         <div style="font-size:10.5px;font-weight:800;letter-spacing:0.07em;text-transform:uppercase;color:${statusConfig.statusColor};line-height:1.2;">
           ${escapeHtml(statusConfig.statusText)}
         </div>
-        <div style="font-size:13px;font-weight:600;color:#0f172a;line-height:1.4;margin-top:2px;word-break:break-word;">
+        <div style="font-size:13px;font-weight:600;color:#111111;line-height:1.4;margin-top:2px;word-break:break-word;">
           ${escapeHtml(message)}
         </div>
       </div>
-      <button type="button" onclick="hideToast()" style="background:none;border:none;color:#94a3b8;cursor:pointer;padding:4px;margin-left:4px;border-radius:4px;display:flex;align-items:center;justify-content:center;transition:color 0.15s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#94a3b8'" aria-label="Close notification" title="Close">
+      <button type="button" onclick="hideToast()" style="background:none;border:none;color:#94a3b8;cursor:pointer;padding:4px;margin-left:4px;border-radius:0px;display:flex;align-items:center;justify-content:center;transition:color 0.15s;" onmouseover="this.style.color='#111111'" onmouseout="this.style.color='#94a3b8'" aria-label="Close notification" title="Close">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     `;
@@ -1347,16 +1681,16 @@ var formatDateString = window.formatDateString || formatDateTime;
       display:flex;align-items:center;justify-content:center;z-index:9999999;padding:16px;box-sizing:border-box;
     `;
     modal.innerHTML = `
-      <div style="background:#ffffff;border-radius:12px;max-width:420px;width:100%;box-shadow:0 20px 30px -10px rgba(15,23,42,0.3);overflow:hidden;position:relative;">
+      <div style="background:#ffffff;border-radius:0px;max-width:420px;width:100%;box-shadow:0 20px 30px -10px rgba(15,23,42,0.3);overflow:hidden;position:relative;">
         <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;background:#ffffff;">
           <div>
             <div style="font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;">Storefront Payment QR</div>
-            <div style="font-size:16px;font-weight:900;color:#0f172a;margin-top:2px;">UPI Payment QR Preview</div>
+            <div style="font-size:16px;font-weight:900;color:#111111;margin-top:2px;">UPI Payment QR Preview</div>
           </div>
           <button type="button" id="lane4-qr-modal-close-icon" style="background:#f1f5f9;border:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#475569;font-size:18px;cursor:pointer;" title="Close">&times;</button>
         </div>
         <div style="padding:24px;text-align:center;background:#ffffff;">
-          <div style="background:#ffffff;border:2px solid #0f172a;border-radius:12px;padding:16px;display:inline-block;box-shadow:0 8px 24px -4px rgba(15,23,42,0.12);">
+          <div style="background:#ffffff;border:2px solid #111111;border-radius:0px;padding:16px;display:inline-block;box-shadow:0 8px 24px -4px rgba(15,23,42,0.12);">
             <img src="${currentImg}" alt="Enlarged Store UPI QR" style="width:260px;height:260px;max-width:65vw;max-height:65vw;object-fit:contain;display:block;margin:0 auto;" />
           </div>
           <div style="margin-top:14px;font-size:12px;color:#475569;font-weight:600;line-height:1.4;">
@@ -1365,7 +1699,7 @@ var formatDateString = window.formatDateString || formatDateTime;
         </div>
         <div style="padding:12px 20px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
           <span style="font-size:11px;color:#64748b;">Scan with any UPI app camera</span>
-          <button type="button" id="lane4-qr-modal-close-btn" class="btn" style="background:#0f172a;color:#ffffff;padding:8px 18px;font-size:12px;font-weight:800;border-radius:6px;cursor:pointer;">Close</button>
+          <button type="button" id="lane4-qr-modal-close-btn" class="btn" style="background:#111111;color:#ffffff;padding:8px 18px;font-size:12px;font-weight:800;border-radius:0px;cursor:pointer;">Close</button>
         </div>
       </div>
     `;
@@ -1420,7 +1754,7 @@ var formatDateString = window.formatDateString || formatDateTime;
           </div>
           <div class="stat-card">
             <div class="stat-label">Pending Payments</div>
-            <div class="stat-val" style="color:${m.pendingPaymentsCount > 0 ? '#ea580c' : '#0f172a'};">${m.pendingPaymentsCount}</div>
+            <div class="stat-val" style="color:${m.pendingPaymentsCount > 0 ? '#ea580c' : '#111111'};">${m.pendingPaymentsCount}</div>
             <div class="stat-sub">Requires staff verification</div>
           </div>
           <div class="stat-card">
@@ -1579,16 +1913,16 @@ var formatDateString = window.formatDateString || formatDateTime;
                         <tr>
                           <td><strong>#${p.orderNumber || p.orderId}</strong></td>
                           <td><strong>${window.LANE4.formatINR(p.amountPaise)}</strong></td>
-                          <td><code style="background:#f1f5f9;padding:4px 8px;border-radius:4px;font-weight:700;letter-spacing:0.5px;">${p.upiReferenceNumber}</code></td>
+                          <td><code style="background:#f1f5f9;padding:4px 8px;border-radius:0px;font-weight:700;letter-spacing:0.5px;">${p.upiReferenceNumber}</code></td>
                           <td style="vertical-align:middle;">
                             ${proofUrl ? `
                               <div style="display:inline-flex;align-items:center;gap:10px;">
                                 <div style="position:relative;cursor:pointer;flex-shrink:0;" onclick="viewPaymentDetail('${p.paymentId}')" title="Click to inspect uploaded customer screenshot">
                                   <img src="${proofUrl}" 
                                        alt="Payment Screenshot" 
-                                       style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #cbd5e1;background:#0f172a;box-shadow:0 1px 3px rgba(0,0,0,0.1);display:block;"
+                                       style="width:48px;height:48px;object-fit:cover;border-radius:0px;border:1px solid #cbd5e1;background:#111111;box-shadow:0 1px 3px rgba(0,0,0,0.1);display:block;"
                                        onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'48\\' height=\\'48\\' fill=\\'%2394a3b8\\' viewBox=\\'0 0 24 24\\'><path d=\\'M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z\\'/></svg>';" />
-                                  <span style="position:absolute;bottom:-4px;right:-4px;background:#0f172a;color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.4);border:1px solid #fff;">
+                                  <span style="position:absolute;bottom:-4px;right:-4px;background:#111111;color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.4);border:1px solid #fff;">
                                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                                   </span>
                                 </div>
@@ -1607,7 +1941,7 @@ var formatDateString = window.formatDateString || formatDateTime;
                               </div>
                             ` : `
                               <div style="display:inline-flex;align-items:center;gap:8px;">
-                                <span style="display:inline-flex;align-items:center;gap:5px;background:#fef3c7;color:#92400e;padding:4px 8px;border-radius:12px;font-size:11px;font-weight:700;">
+                                <span style="display:inline-flex;align-items:center;gap:5px;background:#fef3c7;color:#92400e;padding:4px 8px;border-radius:0px;font-size:11px;font-weight:700;">
                                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                                   Awaiting Upload
                                 </span>
@@ -1681,14 +2015,14 @@ var formatDateString = window.formatDateString || formatDateTime;
 
     showModal(`Payment Proof & Verification — #${p.orderNumber || p.orderId}`, `
       <div style="display:flex;flex-direction:column;gap:18px;">
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:0px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
           <div>
             <div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Order Information</div>
-            <div style="font-size:18px;font-weight:900;color:#0f172a;">Order #${p.orderNumber || p.orderId}</div>
+            <div style="font-size:18px;font-weight:900;color:#111111;">Order #${p.orderNumber || p.orderId}</div>
           </div>
           <div style="text-align:right;">
             <div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Payable Amount</div>
-            <div style="font-size:20px;font-weight:900;color:#0f172a;">${window.LANE4.formatINR(p.amountPaise)}</div>
+            <div style="font-size:20px;font-weight:900;color:#111111;">${window.LANE4.formatINR(p.amountPaise)}</div>
           </div>
         </div>
 
@@ -1702,11 +2036,11 @@ var formatDateString = window.formatDateString || formatDateTime;
               </a>
             ` : ''}
           </div>
-          <div style="background:#090d16;border-radius:10px;padding:16px;display:flex;justify-content:center;align-items:center;min-height:360px;max-height:540px;overflow:auto;border:1px solid #1e293b;">
+          <div style="background:#090d16;border-radius:0px;padding:16px;display:flex;justify-content:center;align-items:center;min-height:360px;max-height:540px;overflow:auto;border:1px solid #1e293b;">
             ${proofUrl ? `
               <img id="detail-proof-img" src="${proofUrl}" 
                    alt="Customer Payment Screenshot for Order #${p.orderNumber || p.orderId}" 
-                   style="max-width:100%;max-height:500px;object-fit:contain;border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,0.5);display:block;margin:auto;" />
+                   style="max-width:100%;max-height:500px;object-fit:contain;border-radius:0px;box-shadow:0 8px 30px rgba(0,0,0,0.5);display:block;margin:auto;" />
             ` : `
               <div style="padding:40px 20px;text-align:center;">
                 <div style="width:50px;height:50px;border-radius:50%;background:#1e293b;display:flex;align-items:center;justify-content:center;margin:0 auto 12px auto;color:#94a3b8;">
@@ -1719,11 +2053,11 @@ var formatDateString = window.formatDateString || formatDateTime;
           </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:14px;background:#f8fafc;padding:14px;border-radius:8px;border:1px solid #e2e8f0;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:14px;background:#f8fafc;padding:14px;border-radius:0px;border:1px solid #e2e8f0;">
           <div>
             <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">12-Digit UPI / UTR Ref</div>
             <div style="margin-top:4px;display:flex;align-items:center;gap:8px;">
-              <code style="font-size:15px;font-weight:800;background:#ffffff;border:1px solid #cbd5e1;padding:4px 8px;border-radius:4px;color:#0f172a;letter-spacing:1px;">${p.upiReferenceNumber || 'N/A'}</code>
+              <code style="font-size:15px;font-weight:800;background:#ffffff;border:1px solid #cbd5e1;padding:4px 8px;border-radius:0px;color:#111111;letter-spacing:1px;">${p.upiReferenceNumber || 'N/A'}</code>
               <button type="button" class="btn btn-outline" style="padding:3px 7px;font-size:11px;" onclick="navigator.clipboard.writeText('${p.upiReferenceNumber}');showToast('UTR copied to clipboard!');">Copy</button>
             </div>
           </div>
@@ -1767,7 +2101,7 @@ var formatDateString = window.formatDateString || formatDateTime;
           </div>
         `}
 
-        <div style="margin-top:6px;padding:14px;background:#f1f5f9;border-radius:8px;border:1px dashed #cbd5e1;">
+        <div style="margin-top:6px;padding:14px;background:#f1f5f9;border-radius:0px;border:1px dashed #cbd5e1;">
           <div style="font-size:12px;font-weight:800;color:#334155;margin-bottom:4px;">Upload Alternate / Updated Customer Screenshot:</div>
           <p style="font-size:11px;color:#64748b;margin:0 0 10px 0;">If customer provided a clearer payment screenshot via WhatsApp or support email, upload it here to attach directly to this payment record.</p>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
@@ -1824,7 +2158,7 @@ var formatDateString = window.formatDateString || formatDateTime;
 
     showModal('Verify & Approve Payment', `
       <div style="display:flex;flex-direction:column;gap:18px;">
-        <div style="background:#f0fdf4;border:1px solid #dcfce7;border-radius:10px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px;">
+        <div style="background:#f0fdf4;border:1px solid #dcfce7;border-radius:0px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px;">
           <div style="width:34px;height:34px;border-radius:50%;background:#dcfce7;display:flex;align-items:center;justify-content:center;color:#16a34a;flex-shrink:0;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
@@ -1834,15 +2168,15 @@ var formatDateString = window.formatDateString || formatDateTime;
           </div>
         </div>
 
-        <div style="display:flex;gap:12px;background:#f8fafc;padding:10px 14px;border-radius:8px;border:1px solid #e2e8f0;font-size:12px;color:#475569;">
-          <div><strong style="color:#0f172a;">12-digit UTR:</strong> <code>${utrStr}</code></div>
+        <div style="display:flex;gap:12px;background:#f8fafc;padding:10px 14px;border-radius:0px;border:1px solid #e2e8f0;font-size:12px;color:#475569;">
+          <div><strong style="color:#111111;">12-digit UTR:</strong> <code>${utrStr}</code></div>
         </div>
 
         <div>
           <label for="approve-note-input" class="form-label" style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;color:#334155;margin-bottom:6px;">
             Internal Staff Verification Note (Required)
           </label>
-          <input type="text" id="approve-note-input" class="form-input" style="width:100%;font-size:13.5px;padding:10px 12px;border:1.5px solid #cbd5e1;border-radius:6px;" value="" placeholder="Enter verification note (e.g. Verified in ICICI / UPI merchant dashboard)" />
+          <input type="text" id="approve-note-input" class="form-input" style="width:100%;font-size:13.5px;padding:10px 12px;border:1.5px solid #cbd5e1;border-radius:0px;" value="" placeholder="Enter verification note (e.g. Verified in ICICI / UPI merchant dashboard)" />
           <div style="font-size:11.5px;color:#64748b;margin-top:4px;">Saved in the administrative audit trail for reconciliation.</div>
         </div>
 
@@ -1914,7 +2248,7 @@ var formatDateString = window.formatDateString || formatDateTime;
   function showNextStepModal(orderId, orderNumber) {
     showModal('Payment Verified — Next Step', `
       <div style="display:flex;flex-direction:column;gap:18px;">
-        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px;display:flex;gap:14px;align-items:flex-start;">
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:0px;padding:16px;display:flex;gap:14px;align-items:flex-start;">
           <div style="width:38px;height:38px;border-radius:50%;background:#dcfce7;display:flex;align-items:center;justify-content:center;color:#16a34a;flex-shrink:0;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
@@ -1924,7 +2258,7 @@ var formatDateString = window.formatDateString || formatDateTime;
           </div>
         </div>
 
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;">
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:0px;padding:14px 16px;">
           <div style="font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:#475569;margin-bottom:8px;">Warehouse & Fulfillment Next Steps:</div>
           <ol style="margin:0;padding-left:18px;font-size:13px;color:#334155;line-height:1.7;">
             <li>Package the competition gear at the store.</li>
@@ -1974,7 +2308,7 @@ var formatDateString = window.formatDateString || formatDateTime;
 
     showModal('Reject Payment Submission', `
       <div style="display:flex;flex-direction:column;gap:18px;">
-        <div style="background:#fef2f2;border:1px solid #fee2e2;border-radius:10px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px;">
+        <div style="background:#fef2f2;border:1px solid #fee2e2;border-radius:0px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px;">
           <div style="width:34px;height:34px;border-radius:50%;background:#fee2e2;display:flex;align-items:center;justify-content:center;color:#dc2626;flex-shrink:0;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </div>
@@ -1984,8 +2318,8 @@ var formatDateString = window.formatDateString || formatDateTime;
           </div>
         </div>
 
-        <div style="display:flex;gap:12px;background:#f8fafc;padding:10px 14px;border-radius:8px;border:1px solid #e2e8f0;font-size:12px;color:#475569;">
-          <div><strong style="color:#0f172a;">12-digit UTR:</strong> <code>${utrStr}</code></div>
+        <div style="display:flex;gap:12px;background:#f8fafc;padding:10px 14px;border-radius:0px;border:1px solid #e2e8f0;font-size:12px;color:#475569;">
+          <div><strong style="color:#111111;">12-digit UTR:</strong> <code>${utrStr}</code></div>
         </div>
 
         <div>
@@ -2000,7 +2334,7 @@ var formatDateString = window.formatDateString || formatDateTime;
           <label for="reject-reason-input" class="form-label" style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;color:#334155;margin-bottom:6px;">
             Reason for Rejection <span style="color:#dc2626;">*</span>
           </label>
-          <textarea id="reject-reason-input" class="form-textarea" rows="3" style="width:100%;font-size:13.5px;font-family:inherit;padding:10px 12px;border:1.5px solid #cbd5e1;border-radius:6px;resize:vertical;" placeholder="Enter specific reason why this payment cannot be approved...">Transaction reference could not be matched with bank records.</textarea>
+          <textarea id="reject-reason-input" class="form-textarea" rows="3" style="width:100%;font-size:13.5px;font-family:inherit;padding:10px 12px;border:1.5px solid #cbd5e1;border-radius:0px;resize:vertical;" placeholder="Enter specific reason why this payment cannot be approved...">Transaction reference could not be matched with bank records.</textarea>
           <div id="reject-error-msg" style="display:none;color:#dc2626;font-size:12px;font-weight:600;margin-top:4px;">Please enter a reason for rejection.</div>
         </div>
 
@@ -2098,12 +2432,18 @@ var formatDateString = window.formatDateString || formatDateTime;
               <div class="card-title">Customer Orders & Fulfillment (${allOrders.length})</div>
               <div style="font-size:12px;color:#64748b;margin-top:2px;">Orders sorted with the newest transactions first. Update fulfillment and attach shipment tracking.</div>
             </div>
-            ${confirmedCount > 0 ? `
-              <div style="background:#f0fdf4;border:1px solid #bbf7d0;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:800;color:#166534;display:inline-flex;align-items:center;gap:6px;">
-                <span style="width:8px;height:8px;border-radius:50%;background:#16a34a;display:inline-block;"></span>
-                <span>${confirmedCount} Order${confirmedCount > 1 ? 's' : ''} Ready to Dispatch</span>
-              </div>
-            ` : ''}
+            <div style="display:flex;gap:8px;align-items:center;margin-left:auto;flex-wrap:wrap;">
+              ${confirmedCount > 0 ? `
+                <div style="background:#f0fdf4;border:1px solid #bbf7d0;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:800;color:#166534;display:inline-flex;align-items:center;gap:6px;">
+                  <span style="width:8px;height:8px;border-radius:50%;background:#16a34a;display:inline-block;"></span>
+                  <span>${confirmedCount} Order${confirmedCount > 1 ? 's' : ''} Ready to Dispatch</span>
+                </div>
+              ` : ''}
+              <button type="button" class="btn btn-outline" style="font-size:12px;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:0px;cursor:pointer;" onclick="exportOrdersCsv()" title="Export orders as CSV">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>Export Orders CSV</span>
+              </button>
+            </div>
           </div>
 
           <!-- Order Status Filter Tabs -->
@@ -2156,11 +2496,11 @@ var formatDateString = window.formatDateString || formatDateTime;
                       return `
                         <tr style="${isConfirmed ? 'background:#f0fdf4;' : ''}">
                           <td>
-                            <strong style="font-size:13.5px;color:#0f172a;display:block;">#${orderNum}</strong>
+                            <strong style="font-size:13.5px;color:#111111;display:block;">#${orderNum}</strong>
                             <span style="font-size:11px;color:#64748b;">${formatDateTime(o.createdAt)}</span>
                           </td>
                           <td>
-                            <div style="font-weight:800;color:#0f172a;">${escapeHtml((o.shippingAddress && o.shippingAddress.addressee) || 'Customer')}</div>
+                            <div style="font-weight:800;color:#111111;">${escapeHtml((o.shippingAddress && o.shippingAddress.addressee) || 'Customer')}</div>
                             <div style="font-size:12px;color:#475569;">${escapeHtml(o.customerEmail || '—')}</div>
                             <div style="font-size:11px;color:#64748b;">${o.shippingAddress ? `${escapeHtml(o.shippingAddress.city || '')}, PIN ${escapeHtml(o.shippingAddress.postalCode || '')}` : ''}</div>
                           </td>
@@ -2170,10 +2510,10 @@ var formatDateString = window.formatDateString || formatDateTime;
                             </div>
                           </td>
                           <td>
-                            <strong style="font-size:14px;color:#0f172a;">${o.pricing ? o.pricing.finalPayableFormatted : ''}</strong>
+                            <strong style="font-size:14px;color:#111111;">${o.pricing ? o.pricing.finalPayableFormatted : ''}</strong>
                             ${(o.pricing && o.pricing.couponCode) ? `
                               <div style="margin-top:3px;">
-                                <span style="font-size:10.5px;font-weight:800;background:#dcfce7;color:#15803d;padding:2px 7px;border-radius:4px;display:inline-flex;align-items:center;gap:4px;" title="Coupon applied">
+                                <span style="font-size:10.5px;font-weight:800;background:#dcfce7;color:#15803d;padding:2px 7px;border-radius:0px;display:inline-flex;align-items:center;gap:4px;" title="Coupon applied">
                                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                                   <span>${escapeHtml(o.pricing.couponCode)} (-${o.pricing.couponDiscountFormatted || ('₹' + ((o.pricing.couponDiscountPaise || 0)/100).toFixed(2))})</span>
                                 </span>
@@ -2181,7 +2521,7 @@ var formatDateString = window.formatDateString || formatDateTime;
                             ` : ''}
                           </td>
                           <td>
-                            <select onchange="updateOrderStatus('${orderRefId}', this.value)" style="padding:6px 9px;border-radius:6px;border:1.5px solid ${isConfirmed ? '#16a34a' : '#cbd5e1'};background:#fff;font-weight:700;font-size:12px;color:#0f172a;">
+                            <select onchange="updateOrderStatus('${orderRefId}', this.value)" style="padding:6px 9px;border-radius:0px;border:1.5px solid ${isConfirmed ? '#16a34a' : '#cbd5e1'};background:#fff;font-weight:700;font-size:12px;color:#111111;">
                               <option value="pending_payment" ${o.status === 'pending_payment' ? 'selected' : ''}>Pending Payment</option>
                               <option value="payment_verification" ${o.status === 'payment_verification' ? 'selected' : ''}>Payment Verification</option>
                               <option value="confirmed" ${o.status === 'confirmed' ? 'selected' : ''}>Confirmed (Ready to Pack)</option>
@@ -2195,7 +2535,7 @@ var formatDateString = window.formatDateString || formatDateTime;
                             </select>
                             ${o.refundStatus === 'pending_refund' ? `
                               <div style="margin-top:4px;">
-                                <button type="button" class="btn" style="background:#ef4444;color:#fff;font-size:10px;padding:3px 7px;border-radius:4px;font-weight:800;border:none;cursor:pointer;" onclick="openRefundModal('${orderRefId}')">
+                                <button type="button" class="btn" style="background:#ef4444;color:#fff;font-size:10px;padding:3px 7px;border-radius:0px;font-weight:800;border:none;cursor:pointer;" onclick="openRefundModal('${orderRefId}')">
                                   Process Refund
                                 </button>
                               </div>
@@ -2213,8 +2553,8 @@ var formatDateString = window.formatDateString || formatDateTime;
                           <td style="white-space:nowrap;">
                             ${o.fulfillment && o.fulfillment.trackingNumber ? `
                               <div style="font-size:12px;line-height:1.4;">
-                                <strong style="color:#0f172a;">${escapeHtml(o.fulfillment.courierName || 'Courier')}</strong><br />
-                                <code style="font-size:11.5px;background:#e2e8f0;padding:2px 6px;border-radius:4px;">${escapeHtml(o.fulfillment.trackingNumber)}</code>
+                                <strong style="color:#111111;">${escapeHtml(o.fulfillment.courierName || 'Courier')}</strong><br />
+                                <code style="font-size:11.5px;background:#e2e8f0;padding:2px 6px;border-radius:0px;">${escapeHtml(o.fulfillment.trackingNumber)}</code>
                               </div>
                             ` : `
                               ${isConfirmed ? `
@@ -2236,6 +2576,12 @@ var formatDateString = window.formatDateString || formatDateTime;
                                 </button>
                               `}
                             `}
+                            <div style="margin-top:6px;">
+                              <button type="button" class="btn btn-outline" style="font-size:11px;padding:3px 8px;border-radius:0px;display:inline-flex;align-items:center;gap:4px;cursor:pointer;" onclick="viewAdminInvoice('${orderRefId}')" title="View / Download GST Invoice">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                                <span>GST Invoice</span>
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       `;
@@ -2284,17 +2630,17 @@ var formatDateString = window.formatDateString || formatDateTime;
 
     showModal('Record & Process Customer Refund', `
       <div style="display:flex;flex-direction:column;gap:16px;">
-        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px;color:#991b1b;font-size:13px;line-height:1.4;">
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:0px;padding:14px;color:#991b1b;font-size:13px;line-height:1.4;">
           <strong>Process Refund for Cancelled Order #${orderNum}</strong><br />
           Original Amount: <strong>${amountStr}</strong>. Confirm you have initiated the refund via your UPI/bank dashboard and record the reference transaction ID below.
         </div>
         <div>
           <label class="form-label" style="display:block;font-size:12px;font-weight:700;margin-bottom:6px;">Bank / UPI Refund Reference ID *</label>
-          <input type="text" id="refund-ref-input" class="form-input" style="width:100%;font-size:13px;padding:9px 12px;border:1.5px solid #cbd5e1;border-radius:6px;" placeholder="e.g. REF123456789012 or Bank UTR" required />
+          <input type="text" id="refund-ref-input" class="form-input" style="width:100%;font-size:13px;padding:9px 12px;border:1.5px solid #cbd5e1;border-radius:0px;" placeholder="e.g. REF123456789012 or Bank UTR" required />
         </div>
         <div>
           <label class="form-label" style="display:block;font-size:12px;font-weight:700;margin-bottom:6px;">Admin Refund Notes</label>
-          <input type="text" id="refund-notes-input" class="form-input" style="width:100%;font-size:13px;padding:9px 12px;border:1.5px solid #cbd5e1;border-radius:6px;" placeholder="e.g. Refunded to customer original UPI handle" />
+          <input type="text" id="refund-notes-input" class="form-input" style="width:100%;font-size:13px;padding:9px 12px;border:1.5px solid #cbd5e1;border-radius:0px;" placeholder="e.g. Refunded to customer original UPI handle" />
         </div>
         <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:12px;border-top:1px solid #e2e8f0;">
           <button type="button" class="btn btn-outline" onclick="hideModal()">Cancel</button>
@@ -2371,21 +2717,21 @@ var formatDateString = window.formatDateString || formatDateTime;
 
     showModal('Dispatch Order & Attach Tracking', `
       <div style="display:flex;flex-direction:column;gap:16px;">
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;">
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:0px;padding:14px 16px;">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;">
             <div>
               <div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Order Fulfillment & Dispatch</div>
-              <div style="font-size:16px;font-weight:900;color:#0f172a;margin-top:2px;">Order #${orderNum}</div>
+              <div style="font-size:16px;font-weight:900;color:#111111;margin-top:2px;">Order #${orderNum}</div>
             </div>
             <div style="text-align:right;">
               <div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;">Recipient</div>
-              <div style="font-size:13px;font-weight:800;color:#0f172a;">${escapeHtml(customerName)}</div>
+              <div style="font-size:13px;font-weight:800;color:#111111;">${escapeHtml(customerName)}</div>
             </div>
           </div>
         </div>
 
         <!-- Notification Mechanism Explainer Card -->
-        <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:8px;padding:12px 14px;font-size:12.5px;color:#166534;line-height:1.5;">
+        <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:0px;padding:12px 14px;font-size:12.5px;color:#166534;line-height:1.5;">
           <div style="font-weight:800;display:flex;align-items:center;gap:6px;margin-bottom:3px;">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
             <span>Customer Notification: Automated Email</span>
@@ -2485,8 +2831,12 @@ var formatDateString = window.formatDateString || formatDateTime;
 
       container.innerHTML = `
         <div class="card">
-          <div class="card-header">
+          <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
             <div class="card-title">Variant Stock Levels (${items.length} SKUs)</div>
+            <button type="button" class="btn btn-outline" style="font-size:12px;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:0px;cursor:pointer;" onclick="exportInventoryCsv()" title="Export current inventory as CSV">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Export Inventory CSV</span>
+            </button>
           </div>
           <div class="card-body" style="padding:0;">
             <div class="table-responsive">
@@ -2553,14 +2903,14 @@ var formatDateString = window.formatDateString || formatDateTime;
   window.adjustStockPrompt = function (sku, curStock = 0) {
     showModal(`Adjust Stock — ${sku}`, `
       <div style="display:flex;flex-direction:column;gap:16px;">
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:0px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
           <div>
             <div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Inventory Balance</div>
-            <div style="font-size:16px;font-weight:900;color:#0f172a;margin-top:2px;">SKU: <code>${sku}</code></div>
+            <div style="font-size:16px;font-weight:900;color:#111111;margin-top:2px;">SKU: <code>${sku}</code></div>
           </div>
           <div style="text-align:right;">
             <div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;">Current Stock</div>
-            <div style="font-size:18px;font-weight:900;color:#0f172a;">${curStock} units</div>
+            <div style="font-size:18px;font-weight:900;color:#111111;">${curStock} units</div>
           </div>
         </div>
 
@@ -2701,9 +3051,9 @@ var formatDateString = window.formatDateString || formatDateTime;
                         <tr>
                           <td>
                             <div style="display:flex;align-items:center;gap:12px;">
-                              <img src="${resolvedImg}" alt="${escapeHtml(p.name)}" style="width:42px;height:42px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;background:#f8fafc;" onerror="this.onerror=null;this.src='${fallbackImg}';" />
+                              <img src="${resolvedImg}" alt="${escapeHtml(p.name)}" style="width:42px;height:42px;object-fit:cover;border-radius:0px;border:1px solid #e2e8f0;background:#f8fafc;" onerror="this.onerror=null;this.src='${fallbackImg}';" />
                               <div>
-                                <strong style="display:block;font-size:14px;color:#0f172a;">${escapeHtml(p.name)}</strong>
+                                <strong style="display:block;font-size:14px;color:#111111;">${escapeHtml(p.name)}</strong>
                                 <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
                                   <span style="font-size:11px;color:#64748b;">${escapeHtml(p.slug || '')}</span>
                                   <span style="font-size:10px;font-weight:600;background:#f1f5f9;color:#475569;padding:1px 5px;border-radius:3px;border:1px solid #e2e8f0;">
@@ -2717,7 +3067,7 @@ var formatDateString = window.formatDateString || formatDateTime;
                           <td><code>${escapeHtml(p.sku || '—')}</code></td>
                           <td>
                             <div style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;" title="Click to edit prices" onclick="openEditProductModal('${p.id}')">
-                              <span style="font-weight:700;color:#0f172a;">${window.LANE4.formatINR(p.regularPricePaise || p.pricePaise)}</span>
+                              <span style="font-weight:700;color:#111111;">${window.LANE4.formatINR(p.regularPricePaise || p.pricePaise)}</span>
                               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                             </div>
                           </td>
@@ -2730,18 +3080,18 @@ var formatDateString = window.formatDateString || formatDateTime;
                             </div>
                           </td>
                           <td>
-                            <span style="font-weight:700;color:${totalStock <= 5 ? '#dc2626' : '#0f172a'};">${totalStock} units</span>
+                            <span style="font-weight:700;color:${totalStock <= 5 ? '#dc2626' : '#111111'};">${totalStock} units</span>
                           </td>
                           <td>
                             <span class="badge ${p.isPublished ? 'badge-active' : 'badge-pending'}">${p.isPublished ? 'Published' : 'Draft'}</span>
                           </td>
                           <td>
                             <div style="display:flex;gap:6px;">
-                              <a href="../product/${p.slug}.html" target="_blank" class="btn btn-outline" style="padding:5px 9px;font-size:11px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;" title="Preview storefront page">
+                              <a href="../product/detail.html?slug=${encodeURIComponent(p.slug || '')}" target="_blank" class="btn btn-outline" style="padding:5px 9px;font-size:11px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;" title="Preview storefront page">
                                 <span>View</span>
                                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                               </a>
-                              <button class="btn btn-outline btn-edit-prod" onclick="openEditProductModal('${p.id}')" style="padding:5px 9px;font-size:11px;display:inline-flex;align-items:center;gap:4px;border-color:#cbd5e1;color:#0f172a;cursor:pointer;" title="Edit product and prices">
+                              <button class="btn btn-outline btn-edit-prod" onclick="openEditProductModal('${p.id}')" style="padding:5px 9px;font-size:11px;display:inline-flex;align-items:center;gap:4px;border-color:#cbd5e1;color:#111111;cursor:pointer;" title="Edit product and prices">
                                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                                 <span>Edit</span>
                               </button>
@@ -2822,10 +3172,10 @@ var formatDateString = window.formatDateString || formatDateTime;
 
     showModal('Edit Product & Gallery', `
       <form id="form-edit-product">
-        <div style="background:#f8fafc;padding:12px 14px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:16px;display:flex;align-items:center;gap:12px;">
-          ${firstImg ? `<img id="edit-prod-header-thumb" src="${resolveAdminAsset(firstImg)}" style="width:48px;height:48px;border-radius:6px;object-fit:cover;border:1px solid #cbd5e1;" onerror="this.onerror=null;this.style.display='none';" />` : `<div style="width:48px;height:48px;border-radius:6px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:20px;">📦</div>`}
+        <div style="background:#f8fafc;padding:12px 14px;border-radius:0px;border:1px solid #e2e8f0;margin-bottom:16px;display:flex;align-items:center;gap:12px;">
+          ${firstImg ? `<img id="edit-prod-header-thumb" src="${resolveAdminAsset(firstImg)}" style="width:48px;height:48px;border-radius:0px;object-fit:cover;border:1px solid #cbd5e1;" onerror="this.onerror=null;this.style.display='none';" />` : `<div style="width:48px;height:48px;border-radius:0px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:20px;">📦</div>`}
           <div>
-            <div style="font-weight:800;font-size:14px;color:#0f172a;">${escapeHtml(p.name)}</div>
+            <div style="font-weight:800;font-size:14px;color:#111111;">${escapeHtml(p.name)}</div>
             <div style="font-size:12px;color:#64748b;">SKU: <code>${escapeHtml(p.sku || '—')}</code> &bull; Slug: <code>${escapeHtml(p.slug || '')}</code></div>
           </div>
         </div>
@@ -2840,6 +3190,10 @@ var formatDateString = window.formatDateString || formatDateTime;
             <select id="edit-prod-cat" class="form-select">
               ${catOptions}
             </select>
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Subcategory (Optional)</label>
+            <input type="text" id="edit-prod-subcat" class="form-input" value="${escapeHtml(p.subcategory || '')}" placeholder="e.g. Paddles" />
           </div>
         </div>
 
@@ -2877,15 +3231,15 @@ var formatDateString = window.formatDateString || formatDateTime;
         </div>
 
         <!-- Product Image Gallery & Order Management Section -->
-        <div class="form-group" style="background:#f8fafc;padding:16px;border-radius:8px;border:1.5px solid #cbd5e1;margin-bottom:18px;">
+        <div class="form-group" style="background:#f8fafc;padding:16px;border-radius:0px;border:1.5px solid #cbd5e1;margin-bottom:18px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-            <label class="form-label" style="display:flex;align-items:center;gap:6px;margin:0;font-size:14px;font-weight:800;color:#0f172a;">
+            <label class="form-label" style="display:flex;align-items:center;gap:6px;margin:0;font-size:14px;font-weight:800;color:#111111;">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               <span>Product Images &amp; Display Order <span style="color:#dc2626;">*</span></span>
             </label>
-            <span id="edit-prod-gallery-count" class="badge" style="background:#0f172a;color:#fff;font-weight:700;">${productImages.length} Photos</span>
+            <span id="edit-prod-gallery-count" class="badge" style="background:#111111;color:#fff;font-weight:700;">${productImages.length} Photos</span>
           </div>
-          <div style="font-size:12px;color:#dc2626;font-weight:700;margin-bottom:12px;background:#fef2f2;border:1px solid #fecaca;padding:8px 12px;border-radius:6px;line-height:1.4;">
+          <div style="font-size:12px;color:#dc2626;font-weight:700;margin-bottom:12px;background:#fef2f2;border:1px solid #fecaca;padding:8px 12px;border-radius:0px;line-height:1.4;">
             <span style="font-size:14px;margin-right:4px;">⚠️</span> <strong>Mandatory:</strong> At least one product photo is required. Photo <strong>#1 PRIMARY</strong> serves as the main catalog cover and the primary hero image.
           </div>
 
@@ -2893,8 +3247,8 @@ var formatDateString = window.formatDateString || formatDateTime;
           <div id="edit-prod-gallery-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
 
           <!-- Add Image Tools -->
-          <div style="background:#ffffff;border:1.5px dashed #cbd5e1;border-radius:8px;padding:12px 14px;">
-            <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+          <div style="background:#ffffff;border:1.5px dashed #cbd5e1;border-radius:0px;padding:12px 14px;">
+            <div style="font-size:12px;font-weight:700;color:#111111;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               <span>Upload New Photos</span>
             </div>
@@ -2914,7 +3268,7 @@ var formatDateString = window.formatDateString || formatDateTime;
             <textarea id="edit-prod-desc" class="form-textarea" rows="3" required minlength="10" placeholder="Detailed product specifications, materials, fit and technical benefits..." style="transition:border-color 0.2s, box-shadow 0.2s, background-color 0.2s;">${escapeHtml(p.description || '')}</textarea>
           </div>
           <div id="edit-prod-desc-hint" style="font-size:11px;color:#64748b;margin-top:4px;">Detailed product specifications, materials, and benefits (minimum 10 characters) *</div>
-          <div id="edit-prod-desc-error" style="display:none;margin-top:6px;padding:8px 12px;background:#fef2f2;border:1.5px solid #fecaca;border-radius:6px;color:#dc2626;font-size:12px;font-weight:700;align-items:center;gap:8px;">
+          <div id="edit-prod-desc-error" style="display:none;margin-top:6px;padding:8px 12px;background:#fef2f2;border:1.5px solid #fecaca;border-radius:0px;color:#dc2626;font-size:12px;font-weight:700;align-items:center;gap:8px;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             <span id="edit-prod-desc-error-text">A detailed product description (at least 10 characters) is required.</span>
           </div>
@@ -2952,7 +3306,7 @@ var formatDateString = window.formatDateString || formatDateTime;
 
       if (productImages.length === 0) {
         container.innerHTML = `
-          <div style="text-align:center;padding:16px;background:#fff;border:1px dashed #cbd5e1;border-radius:6px;color:#94a3b8;font-size:12px;">
+          <div style="text-align:center;padding:16px;background:#fff;border:1px dashed #cbd5e1;border-radius:0px;color:#94a3b8;font-size:12px;">
             No photos in gallery. Add photos below to showcase this product.
           </div>
         `;
@@ -2965,14 +3319,14 @@ var formatDateString = window.formatDateString || formatDateTime;
         const resolvedSrc = resolveAdminAsset(img.url);
 
         return `
-          <div style="display:flex;align-items:center;gap:12px;background:#ffffff;border:1px solid ${isFirst ? '#86efac' : '#e2e8f0'};border-radius:8px;padding:8px 12px;box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+          <div style="display:flex;align-items:center;gap:12px;background:#ffffff;border:1px solid ${isFirst ? '#86efac' : '#e2e8f0'};border-radius:0px;padding:8px 12px;box-shadow:0 1px 2px rgba(0,0,0,0.02);">
             <div style="display:flex;align-items:center;justify-content:center;min-width:32px;">
               ${isFirst
-                ? `<span style="font-size:10px;font-weight:800;background:#16a34a;color:#fff;padding:3px 7px;border-radius:4px;white-space:nowrap;">★ #1 PRIMARY</span>`
-                : `<span style="font-size:11px;font-weight:700;background:#f1f5f9;color:#475569;padding:3px 7px;border-radius:4px;border:1px solid #cbd5e1;">#${idx + 1}</span>`
+                ? `<span style="font-size:10px;font-weight:800;background:#16a34a;color:#fff;padding:3px 7px;border-radius:0px;white-space:nowrap;">★ #1 PRIMARY</span>`
+                : `<span style="font-size:11px;font-weight:700;background:#f1f5f9;color:#475569;padding:3px 7px;border-radius:0px;border:1px solid #cbd5e1;">#${idx + 1}</span>`
               }
             </div>
-            <img src="${resolvedSrc}" alt="Gallery ${idx + 1}" style="width:50px;height:50px;object-fit:cover;border-radius:6px;border:1px solid #cbd5e1;background:#f8fafc;" onerror="this.onerror=null;this.src='${resolveAdminAsset('6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg')}';" />
+            <img src="${resolvedSrc}" alt="Gallery ${idx + 1}" style="width:50px;height:50px;object-fit:cover;border-radius:0px;border:1px solid #cbd5e1;background:#f8fafc;" onerror="this.onerror=null;this.src='${resolveAdminAsset('6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg')}';" />
             <div style="flex:1;min-width:0;">
               <input type="text" class="form-input edit-gallery-alt" data-idx="${idx}" value="${escapeHtml(img.alt || '')}" placeholder="Alt text / description" style="font-size:11px;padding:4px 8px;margin-bottom:3px;height:26px;" />
               <div style="font-size:11px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px;" title="${escapeHtml(img.url)}">
@@ -3229,9 +3583,11 @@ var formatDateString = window.formatDateString || formatDateTime;
             isPrimary: i === 0
           }));
 
+          const subcatVal = (document.getElementById('edit-prod-subcat')?.value || '').trim();
           const patchPayload = {
             name,
             category,
+            subcategory: subcatVal || undefined,
             regularPrice,
             salePrice,
             stockQuantity,
@@ -3292,17 +3648,21 @@ var formatDateString = window.formatDateString || formatDateTime;
         </div>
 
         <div class="form-row">
-          <div class="form-group">
+          <div class="form-group" style="flex:1;">
             <label class="form-label">Category *</label>
             <select id="new-prod-category" class="form-select" required>
               ${catOptions}
             </select>
           </div>
-          <div class="form-group">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Subcategory (Optional)</label>
+            <input type="text" id="new-prod-subcategory" class="form-input" placeholder="e.g. Resistance Gear" />
+          </div>
+          <div class="form-group" style="flex:1;">
             <label class="form-label">Regular Price (₹ INR) *</label>
             <input type="number" id="new-prod-price" class="form-input" placeholder="1999" min="1" step="1" required />
           </div>
-          <div class="form-group">
+          <div class="form-group" style="flex:1;">
             <label class="form-label" style="font-weight:700;">Sale Price (₹ INR) <span style="color:#dc2626;">*</span></label>
             <input type="number" id="new-prod-sale-price" class="form-input" placeholder="e.g. 1799" min="1" step="1" required />
             <div style="font-size:11px;color:#16a34a;margin-top:3px;font-weight:600;">Discounted checkout price (must be less than regular price) *</div>
@@ -3323,7 +3683,7 @@ var formatDateString = window.formatDateString || formatDateTime;
             <textarea id="new-prod-desc" class="form-textarea" rows="3" placeholder="Detailed product specifications, materials, fit and technical benefits..." required minlength="10" style="transition:border-color 0.2s, box-shadow 0.2s, background-color 0.2s;"></textarea>
           </div>
           <div id="new-prod-desc-hint" style="font-size:11px;color:#64748b;margin-top:4px;">Detailed specifications, materials, and benefits (minimum 10 characters) *</div>
-          <div id="new-prod-desc-error" style="display:none;margin-top:6px;padding:8px 12px;background:#fef2f2;border:1.5px solid #fecaca;border-radius:6px;color:#dc2626;font-size:12px;font-weight:700;align-items:center;gap:8px;">
+          <div id="new-prod-desc-error" style="display:none;margin-top:6px;padding:8px 12px;background:#fef2f2;border:1.5px solid #fecaca;border-radius:0px;color:#dc2626;font-size:12px;font-weight:700;align-items:center;gap:8px;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             <span id="new-prod-desc-error-text">A detailed product description (at least 10 characters) is required to publish.</span>
           </div>
@@ -3335,22 +3695,22 @@ var formatDateString = window.formatDateString || formatDateTime;
         </div>
 
         <!-- Product Image Gallery & Order Section -->
-        <div class="form-group" style="background:#f8fafc;padding:16px;border-radius:8px;border:1.5px solid #cbd5e1;margin-bottom:18px;">
+        <div class="form-group" style="background:#f8fafc;padding:16px;border-radius:0px;border:1.5px solid #cbd5e1;margin-bottom:18px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-            <label class="form-label" style="display:flex;align-items:center;gap:6px;margin:0;font-size:14px;font-weight:800;color:#0f172a;">
+            <label class="form-label" style="display:flex;align-items:center;gap:6px;margin:0;font-size:14px;font-weight:800;color:#111111;">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               <span>Product Image Gallery &amp; Display Order <span style="color:#dc2626;">*</span></span>
             </label>
-            <span id="new-prod-gallery-count" class="badge" style="background:#0f172a;color:#fff;font-weight:700;">0 Photos</span>
+            <span id="new-prod-gallery-count" class="badge" style="background:#111111;color:#fff;font-weight:700;">0 Photos</span>
           </div>
-          <div style="font-size:12px;color:#dc2626;font-weight:700;margin-bottom:12px;background:#fef2f2;border:1px solid #fecaca;padding:8px 12px;border-radius:6px;line-height:1.4;">
+          <div style="font-size:12px;color:#dc2626;font-weight:700;margin-bottom:12px;background:#fef2f2;border:1px solid #fecaca;padding:8px 12px;border-radius:0px;line-height:1.4;">
             <span style="font-size:14px;margin-right:4px;">⚠️</span> <strong>Mandatory:</strong> At least one product photo must be uploaded. Products cannot be added without an image. Photo <strong>#1 PRIMARY</strong> will be the main storefront cover image.
           </div>
 
           <div id="new-prod-gallery-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
 
-          <div style="background:#ffffff;border:1.5px dashed #cbd5e1;border-radius:8px;padding:12px 14px;">
-            <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+          <div style="background:#ffffff;border:1.5px dashed #cbd5e1;border-radius:0px;padding:12px 14px;">
+            <div style="font-size:12px;font-weight:700;color:#111111;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               <span>Upload Product Photos</span>
             </div>
@@ -3374,7 +3734,7 @@ var formatDateString = window.formatDateString || formatDateTime;
           </div>
         </div>
 
-        <div id="modal-submit-alert" style="display:none;padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:14px;"></div>
+        <div id="modal-submit-alert" style="display:none;padding:10px 14px;border-radius:0px;font-size:13px;margin-bottom:14px;"></div>
 
         <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;">
           <button type="button" class="btn btn-outline" onclick="document.getElementById('admin-modal-close-btn').click()">Cancel</button>
@@ -3403,7 +3763,7 @@ var formatDateString = window.formatDateString || formatDateTime;
 
       if (newProductImages.length === 0) {
         container.innerHTML = `
-          <div style="text-align:center;padding:16px;background:#fff;border:1px dashed #cbd5e1;border-radius:6px;color:#94a3b8;font-size:12px;">
+          <div style="text-align:center;padding:16px;background:#fff;border:1px dashed #cbd5e1;border-radius:0px;color:#94a3b8;font-size:12px;">
             No photos added yet. Select photos below to build this product's gallery.
           </div>
         `;
@@ -3416,14 +3776,14 @@ var formatDateString = window.formatDateString || formatDateTime;
         const resolvedSrc = resolveAdminAsset(img.url);
 
         return `
-          <div style="display:flex;align-items:center;gap:12px;background:#ffffff;border:1px solid ${isFirst ? '#86efac' : '#e2e8f0'};border-radius:8px;padding:8px 12px;box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+          <div style="display:flex;align-items:center;gap:12px;background:#ffffff;border:1px solid ${isFirst ? '#86efac' : '#e2e8f0'};border-radius:0px;padding:8px 12px;box-shadow:0 1px 2px rgba(0,0,0,0.02);">
             <div style="display:flex;align-items:center;justify-content:center;min-width:32px;">
               ${isFirst
-                ? `<span style="font-size:10px;font-weight:800;background:#16a34a;color:#fff;padding:3px 7px;border-radius:4px;white-space:nowrap;">★ #1 PRIMARY</span>`
-                : `<span style="font-size:11px;font-weight:700;background:#f1f5f9;color:#475569;padding:3px 7px;border-radius:4px;border:1px solid #cbd5e1;">#${idx + 1}</span>`
+                ? `<span style="font-size:10px;font-weight:800;background:#16a34a;color:#fff;padding:3px 7px;border-radius:0px;white-space:nowrap;">★ #1 PRIMARY</span>`
+                : `<span style="font-size:11px;font-weight:700;background:#f1f5f9;color:#475569;padding:3px 7px;border-radius:0px;border:1px solid #cbd5e1;">#${idx + 1}</span>`
               }
             </div>
-            <img src="${resolvedSrc}" alt="Gallery ${idx + 1}" style="width:50px;height:50px;object-fit:cover;border-radius:6px;border:1px solid #cbd5e1;background:#f8fafc;" onerror="this.onerror=null;this.src='${resolveAdminAsset('6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg')}';" />
+            <img src="${resolvedSrc}" alt="Gallery ${idx + 1}" style="width:50px;height:50px;object-fit:cover;border-radius:0px;border:1px solid #cbd5e1;background:#f8fafc;" onerror="this.onerror=null;this.src='${resolveAdminAsset('6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg')}';" />
             <div style="flex:1;min-width:0;">
               <input type="text" class="form-input new-gallery-alt" data-idx="${idx}" value="${escapeHtml(img.alt || '')}" placeholder="Alt text / description" style="font-size:11px;padding:4px 8px;margin-bottom:3px;height:26px;" />
               <div style="font-size:11px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px;" title="${escapeHtml(img.url)}">
@@ -3718,12 +4078,14 @@ var formatDateString = window.formatDateString || formatDateTime;
 
         const features = featuresText.split('\n').map(f => f.trim()).filter(Boolean);
 
+        const subcatVal = (document.getElementById('new-prod-subcategory')?.value || '').trim();
         submitBtn.textContent = 'Saving to Database...';
         const productPayload = {
           name,
           sku: sku || undefined,
           category,
           categorySlug: category,
+          subcategory: subcatVal || undefined,
           regularPrice: regPrice,
           salePrice: salePrice,
           shortDescription,
@@ -3857,13 +4219,13 @@ var formatDateString = window.formatDateString || formatDateTime;
                     cats.map((c, idx) => `
                       <tr>
                         <td><strong>#${c.displayOrder !== undefined && c.displayOrder !== null ? c.displayOrder : (idx + 1)}</strong></td>
-                        <td><strong style="color:#0f172a;">${c.name}</strong></td>
+                        <td><strong style="color:#111111;">${c.name}</strong></td>
                         <td><code>${c.slug}</code></td>
                         <td style="color:#64748b;font-size:13px;max-width:300px;">${c.description || '—'}</td>
                         <td><span class="badge ${c.isPublished ? 'badge-active' : 'badge-pending'}">${c.isPublished ? 'Published' : 'Draft'}</span></td>
                         <td>
                           <div style="display:flex;gap:6px;">
-                            <a href="../category/${c.slug}.html" target="_blank" class="btn btn-outline" style="padding:5px 9px;font-size:11px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
+                            <a href="../shop.html?category=${encodeURIComponent(c.slug || '')}" target="_blank" class="btn btn-outline" style="padding:5px 9px;font-size:11px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;" title="View category in shop">
                               <span>View</span>
                               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                             </a>
@@ -3925,6 +4287,11 @@ var formatDateString = window.formatDateString || formatDateTime;
         </div>
 
         <div class="form-group">
+          <label class="form-label">Subcategories (Optional, comma-separated)</label>
+          <input type="text" id="new-cat-subcategories" class="form-input" placeholder="e.g. Training Fins, Hand Paddles, Kickboards" />
+        </div>
+
+        <div class="form-group">
           <label class="form-label">Description</label>
           <textarea id="new-cat-desc" class="form-textarea" rows="3" placeholder="Category overview shown in search and SEO meta tags..."></textarea>
         </div>
@@ -3936,7 +4303,7 @@ var formatDateString = window.formatDateString || formatDateTime;
           </label>
         </div>
 
-        <div id="modal-cat-alert" style="display:none;padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:14px;"></div>
+        <div id="modal-cat-alert" style="display:none;padding:10px 14px;border-radius:0px;font-size:13px;margin-bottom:14px;"></div>
 
         <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;">
           <button type="button" class="btn btn-outline" onclick="document.getElementById('admin-modal-close-btn').click()">Cancel</button>
@@ -3974,10 +4341,15 @@ var formatDateString = window.formatDateString || formatDateTime;
         const displayOrder = parseInt(document.getElementById('new-cat-order').value, 10) || defaultOrder;
         const description = document.getElementById('new-cat-desc').value.trim();
         const isPublished = document.getElementById('new-cat-published').checked;
+        const subcategoriesRaw = (document.getElementById('new-cat-subcategories')?.value || '').trim();
+        const subcategories = subcategoriesRaw ? subcategoriesRaw.split(',').map(s => s.trim()).filter(Boolean).map(name => ({
+          name,
+          slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+        })) : undefined;
 
         await window.lane4ApiRequest('/admin/categories', {
           method: 'POST',
-          body: JSON.stringify({ name, slug, displayOrder, description, isPublished })
+          body: JSON.stringify({ name, slug, displayOrder, description, isPublished, subcategories })
         });
 
         hideModal();
@@ -4065,7 +4437,7 @@ var formatDateString = window.formatDateString || formatDateTime;
 
                       return `
                         <tr>
-                          <td><code style="background:#f1f5f9;padding:4px 8px;border-radius:4px;font-weight:900;letter-spacing:1px;color:#0f172a;">${cp.code}</code></td>
+                          <td><code style="background:#f1f5f9;padding:4px 8px;border-radius:0px;font-weight:900;letter-spacing:1px;color:#111111;">${cp.code}</code></td>
                           <td style="font-weight:700;color:#16a34a;">${discountStr}</td>
                           <td>${cp.minOrderFormatted || '₹ 0.00'}</td>
                           <td>${cp.usedCount || 0} / ${cp.totalUsageLimit || '∞'} redemptions</td>
@@ -4161,7 +4533,7 @@ var formatDateString = window.formatDateString || formatDateTime;
           </label>
         </div>
 
-        <div id="modal-cp-alert" style="display:none;padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:14px;"></div>
+        <div id="modal-cp-alert" style="display:none;padding:10px 14px;border-radius:0px;font-size:13px;margin-bottom:14px;"></div>
 
         <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;">
           <button type="button" class="btn btn-outline" onclick="document.getElementById('admin-modal-close-btn').click()">Cancel</button>
@@ -4258,12 +4630,20 @@ var formatDateString = window.formatDateString || formatDateTime;
       const custs = res.data || [];
       c.innerHTML = `
         <div class="card">
-          <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
             <div class="card-title">Registered Swimmers (${custs.length})</div>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="window.loadCustomers ? window.loadCustomers() : loadCustomers()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-              <span>Refresh</span>
-            </button>
+            <div style="display:flex;gap:8px;align-items:center;">
+              ${(window.hasAdminPermission ? window.hasAdminPermission('customers:export') : true) ? `
+                <button type="button" class="btn btn-outline" style="font-size:12px;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:0px;cursor:pointer;" onclick="exportCustomersCsv()" title="Export registered customers as CSV">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  <span>Export Customers CSV</span>
+                </button>
+              ` : ''}
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.loadCustomers ? window.loadCustomers() : loadCustomers()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:0px;font-size:12px;cursor:pointer;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                <span>Refresh</span>
+              </button>
+            </div>
           </div>
           <div class="card-body" style="padding:0;">
             <div class="table-responsive">
@@ -4341,16 +4721,16 @@ var formatDateString = window.formatDateString || formatDateTime;
                       return `
                         <tr>
                           <td style="vertical-align:top;">
-                            <span style="font-size:10px;font-weight:800;letter-spacing:0.5px;padding:3px 7px;border-radius:4px;background:${typeBadgeBg};color:${typeBadgeColor};text-transform:uppercase;display:inline-block;">
+                            <span style="font-size:10px;font-weight:800;letter-spacing:0.5px;padding:3px 7px;border-radius:0px;background:${typeBadgeBg};color:${typeBadgeColor};text-transform:uppercase;display:inline-block;">
                               ${escapeHtml(rawType)}
                             </span>
                           </td>
-                          <td style="vertical-align:top;font-size:13px;"><strong style="color:#0f172a;">${escapeHtml(eq.name || 'Anonymous')}</strong></td>
+                          <td style="vertical-align:top;font-size:13px;"><strong style="color:#111111;">${escapeHtml(eq.name || 'Anonymous')}</strong></td>
                           <td style="vertical-align:top;font-size:12.5px;color:#475569;">
                             ${eq.email ? `<a href="mailto:${escapeHtml(eq.email)}" style="color:#2563eb;text-decoration:none;">${escapeHtml(eq.email)}</a>` : '—'}
                           </td>
                           <td style="vertical-align:top;max-width:440px;min-width:240px;">
-                            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:12.5px;color:#334155;line-height:1.55;max-height:130px;overflow-y:auto;overflow-x:hidden;word-break:break-word;overflow-wrap:anywhere;white-space:pre-wrap;">${escapeHtml(eq.message || '—')}</div>
+                            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:0px;padding:9px 12px;font-size:12.5px;color:#334155;line-height:1.55;max-height:130px;overflow-y:auto;overflow-x:hidden;word-break:break-word;overflow-wrap:anywhere;white-space:pre-wrap;">${escapeHtml(eq.message || '—')}</div>
                           </td>
                           <td style="vertical-align:top;font-size:11.5px;color:#64748b;white-space:nowrap;text-align:right;">
                             ${formatDateTime(eq.createdAt, true)}
@@ -4418,12 +4798,12 @@ var formatDateString = window.formatDateString || formatDateTime;
                           <td><code>${escapeHtml(r.reviewId ? r.reviewId.slice(0, 8) : '—')}</code></td>
                           <td><strong>${escapeHtml(r.productName || r.productId || 'Swimming Gear')}</strong></td>
                           <td>
-                            <div style="font-weight:600;color:#0f172a;">${escapeHtml(r.authorName || 'Verified Swimmer')}</div>
+                            <div style="font-weight:600;color:#111111;">${escapeHtml(r.authorName || 'Verified Swimmer')}</div>
                             ${r.isVerifiedPurchase ? '<span style="font-size:10px;color:#16a34a;font-weight:600;">✓ Verified Buyer</span>' : ''}
                           </td>
                           <td><span style="color:#eab308;font-size:14px;letter-spacing:1px;" title="${r.rating} stars">${stars}</span></td>
                           <td style="max-width:320px;">
-                            ${r.title ? `<div style="font-weight:600;font-size:13px;color:#0f172a;margin-bottom:2px;">${escapeHtml(r.title)}</div>` : ''}
+                            ${r.title ? `<div style="font-weight:600;font-size:13px;color:#111111;margin-bottom:2px;">${escapeHtml(r.title)}</div>` : ''}
                             <div style="font-size:12px;color:#475569;line-height:1.4;">${escapeHtml(r.comment || '—')}</div>
                           </td>
                           <td style="font-size:12px;color:#64748b;white-space:nowrap;">${formatDateTime(r.createdAt, true)}</td>
@@ -4535,7 +4915,7 @@ var formatDateString = window.formatDateString || formatDateTime;
                           <td><code>#${escapeHtml(ret.orderNumber || ret.orderId)}</code></td>
                           <td>${escapeHtml(ret.customerEmail || '—')}</td>
                           <td style="max-width:280px;font-size:12.5px;color:#334155;word-break:break-word;">${escapeHtml(ret.reason || '—')}</td>
-                          <td><code style="background:#f1f5f9;padding:3px 6px;border-radius:4px;font-weight:600;">${escapeHtml(ret.customerUpiId || '—')}</code></td>
+                          <td><code style="background:#f1f5f9;padding:3px 6px;border-radius:0px;font-weight:600;">${escapeHtml(ret.customerUpiId || '—')}</code></td>
                           <td style="font-size:12px;color:#64748b;white-space:nowrap;">${formatDateTime(ret.createdAt, true)}</td>
                           <td><span class="badge ${ret.status === 'approved' ? 'badge-active' : (ret.status === 'refunded' ? 'badge-delivered' : (ret.status === 'rejected' ? 'badge-cancelled' : 'badge-pending'))}">${escapeHtml(ret.status || 'requested')}</span></td>
                           <td>
@@ -4545,7 +4925,7 @@ var formatDateString = window.formatDateString || formatDateTime;
                                 <button type="button" class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#dc2626;" onclick="updateReturnStatus('${returnDocId}', 'rejected')">Reject</button>
                               ` : ''}
                               ${ret.status === 'approved' ? `
-                                <button type="button" class="btn btn-primary" style="background:#dc2626;color:#fff;padding:5px 10px;font-size:11px;font-weight:700;border:none;border-radius:4px;cursor:pointer;" onclick="updateReturnStatus('${returnDocId}', 'refunded')">Issue Refund</button>
+                                <button type="button" class="btn btn-primary" style="background:#dc2626;color:#fff;padding:5px 10px;font-size:11px;font-weight:700;border:none;border-radius:0px;cursor:pointer;" onclick="updateReturnStatus('${returnDocId}', 'refunded')">Issue Refund</button>
                               ` : ''}
                               ${ret.status === 'refunded' ? '<span style="font-size:11.5px;color:#16a34a;font-weight:700;display:inline-flex;align-items:center;gap:3px;">✓ Refund Issued</span>' : ''}
                             </div>
@@ -4627,11 +5007,11 @@ var formatDateString = window.formatDateString || formatDateTime;
             </td>
             <td style="white-space:nowrap;width:240px;">
               <div style="display:flex;align-items:center;gap:10px;">
-                <div style="width:34px;height:34px;border-radius:50%;background:#0f172a;color:#ffffff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;flex-shrink:0;box-shadow:0 1px 2px rgba(0,0,0,0.1);">
+                <div style="width:34px;height:34px;border-radius:50%;background:#111111;color:#ffffff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;flex-shrink:0;box-shadow:0 1px 2px rgba(0,0,0,0.1);">
                   ${((l.adminEmail || 'AD').replace(/[^a-zA-Z]/g, '')).slice(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <div style="font-weight:700;font-size:13px;color:#0f172a;line-height:1.2;">LANE4 Operations Staff</div>
+                  <div style="font-weight:700;font-size:13px;color:#111111;line-height:1.2;">LANE4 Operations Staff</div>
                   <div style="font-size:11.5px;color:#64748b;line-height:1.2;margin-top:2px;">${escapeHtml(l.adminEmail || 'admin@lane4swim.in')}</div>
                 </div>
               </div>
@@ -4654,12 +5034,12 @@ var formatDateString = window.formatDateString || formatDateTime;
           <div class="card-header" style="flex-wrap:wrap;gap:12px;padding:16px 20px;">
             <div style="display:flex;align-items:center;gap:10px;">
               <div class="card-title" style="margin:0;">Staff Activity Audit Trail</div>
-              <span id="log-count-badge" style="background:#f1f5f9;color:#334155;font-weight:700;font-size:11px;padding:3px 9px;border-radius:12px;border:1px solid #e2e8f0;">
+              <span id="log-count-badge" style="background:#f1f5f9;color:#334155;font-weight:700;font-size:11px;padding:3px 9px;border-radius:0px;border:1px solid #e2e8f0;">
                 ${rawLogs.length} logged ${rawLogs.length === 1 ? 'event' : 'events'}
               </span>
             </div>
             <div style="display:flex;align-items:center;gap:10px;">
-              <input type="text" id="log-search-filter" placeholder="Filter by staff, action or ID..." style="padding:7px 12px;font-size:12.5px;border:1.5px solid var(--border);border-radius:6px;width:240px;outline:none;" />
+              <input type="text" id="log-search-filter" placeholder="Filter by staff, action or ID..." style="padding:7px 12px;font-size:12.5px;border:1.5px solid var(--border);border-radius:0px;width:240px;outline:none;" />
               <button class="btn btn-outline" id="btn-refresh-log-trail" style="padding:7px 12px;font-size:12px;display:inline-flex;align-items:center;gap:5px;">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
                 <span>Refresh</span>
@@ -4736,14 +5116,14 @@ var formatDateString = window.formatDateString || formatDateTime;
       container.innerHTML = `
         <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));gap:24px;">
           <!-- Payment QR Settings Card -->
-          <div class="card" style="border:1px solid #cbd5e1;border-radius:12px;box-shadow:0 4px 16px -2px rgba(15,23,42,0.06);background:#ffffff;">
+          <div class="card" style="border:1px solid #cbd5e1;border-radius:0px;box-shadow:0 4px 16px -2px rgba(15,23,42,0.06);background:#ffffff;">
             <div class="card-header" style="background:#ffffff;padding:18px 22px;border-bottom:1.5px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
               <div style="display:flex;align-items:center;gap:10px;">
-                <div style="width:36px;height:36px;border-radius:8px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:#0f172a;">
+                <div style="width:36px;height:36px;border-radius:0px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:#111111;">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="14" y2="16"/></svg>
                 </div>
                 <div>
-                  <div class="card-title" style="font-size:16px;font-weight:900;color:#0f172a;">UPI &amp; QR Payment Settings</div>
+                  <div class="card-title" style="font-size:16px;font-weight:900;color:#111111;">UPI &amp; QR Payment Settings</div>
                   <div style="font-size:12px;color:#64748b;">Instant settlement configuration</div>
                 </div>
               </div>
@@ -4752,7 +5132,7 @@ var formatDateString = window.formatDateString || formatDateTime;
 
             <div class="card-body" style="padding:22px;">
               <!-- Live Configuration Summary Table -->
-              <div style="margin-bottom:20px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;background:#ffffff;">
+              <div style="margin-bottom:20px;border:1px solid #e2e8f0;border-radius:0px;overflow:hidden;background:#ffffff;">
                 <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
                   <thead>
                     <tr style="background:#f8fafc;border-bottom:1.5px solid #e2e8f0;">
@@ -4764,24 +5144,24 @@ var formatDateString = window.formatDateString || formatDateTime;
                   <tbody>
                     <tr style="border-bottom:1px solid #f1f5f9;">
                       <td style="padding:10px 14px;font-weight:700;color:#334155;border-right:1px solid #f1f5f9;">Store UPI ID</td>
-                      <td style="padding:10px 14px;border-right:1px solid #f1f5f9;"><code id="tbl-upi-id" style="background:#f1f5f9;color:#0f172a;padding:3px 7px;border-radius:4px;font-weight:800;">${p.upiId || 'lane4swim@upi'}</code></td>
+                      <td style="padding:10px 14px;border-right:1px solid #f1f5f9;"><code id="tbl-upi-id" style="background:#f1f5f9;color:#111111;padding:3px 7px;border-radius:0px;font-weight:800;">${p.upiId || 'lane4swim@upi'}</code></td>
                       <td style="padding:10px 14px;"><span class="badge badge-verified" style="font-size:10px;">Active &amp; Ready</span></td>
                     </tr>
                     <tr style="border-bottom:1px solid #f1f5f9;">
                       <td style="padding:10px 14px;font-weight:700;color:#334155;border-right:1px solid #f1f5f9;">Merchant Name</td>
-                      <td style="padding:10px 14px;font-weight:600;color:#0f172a;border-right:1px solid #f1f5f9;" id="tbl-merchant-name">${p.merchantName || 'The LANE4 Performance Store'}</td>
+                      <td style="padding:10px 14px;font-weight:600;color:#111111;border-right:1px solid #f1f5f9;" id="tbl-merchant-name">${p.merchantName || 'The LANE4 Performance Store'}</td>
                       <td style="padding:10px 14px;"><span class="badge badge-verified" style="font-size:10px;">Verified Display</span></td>
                     </tr>
                     <tr style="border-bottom:1px solid #f1f5f9;">
                       <td style="padding:10px 14px;font-weight:700;color:#334155;border-right:1px solid #f1f5f9;">Expiry Window</td>
-                      <td style="padding:10px 14px;font-weight:600;color:#0f172a;border-right:1px solid #f1f5f9;"><span id="tbl-window-mins">${p.verificationWindowMinutes || 30}</span> Minutes</td>
+                      <td style="padding:10px 14px;font-weight:600;color:#111111;border-right:1px solid #f1f5f9;"><span id="tbl-window-mins">${p.verificationWindowMinutes || 30}</span> Minutes</td>
                       <td style="padding:10px 14px;"><span class="badge badge-processing" style="font-size:10px;">Timer Enforced</span></td>
                     </tr>
                     <tr>
                       <td style="padding:10px 14px;font-weight:700;color:#334155;border-right:1px solid #f1f5f9;">Store UPI QR</td>
                       <td style="padding:10px 14px;border-right:1px solid #f1f5f9;">
                         <div style="display:flex;align-items:center;gap:8px;">
-                          <img id="tbl-qr-thumb" src="${p.qrCodeUrl || '6424266ea05809dff501d86e/lane4-share.png'}" alt="QR" style="width:32px;height:32px;object-fit:contain;border:1px solid #cbd5e1;border-radius:4px;padding:2px;background:#ffffff;cursor:pointer;" onclick="window.previewQrModal(this.src)" title="Click to view full size" />
+                          <img id="tbl-qr-thumb" src="${p.qrCodeUrl || '6424266ea05809dff501d86e/lane4-share.png'}" alt="QR" style="width:32px;height:32px;object-fit:contain;border:1px solid #cbd5e1;border-radius:0px;padding:2px;background:#ffffff;cursor:pointer;" onclick="window.previewQrModal(this.src)" title="Click to view full size" />
                           <button type="button" class="btn btn-outline" style="padding:3px 8px;font-size:11px;" onclick="window.previewQrModal(document.getElementById('tbl-qr-thumb').src)">View Full QR</button>
                         </div>
                       </td>
@@ -4794,7 +5174,7 @@ var formatDateString = window.formatDateString || formatDateTime;
               <!-- Form -->
               <form id="lane4-settings-payment-form">
                 <!-- QR Code Upload & Preview Section -->
-                <div style="margin-bottom:18px;border:1.5px solid #e2e8f0;border-radius:10px;padding:16px;background:#f8fafc;">
+                <div style="margin-bottom:18px;border:1.5px solid #e2e8f0;border-radius:0px;padding:16px;background:#f8fafc;">
                   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                     <div>
                       <label style="display:block;font-size:11.5px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:0.5px;">Store UPI QR Code Image</label>
@@ -4805,9 +5185,9 @@ var formatDateString = window.formatDateString || formatDateTime;
 
                   <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
                     <!-- QR Preview Box -->
-                    <div id="btn-admin-preview-qr" style="position:relative;width:110px;height:110px;border:1.5px solid #cbd5e1;border-radius:8px;background:#ffffff;padding:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(15,23,42,0.06);transition:all 0.15s ease;" title="Click to view full size">
-                      <img id="admin-qr-preview-img" src="${p.qrCodeUrl || '6424266ea05809dff501d86e/lane4-share.png'}" alt="UPI QR Preview" style="width:100%;height:100%;object-fit:contain;border-radius:4px;" />
-                      <div style="position:absolute;bottom:4px;right:4px;background:rgba(15,23,42,0.85);color:#fff;border-radius:4px;padding:2px 5px;font-size:9px;font-weight:700;display:flex;align-items:center;gap:3px;">
+                    <div id="btn-admin-preview-qr" style="position:relative;width:110px;height:110px;border:1.5px solid #cbd5e1;border-radius:0px;background:#ffffff;padding:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(15,23,42,0.06);transition:all 0.15s ease;" title="Click to view full size">
+                      <img id="admin-qr-preview-img" src="${p.qrCodeUrl || '6424266ea05809dff501d86e/lane4-share.png'}" alt="UPI QR Preview" style="width:100%;height:100%;object-fit:contain;border-radius:0px;" />
+                      <div style="position:absolute;bottom:4px;right:4px;background:rgba(15,23,42,0.85);color:#fff;border-radius:0px;padding:2px 5px;font-size:9px;font-weight:700;display:flex;align-items:center;gap:3px;">
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
                         <span>ZOOM</span>
                       </div>
@@ -4815,19 +5195,19 @@ var formatDateString = window.formatDateString || formatDateTime;
 
                     <!-- Upload Controls -->
                     <div style="flex:1;min-width:200px;">
-                      <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:4px;">Upload / Replace Official QR</div>
+                      <div style="font-size:12px;font-weight:700;color:#111111;margin-bottom:4px;">Upload / Replace Official QR</div>
                       <div style="font-size:11px;color:#64748b;line-height:1.45;margin-bottom:10px;">
                         Recommended: Clear square QR image (PNG, JPEG, WEBP) from GPay Business, PhonePe, Paytm, or BHIM.
                       </div>
 
                       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                        <label for="admin-qr-file-input" class="btn btn-outline" style="cursor:pointer;padding:7px 12px;font-size:11.5px;font-weight:700;border:1.5px solid #0f172a;border-radius:6px;background:#ffffff;color:#0f172a;display:inline-flex;align-items:center;gap:6px;margin:0;">
+                        <label for="admin-qr-file-input" class="btn btn-outline" style="cursor:pointer;padding:7px 12px;font-size:11.5px;font-weight:700;border:1.5px solid #111111;border-radius:0px;background:#ffffff;color:#111111;display:inline-flex;align-items:center;gap:6px;margin:0;">
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                           <span>Select QR Image</span>
                         </label>
                         <input type="file" id="admin-qr-file-input" accept="image/png,image/jpeg,image/webp" style="display:none;" />
 
-                        <button type="button" id="btn-upload-qr-now" class="btn" style="display:none;background:#16a34a;color:#ffffff;padding:7px 14px;font-size:11.5px;font-weight:700;border:none;border-radius:6px;cursor:pointer;align-items:center;gap:6px;">
+                        <button type="button" id="btn-upload-qr-now" class="btn" style="display:none;background:#16a34a;color:#ffffff;padding:7px 14px;font-size:11.5px;font-weight:700;border:none;border-radius:0px;cursor:pointer;align-items:center;gap:6px;">
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                           <span>Upload Now</span>
                         </button>
@@ -4844,28 +5224,28 @@ var formatDateString = window.formatDateString || formatDateTime;
 
                 <div style="margin-bottom:16px;">
                   <label style="display:block;font-size:11.5px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Store UPI ID (VPA)</label>
-                  <input type="text" id="set-upi-id" value="${p.upiId || 'lane4swim@upi'}" style="width:100%;padding:11px 14px;border:1.5px solid #cbd5e1;border-radius:8px;background:#f8fafc;font-family:inherit;font-size:14px;color:#0f172a;box-sizing:border-box;" required />
+                  <input type="text" id="set-upi-id" value="${p.upiId || 'lane4swim@upi'}" style="width:100%;padding:11px 14px;border:1.5px solid #cbd5e1;border-radius:0px;background:#f8fafc;font-family:inherit;font-size:14px;color:#111111;box-sizing:border-box;" required />
                   <span style="font-size:11px;color:#64748b;display:block;margin-top:4px;">Swimmers scan or transfer directly to this address.</span>
                 </div>
 
                 <div style="margin-bottom:16px;">
                   <label style="display:block;font-size:11.5px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Merchant Account Name</label>
-                  <input type="text" id="set-merchant-name" value="${p.merchantName || 'The LANE4 Performance Store'}" style="width:100%;padding:11px 14px;border:1.5px solid #cbd5e1;border-radius:8px;background:#f8fafc;font-family:inherit;font-size:14px;color:#0f172a;box-sizing:border-box;" required />
+                  <input type="text" id="set-merchant-name" value="${p.merchantName || 'The LANE4 Performance Store'}" style="width:100%;padding:11px 14px;border:1.5px solid #cbd5e1;border-radius:0px;background:#f8fafc;font-family:inherit;font-size:14px;color:#111111;box-sizing:border-box;" required />
                   <span style="font-size:11px;color:#64748b;display:block;margin-top:4px;">Official beneficiary name shown inside Google Pay, PhonePe, and Paytm.</span>
                 </div>
 
                 <div style="margin-bottom:16px;">
                   <label style="display:block;font-size:11.5px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Verification Time Window (Minutes)</label>
-                  <input type="number" id="set-window-mins" value="${p.verificationWindowMinutes || 30}" style="width:100%;padding:11px 14px;border:1.5px solid #cbd5e1;border-radius:8px;background:#f8fafc;font-family:inherit;font-size:14px;color:#0f172a;box-sizing:border-box;" required />
+                  <input type="number" id="set-window-mins" value="${p.verificationWindowMinutes || 30}" style="width:100%;padding:11px 14px;border:1.5px solid #cbd5e1;border-radius:0px;background:#f8fafc;font-family:inherit;font-size:14px;color:#111111;box-sizing:border-box;" required />
                   <span style="font-size:11px;color:#64748b;display:block;margin-top:4px;">Pending payments expire after this duration if proof is not submitted.</span>
                 </div>
 
                 <div style="margin-bottom:20px;">
                   <label style="display:block;font-size:11.5px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Instructions for Swimmers</label>
-                  <textarea id="set-instructions" rows="3" style="width:100%;padding:11px 14px;border:1.5px solid #cbd5e1;border-radius:8px;background:#f8fafc;font-family:inherit;font-size:13.5px;color:#0f172a;line-height:1.5;box-sizing:border-box;">${p.instructions || 'Pay via any UPI app (GPay, PhonePe, Paytm). Enter the 12-digit UTR and upload a payment receipt screenshot.'}</textarea>
+                  <textarea id="set-instructions" rows="3" style="width:100%;padding:11px 14px;border:1.5px solid #cbd5e1;border-radius:0px;background:#f8fafc;font-family:inherit;font-size:13.5px;color:#111111;line-height:1.5;box-sizing:border-box;">${p.instructions || 'Pay via any UPI app (GPay, PhonePe, Paytm). Enter the 12-digit UTR and upload a payment receipt screenshot.'}</textarea>
                 </div>
 
-                <button type="submit" id="btn-save-upi" class="btn" style="background:#0f172a;color:#ffffff;width:100%;justify-content:center;padding:12px;font-size:13.5px;font-weight:800;border-radius:8px;letter-spacing:0.3px;box-shadow:0 4px 12px rgba(15,23,42,0.15);cursor:pointer;transition:all 0.2s;">
+                <button type="submit" id="btn-save-upi" class="btn" style="background:#111111;color:#ffffff;width:100%;justify-content:center;padding:12px;font-size:13.5px;font-weight:800;border-radius:0px;letter-spacing:0.3px;box-shadow:0 4px 12px rgba(15,23,42,0.15);cursor:pointer;transition:all 0.2s;">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                   <span>Update UPI Settings</span>
                 </button>
@@ -4874,14 +5254,14 @@ var formatDateString = window.formatDateString || formatDateTime;
           </div>
 
           <!-- Shipping Settings Card -->
-          <div class="card" style="border:1px solid #cbd5e1;border-radius:12px;box-shadow:0 4px 16px -2px rgba(15,23,42,0.06);background:#ffffff;">
+          <div class="card" style="border:1px solid #cbd5e1;border-radius:0px;box-shadow:0 4px 16px -2px rgba(15,23,42,0.06);background:#ffffff;">
             <div class="card-header" style="background:#ffffff;padding:18px 22px;border-bottom:1.5px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
               <div style="display:flex;align-items:center;gap:10px;">
-                <div style="width:36px;height:36px;border-radius:8px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:#0f172a;">
+                <div style="width:36px;height:36px;border-radius:0px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:#111111;">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
                 </div>
                 <div>
-                  <div class="card-title" style="font-size:16px;font-weight:900;color:#0f172a;">PAN India Delivery &amp; Shipping</div>
+                  <div class="card-title" style="font-size:16px;font-weight:900;color:#111111;">PAN India Delivery &amp; Shipping</div>
                   <div style="font-size:12px;color:#64748b;">Shipping rules &amp; threshold rates</div>
                 </div>
               </div>
@@ -4890,7 +5270,7 @@ var formatDateString = window.formatDateString || formatDateTime;
 
             <div class="card-body" style="padding:22px;">
               <!-- Live Shipping Tier Summary Table -->
-              <div style="margin-bottom:20px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;background:#ffffff;">
+              <div style="margin-bottom:20px;border:1px solid #e2e8f0;border-radius:0px;overflow:hidden;background:#ffffff;">
                 <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
                   <thead>
                     <tr style="background:#f8fafc;border-bottom:1.5px solid #e2e8f0;">
@@ -4918,23 +5298,23 @@ var formatDateString = window.formatDateString || formatDateTime;
               <form id="lane4-settings-shipping-form">
                 <div style="margin-bottom:16px;">
                   <label style="display:block;font-size:11.5px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Free Shipping Threshold (₹ INR)</label>
-                  <input type="number" id="set-free-threshold" value="${freeThresh}" style="width:100%;padding:11px 14px;border:1.5px solid #cbd5e1;border-radius:8px;background:#f8fafc;font-family:inherit;font-size:14px;color:#0f172a;box-sizing:border-box;" required />
+                  <input type="number" id="set-free-threshold" value="${freeThresh}" style="width:100%;padding:11px 14px;border:1.5px solid #cbd5e1;border-radius:0px;background:#f8fafc;font-family:inherit;font-size:14px;color:#111111;box-sizing:border-box;" required />
                   <span style="font-size:11px;color:#64748b;display:block;margin-top:4px;">Cart subtotals equal or higher than this value receive free delivery automatically.</span>
                 </div>
 
                 <div style="margin-bottom:16px;">
                   <label style="display:block;font-size:11.5px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Standard Delivery Fee (₹ INR)</label>
-                  <input type="number" id="set-shipping-rate" value="${stdRate}" style="width:100%;padding:11px 14px;border:1.5px solid #cbd5e1;border-radius:8px;background:#f8fafc;font-family:inherit;font-size:14px;color:#0f172a;box-sizing:border-box;" required />
+                  <input type="number" id="set-shipping-rate" value="${stdRate}" style="width:100%;padding:11px 14px;border:1.5px solid #cbd5e1;border-radius:0px;background:#f8fafc;font-family:inherit;font-size:14px;color:#111111;box-sizing:border-box;" required />
                   <span style="font-size:11px;color:#64748b;display:block;margin-top:4px;">Flat standard shipping rate applied to orders below the free threshold.</span>
                 </div>
 
                 <div style="margin-bottom:20px;">
                   <label style="display:block;font-size:11.5px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Estimated Transit Window</label>
-                  <input type="text" id="set-transit-days" value="${s.estimatedTransitDays || '3–6 business days'}" style="width:100%;padding:11px 14px;border:1.5px solid #cbd5e1;border-radius:8px;background:#f8fafc;font-family:inherit;font-size:14px;color:#0f172a;box-sizing:border-box;" required />
+                  <input type="text" id="set-transit-days" value="${s.estimatedTransitDays || '3–6 business days'}" style="width:100%;padding:11px 14px;border:1.5px solid #cbd5e1;border-radius:0px;background:#f8fafc;font-family:inherit;font-size:14px;color:#111111;box-sizing:border-box;" required />
                   <span style="font-size:11px;color:#64748b;display:block;margin-top:4px;">Estimated delivery duration displayed to customers during checkout.</span>
                 </div>
 
-                <button type="submit" id="btn-save-shipping" class="btn" style="background:#0f172a;color:#ffffff;width:100%;justify-content:center;padding:12px;font-size:13.5px;font-weight:800;border-radius:8px;letter-spacing:0.3px;box-shadow:0 4px 12px rgba(15,23,42,0.15);cursor:pointer;transition:all 0.2s;">
+                <button type="submit" id="btn-save-shipping" class="btn" style="background:#111111;color:#ffffff;width:100%;justify-content:center;padding:12px;font-size:13.5px;font-weight:800;border-radius:0px;letter-spacing:0.3px;box-shadow:0 4px 12px rgba(15,23,42,0.15);cursor:pointer;transition:all 0.2s;">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                   <span>Update Shipping Rates</span>
                 </button>

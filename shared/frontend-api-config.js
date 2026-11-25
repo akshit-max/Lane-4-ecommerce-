@@ -188,3 +188,18 @@ async function lane4ApiRequest(endpoint, options = {}) {
 // Global exposure
 window.lane4ApiRequest = lane4ApiRequest;
 
+// Universal HTML entity sanitizer to protect against stored DOM XSS
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+window.escapeHtml = escapeHtml;
+if (window.LANE4) {
+  window.LANE4.escapeHtml = escapeHtml;
+}
+

@@ -70,15 +70,24 @@
         display: none !important;
       }
 
-      /* LANE4 Slide-out Cart Drawer Styles */
+      /* LANE4 Slide-out Cart Drawer Styles (Swiss Architectural Theme) */
       #lane4-cart-drawer-root {
         position: fixed;
         inset: 0;
         z-index: 99999990;
         pointer-events: none;
         visibility: hidden;
-        transition: visibility 0.3s ease;
-        font-family: 'Generalsans', 'General Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        transition: visibility 0.25s ease;
+        font-family: 'Generalsans', 'General Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      #lane4-cart-drawer-root,
+      #lane4-cart-drawer-root * {
+        font-family: 'Generalsans', 'General Sans', sans-serif !important;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        box-sizing: border-box;
       }
       #lane4-cart-drawer-root.open {
         pointer-events: auto;
@@ -87,11 +96,11 @@
       #lane4-cart-backdrop {
         position: fixed;
         inset: 0;
-        background: rgba(15, 23, 42, 0.65);
-        backdrop-filter: blur(4px);
-        -webkit-backdrop-filter: blur(4px);
+        background: rgba(0, 0, 0, 0.42);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
         opacity: 0;
-        transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
       }
       #lane4-cart-drawer-root.open #lane4-cart-backdrop {
         opacity: 1;
@@ -104,11 +113,12 @@
         width: 440px;
         max-width: 92vw;
         background: #ffffff;
-        box-shadow: -10px 0 45px rgba(0, 0, 0, 0.28);
+        border-left: 1px solid rgba(0, 0, 0, 0.08);
+        box-shadow: -15px 0 45px rgba(0, 0, 0, 0.16);
         display: flex;
         flex-direction: column;
         transform: translateX(100%);
-        transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+        transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
         z-index: 2;
         box-sizing: border-box;
       }
@@ -116,8 +126,8 @@
         transform: translateX(0);
       }
       .lane4-cart-header {
-        padding: 20px 24px;
-        border-bottom: 1px solid #f1f5f9;
+        padding: 22px 28px;
+        border-bottom: 1px solid #f0f0f0;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -129,94 +139,103 @@
         gap: 10px;
       }
       .lane4-cart-heading {
-        font-size: 17px;
-        font-weight: 900;
+        font-size: 14px;
+        font-weight: 500;
         letter-spacing: 1.5px;
-        color: #0f172a;
+        color: #111111;
         margin: 0;
         text-transform: uppercase;
       }
       .lane4-cart-badge-count {
-        background: #0f172a;
+        background: #111111;
         color: #ffffff;
         font-size: 11px;
-        font-weight: 800;
-        padding: 2px 8px;
-        border-radius: 12px;
+        font-weight: 500;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 6px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
       }
       .lane4-cart-close-btn {
-        background: #f1f5f9;
-        border: none;
-        color: #64748b;
+        width: 30px;
+        height: 30px;
+        background: #f7f7f7;
+        border: 1px solid #ececec;
+        color: #666666;
         cursor: pointer;
-        width: 34px;
-        height: 34px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.15s ease;
+        padding: 0;
+        transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
       }
       .lane4-cart-close-btn:hover {
-        background: #e2e8f0;
-        color: #0f172a;
+        background: #000000;
+        border-color: #000000;
+        color: #ffffff;
+        transform: scale(1.05);
       }
       .lane4-shipping-banner {
-        background: #f8fafc;
-        border-bottom: 1px solid #e2e8f0;
-        padding: 12px 24px;
+        background: #fafafa;
+        border-bottom: 1px solid #eeeeee;
+        padding: 12px 28px;
       }
       .lane4-shipping-bar-track {
-        height: 6px;
-        background: #e2e8f0;
-        border-radius: 3px;
+        height: 2px;
+        background: #e5e5e5;
+        border-radius: 0px;
         overflow: hidden;
-        margin-top: 6px;
+        margin-top: 8px;
       }
       .lane4-shipping-bar-fill {
         height: 100%;
-        background: #16a34a;
+        background: #111111;
         transition: width 0.3s ease;
-        border-radius: 3px;
+        border-radius: 0px;
       }
       .lane4-cart-body {
         flex: 1;
         overflow-y: auto;
-        padding: 16px 24px;
+        padding: 20px 28px;
       }
       .lane4-cart-empty {
         text-align: center;
-        padding: 60px 16px;
+        padding: 70px 16px;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
       }
       .lane4-empty-icon-wrap {
-        width: 72px;
-        height: 72px;
+        width: 56px;
+        height: 56px;
         border-radius: 50%;
-        background: #f1f5f9;
+        background: #fafafa;
+        border: 1px solid #eeeeee;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-bottom: 18px;
-        color: #64748b;
+        margin-bottom: 20px;
+        color: #777777;
       }
       .lane4-cart-item-row {
         display: flex;
         align-items: flex-start;
         gap: 14px;
-        padding: 16px 0;
-        border-bottom: 1px solid #f1f5f9;
+        padding: 18px 0;
+        border-bottom: 1px solid #eeeeee;
       }
       .lane4-cart-item-img {
-        width: 74px;
-        height: 74px;
+        width: 72px;
+        height: 72px;
         object-fit: cover;
-        border-radius: 8px;
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
+        border-radius: 0px;
+        background: #fafafa;
+        border: 1px solid #eeeeee;
         flex-shrink: 0;
       }
       .lane4-cart-item-details {
@@ -224,39 +243,43 @@
         min-width: 0;
       }
       .lane4-cart-item-title {
-        font-weight: 800;
+        font-weight: 500;
         font-size: 13.5px;
-        color: #0f172a;
+        color: #111111;
         text-decoration: none;
         line-height: 1.35;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
+        transition: color 0.15s ease;
+      }
+      .lane4-cart-item-title:hover {
+        color: #444444;
       }
       .lane4-cart-item-variant {
-        font-size: 11.5px;
-        color: #64748b;
-        font-weight: 600;
+        font-size: 12px;
+        color: #777777;
+        font-weight: 400;
         margin-top: 3px;
       }
       .lane4-cart-item-price {
-        font-size: 14px;
-        font-weight: 800;
-        color: #000000;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: #111111;
         margin-top: 4px;
       }
       .lane4-cart-qty-ctrl {
         display: inline-flex;
         align-items: center;
-        border: 1.5px solid #cbd5e1;
-        border-radius: 6px;
+        border: 1px solid #dcdcdc;
+        border-radius: 0px;
         overflow: hidden;
         margin-top: 8px;
         background: #ffffff;
       }
       .lane4-qty-btn {
-        background: #f8fafc;
+        background: #ffffff;
         border: none;
         width: 26px;
         height: 26px;
@@ -264,30 +287,30 @@
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        color: #334155;
-        font-weight: 700;
-        font-size: 14px;
-        transition: background 0.15s;
+        color: #444444;
+        font-weight: 400;
+        font-size: 13px;
+        transition: background 0.15s, color 0.15s;
       }
       .lane4-qty-btn:hover {
-        background: #e2e8f0;
+        background: #f5f5f5;
         color: #000000;
       }
       .lane4-qty-val {
         padding: 0 10px;
-        font-size: 13px;
-        font-weight: 700;
-        color: #0f172a;
+        font-size: 12.5px;
+        font-weight: 500;
+        color: #111111;
         min-width: 18px;
         text-align: center;
       }
       .lane4-item-del-btn {
         background: none;
         border: none;
-        color: #94a3b8;
+        color: #888888;
         cursor: pointer;
         padding: 4px;
-        border-radius: 4px;
+        border-radius: 0px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -295,13 +318,12 @@
         margin-left: 6px;
       }
       .lane4-item-del-btn:hover {
-        color: #ef4444;
+        color: #000000;
       }
       .lane4-cart-footer {
-        padding: 20px 24px;
-        border-top: 1px solid #e2e8f0;
+        padding: 22px 28px;
+        border-top: 1px solid #eeeeee;
         background: #ffffff;
-        box-shadow: 0 -4px 16px rgba(0,0,0,0.03);
       }
       .lane4-subtotal-row {
         display: flex;
@@ -310,27 +332,29 @@
         margin-bottom: 6px;
       }
       .lane4-subtotal-label {
-        font-size: 14px;
-        font-weight: 700;
+        font-size: 12px;
+        font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: #64748b;
+        letter-spacing: 0.8px;
+        color: #777777;
       }
       .lane4-subtotal-val {
-        font-size: 20px;
-        font-weight: 900;
-        color: #0f172a;
+        font-size: 18px;
+        font-weight: 600;
+        color: #111111;
+        letter-spacing: -0.2px;
       }
       .lane4-cart-checkout-btn {
         width: 100%;
+        height: 46px;
         background: #000000;
         color: #ffffff;
-        padding: 15px;
-        border: none;
-        border-radius: 8px;
-        font-size: 13.5px;
-        font-weight: 800;
-        letter-spacing: 1.5px;
+        padding: 0 22px;
+        border: 1px solid #000000;
+        border-radius: 0px;
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 1px;
         text-transform: uppercase;
         cursor: pointer;
         margin-top: 14px;
@@ -339,23 +363,34 @@
         justify-content: center;
         gap: 8px;
         text-decoration: none;
-        transition: all 0.15s ease;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transition: background 0.18s ease;
       }
       .lane4-cart-checkout-btn:hover {
-        background: #1e293b;
-        transform: translateY(-1px);
-        box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+        background: #222222;
+      }
+      .lane4-cart-checkout-btn span {
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 1px;
+        line-height: 20px;
+        text-transform: uppercase;
+      }
+      .lane4-cart-checkout-btn svg {
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .lane4-cart-checkout-btn:hover svg {
+        transform: translateX(3px);
       }
       .lane4-continue-shopping-link {
         display: block;
         text-align: center;
-        margin-top: 10px;
-        font-size: 12.5px;
-        font-weight: 700;
-        color: #64748b;
-        text-decoration: none;
+        margin-top: 12px;
+        font-size: 12px;
+        font-weight: 400;
+        color: #777777;
+        text-decoration: underline;
         cursor: pointer;
+        transition: color 0.15s;
       }
       .lane4-continue-shopping-link:hover {
         color: #000000;
@@ -406,7 +441,7 @@
             <span id="lane4-cart-badge" class="lane4-cart-badge-count">0</span>
           </div>
           <button id="lane4-cart-close" class="lane4-cart-close-btn" aria-label="Close cart">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -415,7 +450,7 @@
 
         <!-- Free Shipping Progress Tracker -->
         <div id="lane4-free-shipping-section" class="lane4-shipping-banner">
-          <div id="lane4-shipping-msg" style="font-size:12px;font-weight:700;color:#334155;"></div>
+          <div id="lane4-shipping-msg" style="font-size:12px;font-weight:400;color:#555555;"></div>
           <div class="lane4-shipping-bar-track">
             <div id="lane4-shipping-bar" class="lane4-shipping-bar-fill" style="width:0%;"></div>
           </div>
@@ -430,12 +465,12 @@
             <span class="lane4-subtotal-label">Subtotal</span>
             <span id="lane4-cart-subtotal-text" class="lane4-subtotal-val">₹0.00</span>
           </div>
-          <div style="font-size:11.5px;color:#64748b;line-height:1.4;">
+          <div style="font-size:11.5px;color:#888888;line-height:1.4;margin-top:4px;">
             PAN India Express delivery • Taxes calculated at checkout
           </div>
           <a id="lane4-go-checkout-btn" class="lane4-cart-checkout-btn" href="checkout.html">
             <span>PROCEED TO CHECKOUT</span>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
           </a>
           <a id="lane4-keep-shopping-link" class="lane4-continue-shopping-link">Continue Shopping</a>
         </div>
@@ -517,15 +552,15 @@
     // Free shipping progress calculation
     const subtotal = activeCart.subtotalPaise || 0;
     if (subtotal >= FREE_SHIPPING_THRESHOLD_PAISE) {
-      shippingMsg.innerHTML = '<span style="color:#16a34a;display:inline-flex;align-items:center;gap:5px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>You unlocked <strong>FREE PAN India Express Delivery!</strong></span>';
+      shippingMsg.innerHTML = '<span style="color:#111111;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>You unlocked <strong>FREE PAN India Express Delivery!</strong></span>';
       shippingBar.style.width = '100%';
-      shippingBar.style.background = '#16a34a';
+      shippingBar.style.background = '#111111';
     } else {
       const remainingPaise = FREE_SHIPPING_THRESHOLD_PAISE - subtotal;
-      shippingMsg.innerHTML = `Add <strong>${window.LANE4.formatINR(remainingPaise)}</strong> more to get <strong style="color:#16a34a;">FREE Delivery</strong>`;
+      shippingMsg.innerHTML = `<span style="font-size:12px;font-weight:400;color:#555555;">Add <strong>${window.LANE4.formatINR(remainingPaise)}</strong> more to get <strong>FREE Delivery</strong></span>`;
       const pct = Math.min(100, Math.round((subtotal / FREE_SHIPPING_THRESHOLD_PAISE) * 100));
       shippingBar.style.width = `${pct}%`;
-      shippingBar.style.background = '#0f172a';
+      shippingBar.style.background = '#111111';
     }
 
     // EMPTY CART STATE
@@ -538,19 +573,19 @@
       bodyEl.innerHTML = `
         <div class="lane4-cart-empty">
           <div class="lane4-empty-icon-wrap">
-            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="8" cy="21" r="1"></circle>
               <circle cx="19" cy="21" r="1"></circle>
               <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
             </svg>
           </div>
-          <h4 style="font-size:18px;font-weight:900;color:#0f172a;margin:0 0 8px 0;">Your Cart is Empty</h4>
-          <p style="font-size:13px;color:#64748b;line-height:1.5;margin:0 0 22px 0;max-width:260px;">
+          <h4 style="font-size:16px;font-weight:500;color:#111111;letter-spacing:0.2px;margin:0 0 8px 0;">Your Cart is Empty</h4>
+          <p style="font-size:13px;font-weight:400;color:#777777;line-height:1.5;margin:0 0 24px 0;max-width:260px;">
             Explore our competitive swim gear, racing caps, and goggles to gear up.
           </p>
           <a href="${shopUrl}" class="lane4-cart-checkout-btn" style="max-width:220px;text-decoration:none;margin-top:0;">
             <span>START SHOPPING</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
           </a>
         </div>
       `;
@@ -565,6 +600,11 @@
     const isInSubfolder = /\/(product|category|blog|authors|utility-pages|category-blog)\//i.test(window.location.pathname);
     const productBase = isInSubfolder ? '../product/' : 'product/';
 
+    const escapeHtml = window.escapeHtml || function(s) {
+      if (s === null || s === undefined) return '';
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    };
+
     bodyEl.innerHTML = activeCart.items.map(item => {
       const imgUrl = window.LANE4.resolveAssetUrl ? window.LANE4.resolveAssetUrl(item.imageUrl) : (item.imageUrl || '');
       const productLink = item.slug ? `${productBase}${item.slug}.html` : '#';
@@ -572,11 +612,11 @@
       return `
         <div class="lane4-cart-item-row" data-row-id="${item.itemId}">
           <a href="${productLink}">
-            <img src="${imgUrl}" alt="${item.name}" class="lane4-cart-item-img" />
+            <img src="${imgUrl}" alt="${escapeHtml(item.name)}" class="lane4-cart-item-img" />
           </a>
           <div class="lane4-cart-item-details">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-              <a href="${productLink}" class="lane4-cart-item-title">${item.name}</a>
+              <a href="${productLink}" class="lane4-cart-item-title">${escapeHtml(item.name)}</a>
               <button type="button" class="lane4-item-del-btn" data-del-id="${item.itemId}" title="Remove item" aria-label="Remove item">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="3 6 5 6 21 6"></polyline>
@@ -584,7 +624,7 @@
                 </svg>
               </button>
             </div>
-            ${item.variantLabel ? `<div class="lane4-cart-item-variant">${item.variantLabel}</div>` : ''}
+            ${item.variantLabel ? `<div class="lane4-cart-item-variant">${escapeHtml(item.variantLabel)}</div>` : ''}
             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
               <div class="lane4-cart-qty-ctrl">
                 <button type="button" class="lane4-qty-btn lane4-qty-minus" data-qty-item="${item.itemId}" data-target-qty="${item.quantity - 1}">-</button>

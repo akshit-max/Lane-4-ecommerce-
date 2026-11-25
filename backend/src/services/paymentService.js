@@ -1,6 +1,7 @@
 const { getDb } = require('../config/firebaseAdmin');
 const { uploadImageBuffer } = require('../config/cloudinary');
 const { sendMail, wrapBrandedTemplate } = require('../config/email');
+const { staffNotificationService } = require('./staffNotificationService');
 const { formatINR } = require('../utils/currency');
 const { logger } = require('../utils/logger');
 
@@ -232,7 +233,32 @@ class PaymentService {
     if (!existingPaymentSnap.empty) {
       const existingDoc = existingPaymentSnap.docs[0];
       paymentId = existingDoc.id;
-      attempts = (existingDoc.data().submissionAttempts || 1) + 1;
+      const existingData = existingDoc.data();
+      attempts = (existingData.submissionAttempts || 1) + 1;
+
+      // Preserve superseded screenshot in proofHistory
+      const priorHistory = Array.isArray(existingData.proofHistory) ? [...existingData.proofHistory] : [];
+      if (existingData.proofScreenshot && (existingData.proofScreenshot.secureUrl || existingData.proofScreenshot.url)) {
+        const oldUrl = existingData.proofScreenshot.secureUrl || existingData.proofScreenshot.url;
+        const oldPublicId = existingData.proofScreenshot.publicId || null;
+        const isDuplicate = priorHistory.some(h =>
+          (h.secureUrl && h.secureUrl === oldUrl) ||
+          (oldPublicId && h.publicId && h.publicId === oldPublicId)
+        );
+
+        if (!isDuplicate) {
+          priorHistory.push({
+            publicId: oldPublicId,
+            secureUrl: oldUrl,
+            upiReferenceNumber: existingData.upiReferenceNumber || null,
+            uploadedAt: existingData.proofScreenshot.uploadedAt || existingData.updatedAt || existingData.createdAt || new Date(),
+            supersededAt: new Date(),
+            submissionAttempt: existingData.submissionAttempts || 1,
+            rejectionReason: existingData.rejection?.reason || existingData.verification?.rejectionReason || null,
+            internalNotes: existingData.rejection?.internalNotes || existingData.verification?.internalNotes || null
+          });
+        }
+      }
 
       await db.collection('payments').doc(paymentId).update({
         upiReferenceNumber: cleanUtr,
@@ -242,6 +268,7 @@ class PaymentService {
           secureUrl: uploadResult.secureUrl,
           uploadedAt: new Date()
         },
+        proofHistory: priorHistory,
         submissionAttempts: attempts,
         updatedAt: new Date()
       });
@@ -261,6 +288,7 @@ class PaymentService {
           secureUrl: uploadResult.secureUrl,
           uploadedAt: new Date()
         },
+        proofHistory: [],
         verification: {},
         submissionAttempts: 1,
         createdAt: new Date(),
@@ -285,14 +313,25 @@ class PaymentService {
     await db.collection('notifications').add({
       type: 'payment_submitted',
       title: 'New UPI Payment Proof Submitted',
-      message: `Payment proof submitted for order ${orderData.orderNumber || orderId} (UTR: ${cleanUtr})`,
+      message: `Payment proof submitted for order ${orderData.orderNumber || orderId} (UTR: ********${cleanUtr.slice(-4)})`,
       referenceId: orderId,
       isRead: false,
       createdAt: new Date()
     });
 
-    // Send customer notification email
     const payableFormatted = formatINR(orderData.pricing ? orderData.pricing.finalPayablePaise : 0);
+
+    // Notify staff of payment proof submission (non-blocking async)
+    staffNotificationService.notifyPaymentProofSubmitted({
+      orderId,
+      orderNumber: orderData.orderNumber || orderId,
+      customerEmail: orderData.customerEmail,
+      amountFormatted: payableFormatted,
+      amountPaise: orderData.pricing ? orderData.pricing.finalPayablePaise : 0,
+      upiReferenceNumber: cleanUtr
+    });
+
+    // Send customer notification email
     sendMail({
       to: orderData.customerEmail,
       subject: `Payment Received — Awaiting Verification (Order #${orderData.orderNumber || orderId})`,
@@ -446,38 +485,71 @@ class PaymentService {
     }
 
     const orderRef = db.collection('orders').doc(paymentData.orderId);
-    const orderDoc = await orderRef.get();
-    if (!orderDoc.exists) throw new Error('Associated order record not found.');
-    const orderData = orderDoc.data();
-
     const now = new Date();
+    let orderData;
 
-    // Update payment
-    await paymentRef.update({
-      status: 'verified',
-      verification: {
-        verifiedAt: now,
-        verifiedByUid: adminUser.uid,
-        verifiedByName: adminUser.displayName || adminUser.email,
-        internalNotes: cleanNote
-      },
-      updatedAt: now
+    // Atomic transactional order validation & payment approval
+    await db.runTransaction(async (transaction) => {
+      const orderDoc = await transaction.get(orderRef);
+      if (!orderDoc.exists) throw new Error('Associated order record not found.');
+      orderData = orderDoc.data();
+
+      const currentStatus = orderData.status || orderData.orderStatus;
+      if (currentStatus === 'cancelled') {
+        const err = new Error(`Cannot approve payment: Order #${orderData.orderNumber || paymentData.orderId} has already been cancelled.`);
+        err.statusCode = 400;
+        err.code = 'ORDER_ALREADY_CANCELLED';
+        throw err;
+      }
+
+      if (currentStatus === 'returned' || currentStatus === 'refunded') {
+        const err = new Error(`Cannot approve payment: Order #${orderData.orderNumber || paymentData.orderId} is in "${currentStatus}" status.`);
+        err.statusCode = 400;
+        err.code = 'INVALID_ORDER_STATUS';
+        throw err;
+      }
+
+      const freshPaymentDoc = await transaction.get(paymentRef);
+      if (!freshPaymentDoc.exists) throw new Error('Payment record not found.');
+      const freshPaymentData = freshPaymentDoc.data();
+      if (freshPaymentData.status === 'verified') {
+        return; // Already verified
+      }
+
+      // Update payment within transaction
+      transaction.update(paymentRef, {
+        status: 'verified',
+        verification: {
+          verifiedAt: now,
+          verifiedByUid: adminUser.uid,
+          verifiedByName: adminUser.displayName || adminUser.email,
+          internalNotes: cleanNote
+        },
+        updatedAt: now
+      });
+
+      // Update order within transaction
+      transaction.update(orderRef, {
+        paymentStatus: 'verified',
+        status: 'confirmed',
+        orderStatus: 'confirmed',
+        stockDeducted: true,
+        updatedAt: now
+      });
     });
 
     // Deduct physical inventory & product variants stock if not already deducted
     if (!orderData.stockDeducted && orderData.items && orderData.items.length > 0) {
       for (const item of orderData.items) {
         try {
-          // 1. Update inventory collection document
+          // 1. Update inventory collection document (fulfill reserved quantity)
           const invRef = db.collection('inventory').doc(item.sku);
           const invDoc = await invRef.get();
           if (invDoc.exists) {
             const inv = invDoc.data();
-            const newAvail = Math.max(0, (inv.availableQuantity || 0) - item.quantity);
+            const newReserved = Math.max(0, (inv.reservedQuantity || 0) - item.quantity);
             await invRef.update({
-              availableQuantity: newAvail,
-              reservedQuantity: Math.max(0, (inv.reservedQuantity || 0) - item.quantity),
-              isOutOfStock: newAvail <= 0,
+              reservedQuantity: newReserved,
               updatedAt: now
             });
           }
@@ -509,15 +581,6 @@ class PaymentService {
         } catch (_) {}
       }
     }
-
-    // Update order
-    await orderRef.update({
-      paymentStatus: 'verified',
-      status: 'confirmed',
-      orderStatus: 'confirmed',
-      stockDeducted: true,
-      updatedAt: now
-    });
 
     // Audit log
     await db.collection('adminActivityLogs').add({

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <title>Verify Email Address | The Lane4 Performance Store</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/svg+xml" href="6424266ea05809dff501d86e/lane4-favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="6424266ea05809dff501d86e/lane4-favicon-32.png">
+  <style>
+    @font-face {
+      font-family: 'Generalsans';
+      src: url('6424266ea05809dff501d86e/6424266ea0580930f001d8ae_GeneralSans-Regular.otf') format('opentype');
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Generalsans';
+      src: url('6424266ea05809dff501d86e/6424266ea058093d9301d8ad_GeneralSans-Light.otf') format('opentype');
+      font-weight: 300;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Generalsans';
+      src: url('6424266ea05809dff501d86e/6424266ea058093f8c01d8b0_GeneralSans-Medium.otf') format('opentype');
+      font-weight: 500 600;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Generalsans';
+      src: url('6424266ea05809dff501d86e/6424266ea058091bfa01d8af_GeneralSans-Bold.otf') format('opentype');
+      font-weight: 700 900;
+      font-style: normal;
+      font-display: swap;
+    }
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Generalsans', 'General Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    body {
+      background: radial-gradient(circle at 50% 25%, #18181b 0%, #09090b 100%);
+      color: #111111;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      line-height: 1.5;
+    }
+    .verify-container {
+      width: 100%;
+      max-width: 440px;
+      background: #ffffff;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 0px;
+      padding: 36px 36px 32px;
+      text-align: center;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      position: relative;
+      animation: verifyFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes verifyFadeIn {
+      from { opacity: 0; transform: translateY(8px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .brand-header-lockup {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #f0f0f0;
+      padding-bottom: 16px;
+      margin-bottom: 22px;
+    }
+    .brand-meta {
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid #e5e5e5;
+      padding-left: 12px;
+      text-align: left;
+      line-height: 1.15;
+    }
+    .brand-badge {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      color: #222222;
+      text-transform: uppercase;
+    }
+    .brand-sub {
+      font-size: 9px;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+      color: #888888;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    .security-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.6px;
+      color: #16a34a;
+      text-transform: uppercase;
+    }
+    .security-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #16a34a;
+      display: inline-block;
+    }
+    .status-icon-wrap {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+      background: #fafafa;
+      border: 1px solid #eeeeee;
+      transition: all 0.2s ease;
+    }
+    .status-icon-wrap.loading {
+      background: #fafafa;
+      border-color: #e5e5e5;
+      color: #111111;
+    }
+    .status-icon-wrap.success {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+      color: #16a34a;
+    }
+    .status-icon-wrap.info {
+      background: #fafafa;
+      border-color: #e5e5e5;
+      color: #111111;
+    }
+    .status-icon-wrap.warning {
+      background: #fefce8;
+      border-color: #fef08a;
+      color: #ca8a04;
+    }
+    .status-icon-wrap.error {
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #dc2626;
+    }
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 2px solid #e5e5e5;
+      border-top-color: #111111;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .verify-title {
+      font-size: 18px;
+      font-weight: 500;
+      color: #111111;
+      letter-spacing: 0.2px;
+      margin-bottom: 8px;
+    }
+    .verify-message {
+      font-size: 13.5px;
+      font-weight: 400;
+      color: #777777;
+      line-height: 1.55;
+      margin-bottom: 24px;
+    }
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      height: 46px;
+      background: #000000;
+      color: #ffffff;
+      padding: 0 22px;
+      border-radius: 0px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: 1px solid #000000;
+      cursor: pointer;
+      transition: background 0.18s ease;
+      line-height: 20px;
+    }
+    .btn-action:hover {
+      background: #222222;
+    }
+    .btn-action svg {
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .btn-action:hover svg {
+      transform: translateX(3px);
+    }
+    .btn-secondary {
+      background: transparent;
+      color: #555555;
+      border: 1px solid #dcdcdc;
+      margin-top: 10px;
+      height: 44px;
+    }
+    .btn-secondary:hover {
+      background: #f5f5f5;
+      color: #000000;
+      border-color: #000000;
+    }
+    .footer-note {
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid #eeeeee;
+      font-size: 11.5px;
+      color: #888888;
+      line-height: 1.5;
+    }
+    .footer-note a {
+      color: #444444;
+      text-decoration: underline;
+    }
+    .footer-note a:hover {
+      color: #000000;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="verify-container">
+    <div class="brand-header-lockup">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <img src="6424266ea05809dff501d86e/lane4-logo.png" alt="LANE4" style="height:26px;width:auto;" onerror="this.style.display='none'" />
+        <div class="brand-meta">
+          <span class="brand-badge">SWIMMER ACCESS</span>
+          <span class="brand-sub">EMAIL VERIFICATION</span>
+        </div>
+      </div>
+      <div class="security-status-pill">
+        <span class="security-dot"></span>
+        <span>SECURE</span>
+      </div>
+    </div>
+
+    <!-- STATUS ICON -->
+    <div id="status-icon-wrap" class="status-icon-wrap loading">
+      <div id="loading-spinner" class="spinner"></div>
+      <div id="icon-success" style="display:none;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+      </div>
+      <div id="icon-info" style="display:none;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+      </div>
+      <div id="icon-warning" style="display:none;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+      </div>
+      <div id="icon-error" style="display:none;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+      </div>
+    </div>
+
+    <!-- TITLE & MESSAGE -->
+    <h1 id="verify-title" class="verify-title">Verifying Your Email</h1>
+    <p id="verify-message" class="verify-message">Please wait while we confirm your email address with our secure servers...</p>
+
+    <!-- ACTION BUTTONS -->
+    <div id="action-wrapper">
+      <a id="btn-primary" href="/?action=login" class="btn-action" style="display:none;">
+        <span>Sign In to Account</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </a>
+      <a id="btn-home" href="/" class="btn-action btn-secondary" style="display:none;">
+        <span>Return to Storefront</span>
+      </a>
+    </div>
+
+    <div class="footer-note">
+      Founded by National Medalist Swimmers in Nagpur, India.<br>
+      Need assistance? Contact us at <a href="mailto:Lane4performancestore@gmail.com">Lane4performancestore@gmail.com</a>
+    </div>
+  </div>
+
+  <script src="shared/frontend-api-config.js"></script>
+  <script>
+    (async function initEmailVerification() {
+      const iconWrap = document.getElementById('status-icon-wrap');
+      const spinner = document.getElementById('loading-spinner');
+      const iconSuccess = document.getElementById('icon-success');
+      const iconInfo = document.getElementById('icon-info');
+      const iconWarning = document.getElementById('icon-warning');
+      const iconError = document.getElementById('icon-error');
+      const titleEl = document.getElementById('verify-title');
+      const msgEl = document.getElementById('verify-message');
+      const btnPrimary = document.getElementById('btn-primary');
+      const btnHome = document.getElementById('btn-home');
+
+      function hideAllIcons() {
+        spinner.style.display = 'none';
+        iconSuccess.style.display = 'none';
+        iconInfo.style.display = 'none';
+        iconWarning.style.display = 'none';
+        iconError.style.display = 'none';
+      }
+
+      function setSuccess(title, message) {
+        hideAllIcons();
+        iconWrap.className = 'status-icon-wrap success';
+        iconSuccess.style.display = 'block';
+        titleEl.textContent = title;
+        msgEl.textContent = message;
+        btnPrimary.style.display = 'inline-flex';
+        btnPrimary.href = '/?action=login';
+        btnPrimary.querySelector('span').textContent = 'Sign In to Account';
+        btnHome.style.display = 'inline-flex';
+      }
+
+      function setInfo(title, message) {
+        hideAllIcons();
+        iconWrap.className = 'status-icon-wrap info';
+        iconInfo.style.display = 'block';
+        titleEl.textContent = title;
+        msgEl.textContent = message;
+        btnPrimary.style.display = 'inline-flex';
+        btnPrimary.href = '/?action=login';
+        btnPrimary.querySelector('span').textContent = 'Proceed to Sign In';
+        btnHome.style.display = 'inline-flex';
+      }
+
+      function setWarning(title, message) {
+        hideAllIcons();
+        iconWrap.className = 'status-icon-wrap warning';
+        iconWarning.style.display = 'block';
+        titleEl.textContent = title;
+        msgEl.textContent = message;
+        btnPrimary.style.display = 'inline-flex';
+        btnPrimary.href = '/?action=login';
+        btnPrimary.querySelector('span').textContent = 'Sign In to Request Link';
+        btnHome.style.display = 'inline-flex';
+      }
+
+      function setError(title, message) {
+        hideAllIcons();
+        iconWrap.className = 'status-icon-wrap error';
+        iconError.style.display = 'block';
+        titleEl.textContent = title;
+        msgEl.textContent = message;
+        btnPrimary.style.display = 'none';
+        btnHome.style.display = 'inline-flex';
+        btnHome.querySelector('span').textContent = 'Return to Storefront';
+      }
+
+      // 1. Extract token from URL search params
+      let token = '';
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        token = (urlParams.get('token') || urlParams.get('tokenHash') || '').trim();
+      } catch (_) {}
+
+      if (!token) {
+        setError(
+          'Missing Verification Token',
+          'No email verification token was detected in this link. Please check your verification email and click the full, complete link.'
+        );
+        return;
+      }
+
+      // 2. Resolve API base URL
+      let baseUrl = '/api';
+      if (window.LANE4_CONFIG && window.LANE4_CONFIG.API_BASE_URL) {
+        baseUrl = window.LANE4_CONFIG.API_BASE_URL;
+      }
+
+      // 3. Dispatch verification request to backend
+      try {
+        const response = await fetch(`${baseUrl}/auth/verify-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ token: token })
+        });
+
+        let data = {};
+        try {
+          data = await response.json();
+        } catch (_) {}
+
+        if (response.ok && data.success) {
+          setSuccess(
+            'Email Verified Successfully!',
+            'Thank you for confirming your email address. Your LANE4 account is now fully active. You can now save addresses, track orders, and experience lightning-fast checkout.'
+          );
+          return;
+        }
+
+        // Handle specific business error codes
+        const errCode = (data.error && data.error.code) || '';
+        const errMsg = (data.error && data.error.message) || '';
+
+        if (errCode === 'TOKEN_ALREADY_USED') {
+          setInfo(
+            'Email Already Verified',
+            'This verification link has already been used. Your account email address is already verified. You can proceed to sign in directly.'
+          );
+        } else if (errCode === 'TOKEN_EXPIRED') {
+          setWarning(
+            'Verification Link Expired',
+            'This verification link has expired (links are valid for 24 hours). Please sign in to your account to request a fresh verification email.'
+          );
+        } else if (errCode === 'INVALID_OR_EXPIRED_TOKEN' || errCode === 'MISSING_TOKEN') {
+          setError(
+            'Invalid Verification Link',
+            'This email verification link is invalid or malformed. Please ensure you clicked the full URL sent to your inbox, or request a new link.'
+          );
+        } else {
+          setError(
+            'Verification Failed',
+            errMsg || 'An unexpected error occurred while verifying your email address. Please try again or contact customer support.'
+          );
+        }
+      } catch (networkErr) {
+        setError(
+          'Connection Error',
+          'Could not reach the authentication server. Please check your internet connection and try again.'
+        );
+        btnHome.style.display = 'inline-flex';
+        // Add retry button if network fails
+        const retryBtn = document.createElement('button');
+        retryBtn.className = 'btn-action';
+        retryBtn.style.marginTop = '10px';
+        retryBtn.innerHTML = '<span>Retry Verification</span>';
+        retryBtn.onclick = function() { window.location.reload(); };
+        document.getElementById('action-wrapper').prepend(retryBtn);
+      }
+    })();
+  </script>
+</body>
+</html>

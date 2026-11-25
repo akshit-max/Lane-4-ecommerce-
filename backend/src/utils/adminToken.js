@@ -1,7 +1,15 @@
 const crypto = require('crypto');
 const { config } = require('../config/environment');
 
-const JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'lane4-admin-super-secure-key-2026-athletic-secret';
+function getAdminSecret() {
+  if (process.env.NODE_ENV === 'production') {
+    if (!process.env.ADMIN_JWT_SECRET || process.env.ADMIN_JWT_SECRET === 'lane4-admin-super-secure-key-2026-athletic-secret') {
+      throw new Error('FATAL: Insecure or missing ADMIN_JWT_SECRET in production. Set a unique secret in environment variables.');
+    }
+  }
+  return process.env.ADMIN_JWT_SECRET || 'lane4-admin-super-secure-key-2026-athletic-secret';
+}
+
 const DEFAULT_EXPIRY_SECONDS = parseInt(process.env.ADMIN_JWT_EXPIRY_SECONDS, 10) || (2 * 3600); // 2 hours default
 
 function base64UrlEncode(str) {
@@ -32,7 +40,7 @@ function generateAdminJwt(payload, expiresInSeconds = DEFAULT_EXPIRY_SECONDS) {
   const data = `${encodedHeader}.${encodedPayload}`;
 
   const signature = crypto
-    .createHmac('sha256', JWT_SECRET)
+    .createHmac('sha256', getAdminSecret())
     .update(data)
     .digest('base64')
     .replace(/=/g, '')
@@ -52,7 +60,7 @@ function verifyAdminJwt(token) {
 
   try {
     const expectedSignature = crypto
-      .createHmac('sha256', JWT_SECRET)
+      .createHmac('sha256', getAdminSecret())
       .update(data)
       .digest('base64')
       .replace(/=/g, '')

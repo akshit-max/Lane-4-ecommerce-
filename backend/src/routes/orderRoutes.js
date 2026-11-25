@@ -17,7 +17,9 @@ router.post(
 
 router.get('/my-orders', authenticate, orderController.getMyOrders);
 router.post('/track', orderController.trackOrder);
-router.get('/:id', optionalAuthenticate, orderController.getOrderById);
+router.post('/:id/cancel', optionalAuthenticate, orderController.cancelMyOrder);
+router.get('/:id/invoice', optionalAuthenticate, orderController.getOrderInvoice);
+router.get('/:id', authenticate, orderController.getOrderById);
 
 module.exports = router;
 

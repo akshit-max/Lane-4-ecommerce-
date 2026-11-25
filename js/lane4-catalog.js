@@ -55,13 +55,17 @@
         function matchesCat(p) {
           if (!currentCatSlug) return true;
           const pCat = (p.categorySlug || p.category || '').toLowerCase().trim();
+          const pSub = (p.subcategorySlug || p.subcategory || '').toLowerCase().trim();
           const target = currentCatSlug.toLowerCase().trim();
-          if (pCat === target) return true;
+          if (pCat === target || pSub === target) return true;
           const cleanP = pCat.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+          const cleanSub = pSub.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
           const cleanT = target.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-          if (cleanP === cleanT) return true;
+          if (cleanP === cleanT || cleanSub === cleanT) return true;
           if (cleanP + 's' === cleanT || cleanT + 's' === cleanP) return true;
+          if (cleanSub + 's' === cleanT || cleanT + 's' === cleanSub) return true;
           if (cleanP.replace(/s$/, '') === cleanT.replace(/s$/, '')) return true;
+          if (cleanSub.replace(/s$/, '') === cleanT.replace(/s$/, '')) return true;
           return false;
         }
 

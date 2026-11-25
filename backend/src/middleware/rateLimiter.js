@@ -1,5 +1,6 @@
 const rateLimit = require('express-rate-limit');
 const { sendError } = require('../utils/response');
+const { verifyAdminJwt } = require('../utils/adminToken');
 
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -20,7 +21,8 @@ const generalLimiter = rateLimit({
     // 3. Skip authenticated admin requests (admin console operations & background sync)
     const authHeader = req.headers['authorization'];
     if (authHeader && authHeader.startsWith('Bearer ')) {
-      if (url.includes('/admin') || path.startsWith('/admin') || authHeader.includes('admin')) {
+      const token = authHeader.split('Bearer ')[1].trim();
+      if (verifyAdminJwt(token)) {
         return true;
       }
     }

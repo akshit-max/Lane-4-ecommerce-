@@ -5,6 +5,12 @@ const { rupeesToPaise, formatINR } = require('../utils/currency');
 const { logger } = require('../utils/logger');
 
 function generateProductHtmlPage(product) {
+  // Serverless Filesystem Decoupling:
+  // Static HTML generation is disabled by default in serverless / cloud environments to avoid EROFS.
+  // Only executed when ENABLE_STATIC_FILE_GENERATION === 'true' and not on Vercel.
+  if (process.env.ENABLE_STATIC_FILE_GENERATION !== 'true' || process.env.VERCEL) {
+    return;
+  }
   try {
     const templatePath = path.resolve(__dirname, '../../../product/swim-training-fins.html');
     if (!fs.existsSync(templatePath)) return;
@@ -88,7 +94,7 @@ function generateProductHtmlPage(product) {
     fs.writeFileSync(outputPath, html, 'utf8');
     logger.info(`Generated product storefront page: product/${product.slug}.html`);
   } catch (err) {
-    logger.warn('Could not generate static product HTML file:', err);
+    logger.warn('Could not generate static product HTML file:', { error: err && err.message ? err.message : err });
   }
 }
 
@@ -366,22 +372,61 @@ class ProductService {
           await docRef.set(productData);
 
           // Seed corresponding inventory entries
-          for (const v of prod.variants) {
-            await db.collection('inventory').doc(v.sku).set({
-              sku: v.sku,
+          if (prod.variants && prod.variants.length > 0) {
+            for (const v of prod.variants) {
+              await db.collection('inventory').doc(v.sku).set({
+                sku: v.sku,
+                productId: docRef.id,
+                variantId: v.variantId,
+                productName: prod.name,
+                variantLabel: `${v.size || ''} ${v.color || ''}`.trim(),
+                availableQuantity: v.stockQuantity,
+                reservedQuantity: 0,
+                lowStockThreshold: v.lowStockThreshold || 5,
+                isOutOfStock: v.stockQuantity <= 0,
+                updatedAt: new Date()
+              });
+            }
+          } else if (prod.sku) {
+            await db.collection('inventory').doc(prod.sku).set({
+              sku: prod.sku,
               productId: docRef.id,
-              variantId: v.variantId,
+              variantId: null,
               productName: prod.name,
-              variantLabel: `${v.size || ''} ${v.color || ''}`.trim(),
-              availableQuantity: v.stockQuantity,
+              variantLabel: 'Standard',
+              availableQuantity: prod.stockQuantity || 50,
               reservedQuantity: 0,
-              lowStockThreshold: v.lowStockThreshold || 5,
-              isOutOfStock: v.stockQuantity <= 0,
+              lowStockThreshold: prod.lowStockThreshold || 5,
+              isOutOfStock: (prod.stockQuantity || 50) <= 0,
               updatedAt: new Date()
             });
           }
         }
-        logger.info('Successfully seeded 6 catalog products and variant inventory.');
+        logger.info('Successfully seeded catalog products and inventory records.');
+      }
+
+      // Reconcile and ensure all single-SKU products have inventory documents
+      const allProductsSnap = await db.collection('products').get();
+      for (const pDoc of allProductsSnap.docs) {
+        const p = pDoc.data();
+        if ((!p.variants || p.variants.length === 0) && p.sku) {
+          const invRef = db.collection('inventory').doc(p.sku);
+          const invDoc = await invRef.get();
+          if (!invDoc.exists) {
+            await invRef.set({
+              sku: p.sku,
+              productId: pDoc.id,
+              variantId: null,
+              productName: p.name,
+              variantLabel: 'Standard',
+              availableQuantity: p.stockQuantity || 50,
+              reservedQuantity: 0,
+              lowStockThreshold: p.lowStockThreshold || 5,
+              isOutOfStock: (p.stockQuantity || 50) <= 0,
+              updatedAt: new Date()
+            });
+          }
+        }
       }
     } catch (err) {
       logger.error('Error seeding initial products', err);
@@ -401,6 +446,11 @@ class ProductService {
 
     if (filters.categorySlug) {
       query = query.where('categorySlug', '==', filters.categorySlug);
+    }
+
+    if (filters.subcategorySlug || filters.subcategory) {
+      const subSlug = (filters.subcategorySlug || filters.subcategory).toLowerCase().trim();
+      query = query.where('subcategorySlug', '==', subSlug);
     }
 
     if (filters.featured === true || filters.featured === 'true') {
@@ -620,6 +670,8 @@ class ProductService {
       category: data.category || data.categorySlug || 'swimming',
       categoryId: data.categoryId || '',
       categorySlug: data.categorySlug || data.category || 'swimming',
+      subcategory: data.subcategory || data.subcategorySlug || null,
+      subcategorySlug: data.subcategorySlug || (data.subcategory ? data.subcategory.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : null),
       pricePaise: regularPricePaise,
       regularPricePaise,
       salePricePaise,
@@ -644,17 +696,32 @@ class ProductService {
     await docRef.set(newProduct);
 
     // Register initial inventory entries
-    for (const v of newProduct.variants) {
-      await db.collection('inventory').doc(v.sku).set({
-        sku: v.sku,
+    if (newProduct.variants && newProduct.variants.length > 0) {
+      for (const v of newProduct.variants) {
+        await db.collection('inventory').doc(v.sku).set({
+          sku: v.sku,
+          productId,
+          variantId: v.variantId,
+          productName: newProduct.name,
+          variantLabel: `${v.size || ''} ${v.color || ''}`.trim(),
+          availableQuantity: v.stockQuantity,
+          reservedQuantity: 0,
+          lowStockThreshold: v.lowStockThreshold,
+          isOutOfStock: v.stockQuantity <= 0,
+          updatedAt: new Date()
+        });
+      }
+    } else if (newProduct.sku) {
+      await db.collection('inventory').doc(newProduct.sku).set({
+        sku: newProduct.sku,
         productId,
-        variantId: v.variantId,
+        variantId: null,
         productName: newProduct.name,
-        variantLabel: `${v.size || ''} ${v.color || ''}`.trim(),
-        availableQuantity: v.stockQuantity,
+        variantLabel: 'Standard',
+        availableQuantity: newProduct.stockQuantity || 50,
         reservedQuantity: 0,
-        lowStockThreshold: v.lowStockThreshold,
-        isOutOfStock: v.stockQuantity <= 0,
+        lowStockThreshold: newProduct.lowStockThreshold || 5,
+        isOutOfStock: (newProduct.stockQuantity || 50) <= 0,
         updatedAt: new Date()
       });
     }
@@ -715,6 +782,11 @@ class ProductService {
     if (data.category || data.categorySlug) {
       updates.category = data.category || data.categorySlug;
       updates.categorySlug = data.categorySlug || data.category;
+    }
+
+    if (data.subcategory !== undefined || data.subcategorySlug !== undefined) {
+      updates.subcategory = data.subcategory || data.subcategorySlug || null;
+      updates.subcategorySlug = data.subcategorySlug || (data.subcategory ? data.subcategory.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : null);
     }
 
     // Keep variants pricing synchronized with updated product prices

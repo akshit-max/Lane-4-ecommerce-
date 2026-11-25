@@ -1,4 +1,5 @@
 const orderService = require('../services/orderService');
+const gstInvoiceService = require('../services/gstInvoiceService');
 const { sendSuccess } = require('../utils/response');
 
 class OrderController {
@@ -67,6 +68,62 @@ class OrderController {
       }
       return sendSuccess(res, order);
     } catch (err) {
+      if (err.statusCode) {
+        return res.status(err.statusCode).json({
+          success: false,
+          error: {
+            code: err.code || 'UNAUTHORIZED',
+            message: err.message
+          }
+        });
+      }
+      next(err);
+    }
+  }
+
+  async cancelMyOrder(req, res, next) {
+    try {
+      const orderId = req.params.id;
+      const customer = req.user || null;
+      const { reason } = req.body || {};
+      const orderAccessToken = (req.body && req.body.orderAccessToken) || req.headers['x-order-token'] || '';
+
+      const cancelled = await orderService.cancelCustomerOrder(orderId, customer, {
+        reason,
+        orderAccessToken
+      });
+      return sendSuccess(res, cancelled, 'Order cancelled successfully.');
+    } catch (err) {
+      if (err.statusCode) {
+        return res.status(err.statusCode).json({
+          success: false,
+          error: {
+            code: err.code || 'CANCEL_ORDER_ERROR',
+            message: err.message
+          }
+        });
+      }
+      next(err);
+    }
+  }
+
+  async getOrderInvoice(req, res, next) {
+    try {
+      const orderId = req.params.id;
+      const callerUser = req.user || null;
+      const orderAccessToken = (req.query && req.query.token) || (req.headers && req.headers['x-order-token']) || '';
+      const invoice = await gstInvoiceService.getOrCreateInvoice(orderId, callerUser, orderAccessToken);
+      return sendSuccess(res, invoice, 'GST tax invoice retrieved successfully.');
+    } catch (err) {
+      if (err.statusCode) {
+        return res.status(err.statusCode).json({
+          success: false,
+          error: {
+            code: err.code || 'INVOICE_ERROR',
+            message: err.message
+          }
+        });
+      }
       next(err);
     }
   }

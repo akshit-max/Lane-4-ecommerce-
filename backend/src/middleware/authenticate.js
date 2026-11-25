@@ -1,7 +1,8 @@
-const { getAuth } = require('../config/firebaseAdmin');
+const { getAuth, getDb } = require('../config/firebaseAdmin');
 const { sendError } = require('../utils/response');
 const { logger } = require('../utils/logger');
 const { verifyAdminJwt } = require('../utils/adminToken');
+const { verifyCustomerJwt } = require('../utils/customerToken');
 
 /**
  * Authentication Middleware:
@@ -20,34 +21,62 @@ async function authenticate(req, res, next) {
   // 1. Verify cryptographic Admin Session JWT
   const adminPayload = verifyAdminJwt(token);
   if (adminPayload) {
+    const { ROLE_PERMISSIONS } = require('../constants/roles');
+    const role = adminPayload.role || 'super_admin';
+    const rolePerms = ROLE_PERMISSIONS[role] || [];
+    const permissions = (Array.isArray(adminPayload.permissions) && adminPayload.permissions.length > 0)
+      ? adminPayload.permissions
+      : rolePerms;
+
     req.user = {
       uid: adminPayload.uid,
       email: adminPayload.email,
-      role: adminPayload.role || 'super_admin',
-      permissions: adminPayload.permissions || [],
+      role,
+      permissions,
       emailVerified: true,
       token: adminPayload
     };
     return next();
   }
 
-  // 1b. Customer Session Token
-  if (token.startsWith('cust_token_')) {
+  // 1b. Cryptographically Verified Customer Session JWT
+  const customerPayload = verifyCustomerJwt(token);
+  if (customerPayload) {
+    // Invalidate session if password was reset after token issuance
     try {
-      const b64 = token.replace('cust_token_', '');
-      const parsed = JSON.parse(Buffer.from(b64, 'base64').toString('utf8'));
-      if (parsed && parsed.uid && parsed.email) {
-        req.user = {
-          uid: parsed.uid,
-          email: parsed.email,
-          role: 'customer',
-          permissions: [],
-          emailVerified: true,
-          token: parsed
-        };
-        return next();
+      const db = getDb();
+      if (db) {
+        const userDoc = await db.collection('users').doc(customerPayload.uid).get();
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          if (userData.passwordChangedAt) {
+            const changedAtMs = userData.passwordChangedAt.toMillis
+              ? userData.passwordChangedAt.toMillis()
+              : new Date(userData.passwordChangedAt).getTime();
+            const tokenIssuedMs = typeof customerPayload.iatMs === 'number'
+              ? customerPayload.iatMs
+              : (customerPayload.iat * 1000);
+
+            if (tokenIssuedMs < changedAtMs) {
+              return sendError(res, 'INVALID_TOKEN', 'Session has expired or token is invalid due to a recent password reset.', null, 401);
+            }
+          }
+        }
       }
-    } catch (_) {}
+    } catch (authErr) {
+      logger.warn('Failed session revocation check', { message: authErr.message });
+    }
+
+    req.user = {
+      uid: customerPayload.uid,
+      email: customerPayload.email,
+      displayName: customerPayload.displayName || '',
+      role: 'customer',
+      permissions: [],
+      emailVerified: Boolean(customerPayload.emailVerified),
+      token: customerPayload
+    };
+    return next();
   }
 
   // 2. Fall back to Firebase Admin SDK ID token verification
@@ -91,13 +120,58 @@ async function optionalAuthenticate(req, res, next) {
   // Check Admin JWT first
   const adminPayload = verifyAdminJwt(token);
   if (adminPayload) {
+    const { ROLE_PERMISSIONS } = require('../constants/roles');
+    const role = adminPayload.role || 'super_admin';
+    const rolePerms = ROLE_PERMISSIONS[role] || [];
+    const permissions = (Array.isArray(adminPayload.permissions) && adminPayload.permissions.length > 0)
+      ? adminPayload.permissions
+      : rolePerms;
+
     req.user = {
       uid: adminPayload.uid,
       email: adminPayload.email,
-      role: adminPayload.role || 'super_admin',
-      permissions: adminPayload.permissions || [],
+      role,
+      permissions,
       emailVerified: true,
       token: adminPayload
+    };
+    return next();
+  }
+
+  // Check Customer JWT
+  const customerPayload = verifyCustomerJwt(token);
+  if (customerPayload) {
+    try {
+      const db = getDb();
+      if (db) {
+        const userDoc = await db.collection('users').doc(customerPayload.uid).get();
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          if (userData.passwordChangedAt) {
+            const changedAtMs = userData.passwordChangedAt.toMillis
+              ? userData.passwordChangedAt.toMillis()
+              : new Date(userData.passwordChangedAt).getTime();
+            const tokenIssuedMs = typeof customerPayload.iatMs === 'number'
+              ? customerPayload.iatMs
+              : (customerPayload.iat * 1000);
+
+            if (tokenIssuedMs < changedAtMs) {
+              req.user = null;
+              return next();
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    req.user = {
+      uid: customerPayload.uid,
+      email: customerPayload.email,
+      displayName: customerPayload.displayName || '',
+      role: 'customer',
+      permissions: [],
+      emailVerified: Boolean(customerPayload.emailVerified),
+      token: customerPayload
     };
     return next();
   }

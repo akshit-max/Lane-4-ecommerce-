@@ -4,6 +4,12 @@ const { getDb } = require('../config/firebaseAdmin');
 const { logger } = require('../utils/logger');
 
 function generateCategoryHtmlPage(category) {
+  // Serverless Filesystem Decoupling:
+  // Static HTML generation is disabled by default in serverless / cloud environments to avoid EROFS.
+  // Only executed when ENABLE_STATIC_FILE_GENERATION === 'true' and not on Vercel.
+  if (process.env.ENABLE_STATIC_FILE_GENERATION !== 'true' || process.env.VERCEL) {
+    return;
+  }
   try {
     const templatePath = path.resolve(__dirname, '../../../category/training-gear.html');
     if (!fs.existsSync(templatePath)) return;
@@ -34,7 +40,7 @@ function generateCategoryHtmlPage(category) {
     fs.writeFileSync(outputPath, html, 'utf8');
     logger.info(`Generated category storefront page: category/${category.slug}.html`);
   } catch (err) {
-    logger.warn('Could not generate category HTML file:', err);
+    logger.warn('Could not generate category HTML file:', { error: err && err.message ? err.message : err });
   }
 }
 
@@ -137,6 +143,13 @@ class CategoryService {
   async createCategory(data) {
     const db = getDb();
     const docRef = db.collection('categories').doc();
+    const subcategories = Array.isArray(data.subcategories)
+      ? data.subcategories.map(s => typeof s === 'string'
+          ? { name: s.trim(), slug: s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') }
+          : { name: (s.name || '').trim(), slug: (s.slug || s.name || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') }
+        ).filter(s => s.name && s.slug)
+      : [];
+
     const newCategory = {
       id: docRef.id,
       name: data.name,
@@ -144,6 +157,8 @@ class CategoryService {
       description: data.description || '',
       displayOrder: parseInt(data.displayOrder, 10) || 0,
       image: data.image || null,
+      subcategories,
+      parentId: data.parentId || null,
       isPublished: data.isPublished !== false,
       isDeleted: false,
       createdAt: new Date(),
@@ -165,6 +180,14 @@ class CategoryService {
       ...data,
       updatedAt: new Date()
     };
+    if (data.subcategories !== undefined) {
+      updates.subcategories = Array.isArray(data.subcategories)
+        ? data.subcategories.map(s => typeof s === 'string'
+            ? { name: s.trim(), slug: s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') }
+            : { name: (s.name || '').trim(), slug: (s.slug || s.name || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') }
+          ).filter(s => s.name && s.slug)
+        : [];
+    }
     await docRef.update(updates);
     const updated = await docRef.get();
     const updatedData = updated.data();

@@ -89,7 +89,10 @@ window.INDIAN_STATES = [
   function createAuthModalDOM() {
     if (document.getElementById('lane4-auth-modal-wrapper')) return;
 
-    // Inject styles for Auth Modal
+    const isInSubfolder = /\/(product|category|blog|authors|utility-pages|category-blog)\//i.test(window.location.pathname);
+    const logoUrl = (isInSubfolder ? '../' : '') + '6424266ea05809dff501d86e/lane4-logo.png';
+
+    // Inject styles for Auth Modal (OG LANE4 Architectural Enterprise Theme)
     const styleEl = document.createElement('style');
     styleEl.id = 'lane4-auth-styles';
     styleEl.textContent = `
@@ -100,12 +103,29 @@ window.INDIAN_STATES = [
         display: none;
         align-items: center;
         justify-content: center;
-        font-family: 'Generalsans', 'General Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        font-family: 'Generalsans', 'General Sans', sans-serif !important;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      #lane4-auth-modal-wrapper,
+      #lane4-auth-modal-wrapper *,
+      #lane4-auth-modal-wrapper button,
+      #lane4-auth-modal-wrapper input,
+      #lane4-auth-modal-wrapper select,
+      #lane4-auth-modal-wrapper textarea,
+      #lane4-auth-modal-wrapper label,
+      #lane4-auth-modal-wrapper a,
+      #lane4-auth-modal-wrapper span,
+      #lane4-auth-modal-wrapper div {
+        font-family: 'Generalsans', 'General Sans', sans-serif !important;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        box-sizing: border-box;
       }
       #lane4-auth-backdrop {
         position: fixed;
         inset: 0;
-        background: rgba(15, 23, 42, 0.72);
+        background: rgba(0, 0, 0, 0.42);
         backdrop-filter: blur(6px);
         -webkit-backdrop-filter: blur(6px);
         z-index: 1;
@@ -118,110 +138,152 @@ window.INDIAN_STATES = [
         max-height: 90vh;
         overflow-y: auto;
         background: #ffffff;
-        border-radius: 14px;
-        padding: 32px 28px 28px;
-        box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.05);
-        color: #0f172a;
-        box-sizing: border-box;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 0px;
+        padding: 34px 34px 32px;
+        box-shadow: 0 24px 50px -10px rgba(0, 0, 0, 0.16), 0 1px 3px rgba(0, 0, 0, 0.04);
+        color: #111111;
+        animation: lane4AuthScaleIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      @keyframes lane4AuthScaleIn {
+        from { opacity: 0; transform: scale(0.97) translateY(6px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
       }
       .lane4-auth-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
         margin-bottom: 22px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 16px;
       }
       .lane4-auth-brand {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
       }
-      .lane4-auth-logo {
-        font-size: 19px;
-        font-weight: 900;
-        letter-spacing: 2px;
-        color: #000000;
+      .lane4-auth-logo-img {
+        height: 28px;
+        width: auto;
+        max-width: 130px;
+        object-fit: contain;
+        display: block;
       }
-      .lane4-auth-badge {
-        font-size: 9.5px;
-        font-weight: 800;
-        letter-spacing: 1px;
-        background: #0f172a;
-        color: #ffffff;
-        padding: 3px 8px;
-        border-radius: 4px;
+      .lane4-auth-brand-text {
+        display: flex;
+        flex-direction: column;
+        border-left: 1px solid #e5e5e5;
+        padding-left: 12px;
+        line-height: 1.15;
+      }
+      .lane4-auth-brand-badge {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.8px;
+        color: #222222;
         text-transform: uppercase;
       }
+      .lane4-auth-brand-sub {
+        font-size: 9px;
+        font-weight: 400;
+        letter-spacing: 0.5px;
+        color: #888888;
+        text-transform: uppercase;
+        margin-top: 2px;
+      }
       .lane4-auth-close-btn {
-        background: #f1f5f9;
-        border: none;
-        color: #64748b;
+        width: 30px;
+        height: 30px;
+        background: #f7f7f7;
+        border: 1px solid #ececec;
+        color: #666666;
         cursor: pointer;
-        width: 32px;
-        height: 32px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.15s ease;
+        padding: 0;
+        transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
       }
       .lane4-auth-close-btn:hover {
-        background: #e2e8f0;
-        color: #0f172a;
+        background: #000000;
+        border-color: #000000;
+        color: #ffffff;
+        transform: scale(1.05);
       }
       .lane4-auth-tabs {
         display: flex;
-        background: #f1f5f9;
-        padding: 4px;
-        border-radius: 8px;
-        margin-bottom: 22px;
-        gap: 4px;
+        border-bottom: 1px solid #eeeeee;
+        margin-bottom: 24px;
+        gap: 28px;
+        padding: 0;
       }
       .lane4-auth-tab-btn {
-        flex: 1;
-        padding: 9px 0;
         background: transparent;
         border: none;
-        border-radius: 6px;
-        font-size: 13px;
-        font-weight: 700;
-        color: #64748b;
+        border-bottom: 2px solid transparent;
+        padding: 6px 2px 12px;
+        font-size: 13.5px;
+        font-weight: 400;
+        letter-spacing: 0.25px;
+        color: #888888;
         cursor: pointer;
-        transition: all 0.15s ease;
-        text-align: center;
+        transition: color 0.15s ease, border-color 0.15s ease;
+        text-align: left;
+        line-height: 20px;
+        text-transform: none;
+        margin-bottom: -1px;
+      }
+      .lane4-auth-tab-btn:hover:not(.active) {
+        color: #111111;
       }
       .lane4-auth-tab-btn.active {
-        background: #000000;
-        color: #ffffff;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        color: #000000;
+        font-weight: 500;
+        border-bottom: 2px solid #000000;
       }
       .lane4-auth-form-group {
-        margin-bottom: 16px;
+        margin-bottom: 18px;
       }
+      #lane4-auth-modal-wrapper label,
       .lane4-auth-label {
         display: block;
-        font-size: 11px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-        color: #334155;
-        margin-bottom: 6px;
+        font-size: 11.5px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.7px !important;
+        color: #333333 !important;
+        margin-bottom: 6px !important;
+        line-height: 16px !important;
+        text-transform: uppercase !important;
       }
       .lane4-auth-input {
         width: 100%;
-        padding: 12px 14px;
-        border: 1.5px solid #cbd5e1;
-        border-radius: 8px;
-        font-size: 14px;
+        height: 44px;
+        padding: 10px 14px;
+        border: 1px solid #dcdcdc;
+        border-radius: 0px;
+        font-size: 13.5px;
+        font-weight: 400;
+        letter-spacing: 0.2px;
         font-family: inherit;
         background: #ffffff;
-        color: #0f172a;
+        color: #111111;
         box-sizing: border-box;
-        transition: border-color 0.15s, box-shadow 0.15s;
+        transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+        line-height: 20px;
+      }
+      .lane4-auth-input::placeholder {
+        color: #a0a0a0;
+        font-size: 13px;
+        font-weight: 300;
+        letter-spacing: 0.2px;
+        font-family: inherit;
       }
       .lane4-auth-input:focus {
         border-color: #000000;
         outline: none;
-        box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 0 0 1px #000000;
+        background: #ffffff;
       }
       .lane4-auth-password-wrap {
         position: relative;
@@ -242,110 +304,164 @@ window.INDIAN_STATES = [
         border: none;
         padding: 6px;
         cursor: pointer;
-        color: #64748b;
+        color: #777777;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 6px;
-        transition: color 0.15s, background-color 0.15s;
+        border-radius: 0px;
+        transition: color 0.15s;
       }
       .lane4-auth-pass-toggle:hover {
-        color: #0f172a;
-        background-color: #f1f5f9;
+        color: #000000;
       }
       .lane4-auth-pass-toggle:focus {
         outline: none;
-        color: #0f172a;
       }
       .lane4-auth-submit-btn {
         width: 100%;
+        height: 46px;
         background: #000000;
         color: #ffffff;
-        padding: 14px;
-        border: none;
-        border-radius: 8px;
-        font-size: 13px;
-        font-weight: 800;
-        letter-spacing: 1.5px;
+        padding: 0 22px;
+        border: 1px solid #000000;
+        border-radius: 0px;
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 1px;
         text-transform: uppercase;
         cursor: pointer;
-        margin-top: 8px;
-        transition: all 0.15s ease;
+        margin-top: 14px;
+        transition: background 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 8px;
+        line-height: 20px;
+      }
+      .lane4-auth-submit-btn span {
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 1px;
+        line-height: 20px;
+        text-transform: uppercase;
+      }
+      .lane4-auth-submit-btn svg {
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       }
       .lane4-auth-submit-btn:hover {
-        background: #1e293b;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+        background: #222222;
+        border-color: #222222;
+      }
+      .lane4-auth-submit-btn:hover svg {
+        transform: translateX(3px);
       }
       .lane4-auth-submit-btn:disabled {
-        opacity: 0.65;
+        opacity: 0.45;
         cursor: not-allowed;
-        transform: none !important;
-        box-shadow: none !important;
+      }
+      .lane4-auth-submit-btn:active {
+        transform: scale(0.995);
       }
       @keyframes spin {
         from { transform: rotate(0deg); }
         to { transform: rotate(360deg); }
       }
-      .lane4-auth-submit-btn:active {
-        transform: translateY(0);
-      }
       .lane4-auth-link {
-        font-size: 12.5px;
-        color: #64748b;
+        font-size: 12px;
+        color: #777777;
         text-decoration: none;
-        font-weight: 600;
-        transition: color 0.15s;
+        font-weight: 400;
+        letter-spacing: 0.2px;
+        transition: color 0.15s ease;
         cursor: pointer;
       }
       .lane4-auth-link:hover {
         color: #000000;
+        text-decoration: underline;
       }
       .lane4-auth-alert {
         display: none;
         padding: 12px 14px;
-        border-radius: 8px;
+        border-radius: 0px;
         font-size: 13px;
-        font-weight: 600;
-        margin-bottom: 16px;
+        font-weight: 400;
+        margin-bottom: 18px;
+        border: 1px solid;
+        line-height: 1.4;
       }
       .lane4-auth-alert.error {
         background: #fef2f2;
         color: #b91c1c;
-        border: 1px solid #fee2e2;
+        border-color: #fca5a5;
       }
       .lane4-auth-alert.success {
         background: #f0fdf4;
         color: #15803d;
-        border: 1px solid #dcfce7;
+        border-color: #86efac;
       }
       .lane4-auth-alert.info {
-        background: #f0f9ff;
-        color: #0369a1;
-        border: 1px solid #e0f2fe;
+        background: #f8fafc;
+        color: #0f172a;
+        border-color: #e2e8f0;
       }
       .lane4-order-card {
-        border: 1.5px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 14px;
+        border: 1px solid #ebebeb;
+        border-radius: 0px;
+        padding: 16px;
         margin-bottom: 12px;
-        background: #f8fafc;
+        background: #ffffff;
         cursor: pointer;
-        transition: all 0.18s ease;
+        transition: border-color 0.18s ease, box-shadow 0.18s ease;
       }
       .lane4-order-card:hover {
-        border-color: #0f172a;
-        background: #ffffff;
-        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
-        transform: translateY(-1px);
+        border-color: #111111;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
       }
       .lane4-order-card:focus {
-        outline: 2px solid #000;
-        outline-offset: 2px;
+        outline: 1px solid #000000;
+        outline-offset: 1px;
+      }
+      .lane4-acc-subtabs {
+        display: flex;
+        border-bottom: 1px solid #eeeeee;
+        margin-bottom: 20px;
+        gap: 24px;
+        padding: 0;
+      }
+      .lane4-acc-subtab-btn {
+        background: transparent !important;
+        border: none !important;
+        border-bottom: 2px solid transparent !important;
+        padding: 6px 0 10px !important;
+        font-size: 13px !important;
+        font-weight: 400 !important;
+        letter-spacing: 0.3px !important;
+        color: #888888 !important;
+        cursor: pointer;
+        transition: color 0.15s ease, border-color 0.15s ease;
+        margin-bottom: -1px;
+        text-align: left;
+      }
+      .lane4-acc-subtab-btn:hover:not(.active) {
+        color: #111111 !important;
+      }
+      .lane4-acc-subtab-btn.active {
+        color: #000000 !important;
+        font-weight: 500 !important;
+        border-bottom: 2px solid #000000 !important;
+      }
+      .lane4-account-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #111111;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 500;
+        font-size: 14px;
+        flex-shrink: 0;
       }
     `;
     document.head.appendChild(styleEl);
@@ -358,11 +474,15 @@ window.INDIAN_STATES = [
         <!-- Header -->
         <div class="lane4-auth-header">
           <div class="lane4-auth-brand">
-            <span class="lane4-auth-logo">LANE4</span>
-            <span class="lane4-auth-badge">SWIMMER ACCESS</span>
+            <img src="${logoUrl}" alt="The Lane4 Performance Store" class="lane4-auth-logo-img" onerror="this.style.display='none'; document.getElementById('lane4-auth-logo-fallback').style.display='block';" />
+            <span id="lane4-auth-logo-fallback" style="display:none;font-size:15px;font-weight:600;letter-spacing:1px;color:#111;">THE LANE4</span>
+            <div class="lane4-auth-brand-text">
+              <span class="lane4-auth-brand-badge">Swimmer Access</span>
+              <span class="lane4-auth-brand-sub">Performance Store</span>
+            </div>
           </div>
-          <button id="lane4-auth-close" class="lane4-auth-close-btn" aria-label="Close">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <button id="lane4-auth-close" class="lane4-auth-close-btn" aria-label="Close modal">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -404,7 +524,7 @@ window.INDIAN_STATES = [
             </div>
           </div>
           <button type="submit" class="lane4-auth-submit-btn">
-            <span>SIGN IN</span>
+            <span>Sign In</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
           </button>
         </form>
@@ -440,49 +560,77 @@ window.INDIAN_STATES = [
             </div>
           </div>
           <button type="submit" class="lane4-auth-submit-btn">
-            <span>CREATE ACCOUNT</span>
+            <span>Create Account</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
           </button>
         </form>
 
         <!-- GUEST TRACK ORDER FORM -->
         <form id="lane4-track-form" style="display:none;">
-          <div style="margin-bottom:14px;">
-            <div style="font-size:16px;font-weight:800;color:#0f172a;margin-bottom:4px;">Track Swimmer Order</div>
-            <div style="font-size:12.5px;color:#64748b;line-height:1.5;">Check live dispatch progress for guest or registered orders without signing in.</div>
+          <div style="margin-bottom:20px;">
+            <div style="font-size:16px;font-weight:400;color:#111111;letter-spacing:0.2px;margin-bottom:6px;">Track Swimmer Order</div>
+            <div style="font-size:13px;font-weight:300;color:#666666;line-height:1.5;">Check live dispatch progress for guest or registered orders without signing in.</div>
           </div>
           <div class="lane4-auth-form-group">
             <label class="lane4-auth-label">Order Reference Number *</label>
             <input type="text" name="trackNumber" id="lane4-track-number" required class="lane4-auth-input" placeholder="e.g. L4-26-8984 or #L4-26-8984" />
-            <div style="font-size:11px;color:#64748b;margin-top:3px;">Found in your order confirmation screen or email</div>
+            <div style="font-size:12px;font-weight:300;color:#777777;margin-top:5px;">Found in your order confirmation screen or email</div>
           </div>
           <div class="lane4-auth-form-group">
             <label class="lane4-auth-label">Billing / Order Email *</label>
             <input type="email" name="trackEmail" id="lane4-track-email" required class="lane4-auth-input" placeholder="swimmer@example.com" />
           </div>
           <button type="submit" id="lane4-track-submit-btn" class="lane4-auth-submit-btn">
-            <span>TRACK ORDER STATUS</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <span>Track Order Status</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           </button>
           <div id="lane4-track-result" style="margin-top:16px;display:none;"></div>
         </form>
 
         <!-- FORGOT PASSWORD FORM -->
         <form id="lane4-forgot-form" style="display:none;">
-          <div style="margin-bottom:14px;">
-            <div style="font-size:16px;font-weight:800;color:#0f172a;margin-bottom:4px;">Reset Password</div>
-            <div style="font-size:13px;color:#64748b;line-height:1.5;">Enter the email associated with your swimmer account to receive recovery instructions.</div>
+          <div style="margin-bottom:20px;">
+            <div style="font-size:16px;font-weight:400;color:#111111;letter-spacing:0.2px;margin-bottom:6px;">Reset Password</div>
+            <div style="font-size:13px;font-weight:300;color:#666666;line-height:1.5;">Enter the email associated with your swimmer account to receive recovery instructions.</div>
           </div>
           <div class="lane4-auth-form-group">
             <label class="lane4-auth-label">Email Address</label>
             <input type="email" name="resetEmail" id="lane4-reset-email" required class="lane4-auth-input" placeholder="swimmer@example.com" />
           </div>
           <button type="submit" class="lane4-auth-submit-btn">
-            <span>SEND RESET INSTRUCTIONS</span>
+            <span>Send Reset Instructions</span>
+          </button>
+          <div style="text-align:center;margin-top:18px;">
+            <a id="lane4-back-to-login" class="lane4-auth-link" style="display:inline-flex;align-items:center;gap:6px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+              <span>Back to Sign In</span>
+            </a>
+          </div>
+        </form>
+
+        <!-- RESET PASSWORD FORM -->
+        <form id="lane4-reset-password-form" style="display:none;">
+          <div style="margin-bottom:20px;">
+            <div style="font-size:16px;font-weight:400;color:#111111;letter-spacing:0.2px;margin-bottom:6px;">Set New Password</div>
+            <div style="font-size:13px;font-weight:300;color:#666666;line-height:1.5;">Choose a new password for your account (minimum 6 characters).</div>
+          </div>
+          <input type="hidden" id="lane4-reset-token-input" />
+          <div class="lane4-auth-form-group">
+            <label class="lane4-auth-label">New Password *</label>
+            <div class="lane4-auth-password-wrap">
+              <input type="password" id="lane4-new-password-input" required minlength="6" class="lane4-auth-input" placeholder="••••••••" />
+              <button type="button" class="lane4-auth-pass-toggle" aria-label="Show password">
+                <svg class="eye-show" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg class="eye-hide" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </button>
+            </div>
+          </div>
+          <button type="submit" id="lane4-reset-password-btn" class="lane4-auth-submit-btn">
+            <span>Update Password</span>
           </button>
           <div style="text-align:center;margin-top:16px;">
-            <a id="lane4-back-to-login" class="lane4-auth-link" style="display:inline-flex;align-items:center;gap:6px;">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            <a id="lane4-reset-back-to-login" class="lane4-auth-link" style="display:inline-flex;align-items:center;gap:6px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
               <span>Back to Sign In</span>
             </a>
           </div>
@@ -490,26 +638,26 @@ window.INDIAN_STATES = [
 
         <!-- ACCOUNT PROFILE PANEL -->
         <div id="lane4-account-panel" style="display:none;">
-          <div style="display:flex;align-items:center;gap:14px;padding-bottom:16px;border-bottom:1px solid #e2e8f0;margin-bottom:16px;">
-            <div style="width:44px;height:44px;border-radius:50%;background:#000000;color:#ffffff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;" id="lane4-account-avatar">
+          <div style="display:flex;align-items:center;gap:14px;padding-bottom:16px;border-bottom:1px solid #f0f0f0;margin-bottom:16px;">
+            <div class="lane4-account-avatar" id="lane4-account-avatar">
               S
             </div>
             <div style="flex:1;min-width:0;">
-              <div id="lane4-account-name" style="font-weight:600;font-size:15px;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
-              <div id="lane4-account-email" style="font-size:12.5px;color:#64748b;margin-top:2px;"></div>
+              <div id="lane4-account-name" style="font-weight:500;font-size:14.5px;color:#111111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:0.2px;"></div>
+              <div id="lane4-account-email" style="font-size:12.5px;color:#777777;margin-top:2px;"></div>
             </div>
           </div>
 
           <!-- Subtabs for Account: Orders, Profile, Addresses -->
-          <div style="display:flex;background:#f1f5f9;padding:3px;border-radius:8px;margin-bottom:16px;gap:3px;" id="lane4-acc-subtabs">
-            <button type="button" class="lane4-acc-subtab-btn active" data-subtab="orders" style="flex:1;padding:8px 0;background:#000000;color:#ffffff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">My Orders</button>
-            <button type="button" class="lane4-acc-subtab-btn" data-subtab="profile" style="flex:1;padding:8px 0;background:transparent;color:#64748b;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Profile</button>
-            <button type="button" class="lane4-acc-subtab-btn" data-subtab="addresses" style="flex:1;padding:8px 0;background:transparent;color:#64748b;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Addresses</button>
+          <div class="lane4-acc-subtabs" id="lane4-acc-subtabs">
+            <button type="button" class="lane4-acc-subtab-btn active" data-subtab="orders">My Orders</button>
+            <button type="button" class="lane4-acc-subtab-btn" data-subtab="profile">Profile</button>
+            <button type="button" class="lane4-acc-subtab-btn" data-subtab="addresses">Addresses</button>
           </div>
 
           <!-- Tab Content: Orders -->
           <div id="lane4-acc-tab-orders" style="display:block;">
-            <div id="lane4-account-orders" style="font-size:13px;color:#64748b;max-height:280px;overflow-y:auto;">Loading orders...</div>
+            <div id="lane4-account-orders" style="font-size:13px;color:#555555;max-height:280px;overflow-y:auto;">Loading orders...</div>
           </div>
 
           <!-- Tab Content: Profile -->
@@ -521,15 +669,15 @@ window.INDIAN_STATES = [
               </div>
               <div class="lane4-auth-form-group">
                 <label class="lane4-auth-label">Email Address (Read-only)</label>
-                <input type="email" id="lane4-profile-email" class="lane4-auth-input" disabled style="background:#f8fafc;color:#64748b;cursor:not-allowed;" />
+                <input type="email" id="lane4-profile-email" class="lane4-auth-input" disabled style="background:#f5f5f5;color:#666666;cursor:not-allowed;" />
               </div>
               <div class="lane4-auth-form-group">
                 <label class="lane4-auth-label">Mobile Number</label>
                 <input type="tel" id="lane4-profile-phone" class="lane4-auth-input" placeholder="+91 98765 43210" />
-                <div style="font-size:11px;color:#64748b;margin-top:3px;">10-digit Indian phone number</div>
+                <div style="font-size:12px;color:#64748b;margin-top:3px;">10-digit Indian phone number</div>
               </div>
-              <button type="submit" id="lane4-profile-save-btn" class="lane4-auth-submit-btn" style="padding:11px;font-size:12px;">
-                <span>SAVE PROFILE CHANGES</span>
+              <button type="submit" id="lane4-profile-save-btn" class="lane4-auth-submit-btn">
+                <span>Save Profile Changes</span>
               </button>
             </form>
           </div>
@@ -537,90 +685,90 @@ window.INDIAN_STATES = [
           <!-- Tab Content: Addresses -->
           <div id="lane4-acc-tab-addresses" style="display:none;">
             <div id="lane4-addresses-list" style="max-height:220px;overflow-y:auto;margin-bottom:14px;">Loading addresses...</div>
-            <button type="button" id="lane4-add-address-toggle" style="width:100%;background:#ffffff;color:#0f172a;border:1.5px dashed #cbd5e1;padding:10px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <button type="button" id="lane4-add-address-toggle" style="width:100%;background:#ffffff;color:#111111;border:1px dashed #cccccc;padding:12px;border-radius:0px;font-size:11.5px;font-weight:500;letter-spacing:0.5px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.15s ease;">
               <span>+ Add New Delivery Address</span>
             </button>
-            <form id="lane4-new-address-form" style="display:none;margin-top:14px;padding:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
+            <form id="lane4-new-address-form" style="display:none;margin-top:14px;padding:16px;background:#fafafa;border:1px solid #e5e5e5;border-radius:0px;">
               <div class="lane4-auth-form-group" style="margin-bottom:10px;">
                 <label class="lane4-auth-label">Recipient / Addressee Name *</label>
-                <input type="text" id="lane4-addr-name" required class="lane4-auth-input" style="padding:8px 10px;font-size:13px;" />
+                <input type="text" id="lane4-addr-name" required class="lane4-auth-input" style="padding:10px 12px;font-size:13px;" />
               </div>
               <div class="lane4-auth-form-group" style="margin-bottom:10px;">
                 <label class="lane4-auth-label">Phone Number *</label>
-                <input type="tel" id="lane4-addr-phone" required class="lane4-auth-input" placeholder="+91 98765 43210" style="padding:8px 10px;font-size:13px;" />
+                <input type="tel" id="lane4-addr-phone" required class="lane4-auth-input" placeholder="+91 98765 43210" style="padding:10px 12px;font-size:13px;" />
               </div>
               <div class="lane4-auth-form-group" style="margin-bottom:10px;">
                 <label class="lane4-auth-label">Street Address Line 1 *</label>
-                <input type="text" id="lane4-addr-line1" required class="lane4-auth-input" placeholder="House/Flat No, Apartment, Street" style="padding:8px 10px;font-size:13px;" />
+                <input type="text" id="lane4-addr-line1" required class="lane4-auth-input" placeholder="House/Flat No, Apartment, Street" style="padding:10px 12px;font-size:13px;" />
               </div>
               <div class="lane4-auth-form-group" style="margin-bottom:10px;">
                 <label class="lane4-auth-label">Address Line 2 (Optional)</label>
-                <input type="text" id="lane4-addr-line2" class="lane4-auth-input" placeholder="Landmark, Area" style="padding:8px 10px;font-size:13px;" />
+                <input type="text" id="lane4-addr-line2" class="lane4-auth-input" placeholder="Landmark, Area" style="padding:10px 12px;font-size:13px;" />
               </div>
               <div style="display:flex;gap:8px;margin-bottom:10px;">
                 <div style="flex:1;">
                   <label class="lane4-auth-label">State *</label>
-                  <select id="lane4-addr-state" required class="lane4-auth-input" style="padding:8px 10px;font-size:13px;">
+                  <select id="lane4-addr-state" required class="lane4-auth-input" style="padding:10px 12px;font-size:13px;">
                     <option value="">Select State</option>
                   </select>
                 </div>
                 <div style="flex:1;">
                   <label class="lane4-auth-label">City *</label>
-                  <input type="text" id="lane4-addr-city" required class="lane4-auth-input" placeholder="e.g. Nagpur" style="padding:8px 10px;font-size:13px;" />
+                  <input type="text" id="lane4-addr-city" required class="lane4-auth-input" placeholder="e.g. Nagpur" style="padding:10px 12px;font-size:13px;" />
                 </div>
               </div>
               <div class="lane4-auth-form-group" style="margin-bottom:12px;">
                 <label class="lane4-auth-label">PIN / Postal Code (6 Digits) *</label>
-                <input type="text" id="lane4-addr-pin" maxlength="6" minlength="6" inputmode="numeric" pattern="[0-9]{6}" autocomplete="postal-code" required class="lane4-auth-input" placeholder="440010" style="padding:8px 10px;font-size:13px;" />
+                <input type="text" id="lane4-addr-pin" maxlength="6" minlength="6" inputmode="numeric" pattern="[0-9]{6}" autocomplete="postal-code" required class="lane4-auth-input" placeholder="440010" style="padding:10px 12px;font-size:13px;" />
               </div>
               <div style="display:flex;gap:8px;">
-                <button type="submit" class="lane4-auth-submit-btn" style="flex:1;padding:10px;font-size:12px;margin-top:0;">Save Address</button>
-                <button type="button" id="lane4-cancel-addr-btn" style="padding:10px 14px;background:#e2e8f0;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;color:#475569;">Cancel</button>
+                <button type="submit" class="lane4-auth-submit-btn" style="flex:1;padding:12px;font-size:12px;margin-top:0;">Save Address</button>
+                <button type="button" id="lane4-cancel-addr-btn" style="padding:12px 16px;background:#ffffff;border:1px solid #dcdcdc;border-radius:0px;font-size:12px;font-weight:400;letter-spacing:0.3px;cursor:pointer;color:#333333;">Cancel</button>
               </div>
             </form>
           </div>
 
-          <div style="margin-top:18px;border-top:1px solid #e2e8f0;padding-top:14px;">
-            <button id="lane4-logout-btn" style="width:100%;background:#f1f5f9;color:#0f172a;border:1px solid #cbd5e1;padding:11px;border-radius:8px;font-weight:600;font-size:12.5px;letter-spacing:0.8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s;">
+          <div style="margin-top:18px;border-top:1px solid #f0f0f0;padding-top:14px;">
+            <button id="lane4-logout-btn" style="width:100%;background:#fafafa;color:#333333;border:1px solid #e0e0e0;padding:11px;border-radius:0px;font-weight:500;font-size:12px;letter-spacing:0.8px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-              <span>SIGN OUT</span>
+              <span>Sign Out</span>
             </button>
           </div>
         </div>
 
         <!-- DEDICATED ORDER DETAILS PANEL -->
         <div id="lane4-order-details-panel" style="display:none;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #e2e8f0;">
-            <button type="button" id="lane4-order-back-btn" style="background:#f1f5f9;border:1px solid #cbd5e1;padding:7px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:#0f172a;transition:all 0.15s;">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #f0f0f0;">
+            <button type="button" id="lane4-order-back-btn" style="background:#ffffff;border:1px solid #dcdcdc;padding:8px 14px;border-radius:0px;font-size:12px;font-weight:500;letter-spacing:0.3px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:#111111;transition:all 0.15s;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
               <span>Back to Orders</span>
             </button>
-            <span style="font-size:11px;font-weight:600;color:#64748b;letter-spacing:0.8px;text-transform:uppercase;">Order Details</span>
+            <span style="font-size:12px;font-weight:500;color:#111111;letter-spacing:0.3px;">Order Details</span>
           </div>
           <div id="lane4-order-details-content" style="max-height:65vh;overflow-y:auto;padding-right:2px;"></div>
         </div>
 
         <!-- RETURN REQUEST PANEL -->
         <div id="lane4-return-panel" style="display:none;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #e2e8f0;">
-            <button type="button" id="lane4-return-back-btn" style="background:#f1f5f9;border:1px solid #cbd5e1;padding:7px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:#0f172a;">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #f0f0f0;">
+            <button type="button" id="lane4-return-back-btn" style="background:#ffffff;border:1px solid #dcdcdc;padding:8px 14px;border-radius:0px;font-size:12px;font-weight:500;letter-spacing:0.3px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:#111111;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
               <span>Back to Order</span>
             </button>
-            <span style="font-size:11px;font-weight:600;color:#64748b;letter-spacing:0.8px;text-transform:uppercase;">Return / Exchange</span>
+            <span style="font-size:12px;font-weight:500;color:#111111;letter-spacing:0.3px;">Return / Exchange</span>
           </div>
           <form id="lane4-return-form">
             <input type="hidden" id="lane4-return-order-id" />
-            <div style="font-size:13px;color:#334155;margin-bottom:12px;">
+            <div style="font-size:13px;color:#000000;margin-bottom:12px;font-weight:700;">
               Requesting return for Order <strong id="lane4-return-order-num"></strong>
             </div>
             <div class="lane4-auth-form-group">
               <label class="lane4-auth-label">Select Item *</label>
-              <select id="lane4-return-item-select" required class="lane4-auth-input" style="font-size:13px;padding:9px 12px;"></select>
+              <select id="lane4-return-item-select" required class="lane4-auth-input" style="font-size:13px;padding:10px 12px;"></select>
             </div>
             <div class="lane4-auth-form-group">
               <label class="lane4-auth-label">Reason for Return *</label>
-              <select id="lane4-return-reason" required class="lane4-auth-input" style="font-size:13px;padding:9px 12px;">
+              <select id="lane4-return-reason" required class="lane4-auth-input" style="font-size:13px;padding:10px 12px;">
                 <option value="">Choose a reason...</option>
                 <option value="Wrong Size / Fit Issue">Wrong Size / Fit Issue</option>
                 <option value="Damaged / Defective Item">Damaged / Defective Item</option>
@@ -643,10 +791,31 @@ window.INDIAN_STATES = [
               <span>SUBMIT RETURN REQUEST</span>
             </button>
           </form>
-          <div id="lane4-return-success" style="display:none;padding:16px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;text-align:center;">
-            <div style="color:#16a34a;font-weight:700;font-size:15px;margin-bottom:6px;">Return Request Submitted!</div>
-            <div style="font-size:12.5px;color:#334155;line-height:1.5;" id="lane4-return-success-msg"></div>
+          <div id="lane4-return-success" style="display:none;padding:16px;background:#ffffff;border:1.5px solid #16a34a;border-radius:0px;text-align:center;">
+            <div style="color:#16a34a;font-weight:600;font-size:15px;margin-bottom:6px;letter-spacing:0.5px;text-transform:uppercase;">Return Request Submitted!</div>
+            <div style="font-size:12.5px;color:#000000;line-height:1.5;" id="lane4-return-success-msg"></div>
           </div>
+        </div>
+
+        <!-- DEDICATED TAX INVOICE PANEL -->
+        <div id="lane4-invoice-panel" style="display:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1.5px solid #000000;flex-wrap:wrap;gap:8px;">
+            <button type="button" id="lane4-invoice-back-btn" style="background:#ffffff;border:1.5px solid #000000;padding:8px 14px;border-radius:0px;font-size:11.5px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:#000000;transition:all 0.15s;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+              <span>Back to Order</span>
+            </button>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button type="button" id="lane4-invoice-json-btn" style="background:#ffffff;border:1.5px solid #000000;padding:8px 14px;border-radius:0px;font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;cursor:pointer;color:#000000;display:inline-flex;align-items:center;gap:4px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>Download JSON</span>
+              </button>
+              <button type="button" id="lane4-invoice-print-btn" style="background:#000000;color:#ffffff;border:1.5px solid #000000;padding:8px 16px;border-radius:0px;font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <span>Print Invoice</span>
+              </button>
+            </div>
+          </div>
+          <div id="lane4-invoice-content" style="max-height:65vh;overflow-y:auto;padding-right:2px;"></div>
         </div>
       </div>
     `;
@@ -662,6 +831,40 @@ window.INDIAN_STATES = [
       document.getElementById('lane4-account-panel').style.display = 'block';
       loadCustomerOrders();
     };
+
+    const invoiceBackBtn = document.getElementById('lane4-invoice-back-btn');
+    if (invoiceBackBtn) {
+      invoiceBackBtn.onclick = () => {
+        const invPanel = document.getElementById('lane4-invoice-panel');
+        if (invPanel) invPanel.style.display = 'none';
+        const detailsPanel = document.getElementById('lane4-order-details-panel');
+        if (detailsPanel && activeViewingOrderData) {
+          detailsPanel.style.display = 'block';
+        } else {
+          const accPanel = document.getElementById('lane4-account-panel');
+          if (accPanel) accPanel.style.display = 'block';
+        }
+      };
+    }
+    const invoicePrintBtn = document.getElementById('lane4-invoice-print-btn');
+    if (invoicePrintBtn) {
+      invoicePrintBtn.onclick = () => window.print();
+    }
+    const invoiceJsonBtn = document.getElementById('lane4-invoice-json-btn');
+    if (invoiceJsonBtn) {
+      invoiceJsonBtn.onclick = () => {
+        if (!window.currentCustomerInvoice) return;
+        const blob = new Blob([JSON.stringify(window.currentCustomerInvoice, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${window.currentCustomerInvoice.invoiceNumber || 'gst_invoice'}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      };
+    }
 
     // Password visibility toggles
     function resetPasswordFields(scope = wrapper) {
@@ -730,6 +933,8 @@ window.INDIAN_STATES = [
       if (forgotForm) forgotForm.style.display = 'none';
       if (accPanel) accPanel.style.display = 'none';
       if (orderDetailsPanel) orderDetailsPanel.style.display = 'none';
+      const invoicePanel = document.getElementById('lane4-invoice-panel');
+      if (invoicePanel) invoicePanel.style.display = 'none';
       hideAlert();
     }
 
@@ -758,17 +963,102 @@ window.INDIAN_STATES = [
       switchAuthTab('login');
     };
 
-    // Handle Forgot Password Form
-    document.getElementById('lane4-forgot-form').onsubmit = (e) => {
+    const resetBackBtn = document.getElementById('lane4-reset-back-to-login');
+    if (resetBackBtn) {
+      resetBackBtn.onclick = () => {
+        document.getElementById('lane4-reset-password-form').style.display = 'none';
+        document.getElementById('lane4-auth-tabs').style.display = 'flex';
+        switchAuthTab('login');
+      };
+    }
+
+    // Handle Forgot Password Form (Real API integration with anti-enumeration)
+    document.getElementById('lane4-forgot-form').onsubmit = async (e) => {
       e.preventDefault();
       const email = document.getElementById('lane4-reset-email').value.trim();
-      showAlert(`Password recovery instructions dispatched to ${email}.`, 'success');
-      setTimeout(() => {
-        document.getElementById('lane4-auth-tabs').style.display = 'flex';
-        document.getElementById('lane4-forgot-form').style.display = 'none';
-        document.getElementById('lane4-login-form').style.display = 'block';
-      }, 2500);
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending instructions...';
+      }
+      try {
+        const res = await window.lane4ApiRequest('/auth/forgot-password', {
+          method: 'POST',
+          body: JSON.stringify({ email })
+        });
+        showAlert(res.message || `Password recovery instructions dispatched to ${email}.`, 'success');
+        setTimeout(() => {
+          document.getElementById('lane4-auth-tabs').style.display = 'flex';
+          document.getElementById('lane4-forgot-form').style.display = 'none';
+          document.getElementById('lane4-login-form').style.display = 'block';
+        }, 3000);
+      } catch (err) {
+        showAlert(err.message || 'Unable to process password reset request.', 'error');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<span>Send Reset Instructions</span>';
+        }
+      }
     };
+
+    // Handle Reset Password Form
+    const resetFormEl = document.getElementById('lane4-reset-password-form');
+    if (resetFormEl) {
+      resetFormEl.onsubmit = async (e) => {
+        e.preventDefault();
+        const token = document.getElementById('lane4-reset-token-input').value.trim();
+        const newPassword = document.getElementById('lane4-new-password-input').value;
+        const submitBtn = document.getElementById('lane4-reset-password-btn');
+        if (!token) {
+          showAlert('Missing password reset token. Please use the link sent to your email.', 'error');
+          return;
+        }
+        if (newPassword.length < 6) {
+          showAlert('Password must be at least 6 characters long.', 'error');
+          return;
+        }
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Updating Password...';
+        }
+        try {
+          const res = await window.lane4ApiRequest('/auth/reset-password', {
+            method: 'POST',
+            body: JSON.stringify({ token, newPassword })
+          });
+          showAlert(res.message || 'Password updated successfully! You can now sign in.', 'success');
+          setTimeout(() => {
+            resetFormEl.style.display = 'none';
+            document.getElementById('lane4-auth-tabs').style.display = 'flex';
+            switchAuthTab('login');
+          }, 2000);
+        } catch (err) {
+          showAlert(err.message || 'Failed to reset password. Link may be invalid or expired.', 'error');
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<span>Update Password</span>';
+          }
+        }
+      };
+    }
+
+    // Auto-detect password reset or email verification token in URL
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const resetTokenParam = urlParams.get('resetToken') || (urlParams.get('token') && window.location.pathname.includes('reset'));
+      if (resetTokenParam) {
+        openAuthModal();
+        document.getElementById('lane4-auth-tabs').style.display = 'none';
+        document.getElementById('lane4-login-form').style.display = 'none';
+        document.getElementById('lane4-forgot-form').style.display = 'none';
+        if (resetFormEl) {
+          resetFormEl.style.display = 'block';
+          document.getElementById('lane4-reset-token-input').value = resetTokenParam;
+        }
+      }
+    } catch (_) {}
 
     // Handle Guest / Customer Order Tracking Form
     const trackForm = document.getElementById('lane4-track-form');
@@ -789,7 +1079,7 @@ window.INDIAN_STATES = [
         }
 
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span>SEARCHING ORDER RECORDS...</span>';
+        submitBtn.innerHTML = '<span>Searching order records...</span>';
         hideAlert();
         resultEl.style.display = 'none';
 
@@ -805,7 +1095,7 @@ window.INDIAN_STATES = [
           showAlert(err.message || 'Unable to find order matching these details.', 'error');
         } finally {
           submitBtn.disabled = false;
-          submitBtn.innerHTML = '<span>TRACK ORDER STATUS</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>';
+          submitBtn.innerHTML = '<span>Track Order Status</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>';
         }
       };
     }
@@ -843,7 +1133,7 @@ window.INDIAN_STATES = [
       loginSubmitBtn.disabled = true;
       loginSubmitBtn.innerHTML = `
         <span style="display:inline-block;width:12px;height:12px;border:2px solid #ffffff;border-top-color:transparent;border-radius:50%;animation:spin 0.6s linear infinite;margin-right:6px;"></span>
-        <span>AUTHENTICATING...</span>
+        <span>Signing in...</span>
       `;
       showAlert('Authenticating swimmer credentials...', 'info');
 
@@ -900,8 +1190,8 @@ window.INDIAN_STATES = [
                 <div style="font-size:12.5px;line-height:1.4;margin-bottom:8px;">
                   No customer account found with <strong>${email}</strong>.
                 </div>
-                <button type="button" id="lane4-btn-quick-create" style="background:#000000;color:#ffffff;border:none;border-radius:6px;padding:7px 14px;font-size:11.5px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px;letter-spacing:0.5px;">
-                  <span>CREATE ACCOUNT WITH THIS EMAIL &rarr;</span>
+                <button type="button" id="lane4-btn-quick-create" style="background:#000000;color:#ffffff;border:1px solid #000000;border-radius:0px;padding:9px 14px;font-size:13px;font-weight:400;cursor:pointer;display:inline-flex;align-items:center;gap:6px;letter-spacing:0.3px;">
+                  <span>Create account with this email &rarr;</span>
                 </button>
               `;
               alertEl.style.display = 'block';
@@ -966,7 +1256,7 @@ window.INDIAN_STATES = [
       regSubmitBtn.disabled = true;
       regSubmitBtn.innerHTML = `
         <span style="display:inline-block;width:12px;height:12px;border:2px solid #ffffff;border-top-color:transparent;border-radius:50%;animation:spin 0.6s linear infinite;margin-right:6px;"></span>
-        <span>CREATING ACCOUNT...</span>
+        <span>Creating account...</span>
       `;
       showAlert('Setting up your swimmer account...', 'info');
 
@@ -1085,6 +1375,8 @@ window.INDIAN_STATES = [
       if (orderDetailsPanel) orderDetailsPanel.style.display = 'none';
       const returnPanel = document.getElementById('lane4-return-panel');
       if (returnPanel) returnPanel.style.display = 'none';
+      const invoicePanel = document.getElementById('lane4-invoice-panel');
+      if (invoicePanel) invoicePanel.style.display = 'none';
       accPanel.style.display = 'block';
 
       const initials = (user.displayName || user.email || 'S').slice(0, 1).toUpperCase();
@@ -1096,8 +1388,8 @@ window.INDIAN_STATES = [
       const subtabs = document.getElementById('lane4-acc-subtabs');
       if (subtabs) {
         subtabs.querySelectorAll('.lane4-acc-subtab-btn').forEach((b, idx) => {
-          b.style.background = idx === 0 ? '#000000' : 'transparent';
-          b.style.color = idx === 0 ? '#ffffff' : '#64748b';
+          if (idx === 0) b.classList.add('active');
+          else b.classList.remove('active');
         });
         document.getElementById('lane4-acc-tab-orders').style.display = 'block';
         document.getElementById('lane4-acc-tab-profile').style.display = 'none';
@@ -1113,6 +1405,8 @@ window.INDIAN_STATES = [
       if (orderDetailsPanel) orderDetailsPanel.style.display = 'none';
       const returnPanel = document.getElementById('lane4-return-panel');
       if (returnPanel) returnPanel.style.display = 'none';
+      const invoicePanel = document.getElementById('lane4-invoice-panel');
+      if (invoicePanel) invoicePanel.style.display = 'none';
       const tabBtns = tabs.querySelectorAll('.lane4-auth-tab-btn');
       tabBtns.forEach(b => {
         if (b.getAttribute('data-tab') === view) {
@@ -1198,18 +1492,39 @@ window.INDIAN_STATES = [
     const isPaymentVerified = pst === 'verified';
     const isPaymentRejected = pst === 'payment_rejected' || pst === 'rejected' || st === 'payment_rejected';
     const isStep2Done = isPaymentVerified || ['confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered'].includes(st);
+    const isVerificationPending = st === 'payment_verification' || pst === 'verification_pending';
+    const isAwaitingProof = !isStep2Done && !isPaymentRejected && !isVerificationPending;
 
-    let step2Text = '● 2. Awaiting Payment';
+    let step2Text = '● 2. Awaiting Payment Proof';
     let step2Color = '#d97706';
+    let paymentBadgeText = 'Awaiting Payment Proof';
+    let paymentBadgeBg = '#fef3c7';
+    let paymentBadgeColor = '#92400e';
+
     if (isStep2Done) {
       step2Text = '✓ 2. Verified';
       step2Color = '#16a34a';
+      paymentBadgeText = 'Payment Verified';
+      paymentBadgeBg = '#dcfce7';
+      paymentBadgeColor = '#15803d';
     } else if (isPaymentRejected) {
       step2Text = '✕ 2. Rejected';
       step2Color = '#dc2626';
-    } else if (st === 'payment_verification' || pst === 'verification_pending') {
-      step2Text = '● 2. Verification Pending';
+      paymentBadgeText = 'Payment Rejected';
+      paymentBadgeBg = '#fee2e2';
+      paymentBadgeColor = '#b91c1c';
+    } else if (isVerificationPending) {
+      step2Text = '● 2. Awaiting Admin Verification';
       step2Color = '#0284c7';
+      paymentBadgeText = 'Awaiting Admin Verification';
+      paymentBadgeBg = '#e0f2fe';
+      paymentBadgeColor = '#0369a1';
+    } else {
+      step2Text = '● 2. Awaiting Payment Proof';
+      step2Color = '#d97706';
+      paymentBadgeText = 'Awaiting Payment Proof';
+      paymentBadgeBg = '#fef3c7';
+      paymentBadgeColor = '#92400e';
     }
 
     // Step 3: Packing / Processing
@@ -1219,9 +1534,9 @@ window.INDIAN_STATES = [
     if (isStep3Done) {
       step3Html = '<span style="color:#16a34a;">✓ 3. Packed</span>';
     } else if (isProcessing) {
-      step3Html = '<span style="color:#0284c7;font-weight:900;">● 3. Processing</span>';
+      step3Html = '<span style="color:#0284c7;font-weight:600;">● 3. Processing</span>';
     } else if (isConfirmed) {
-      step3Html = '<span style="color:#0284c7;font-weight:900;">● 3. Confirmed (Ready to Pack)</span>';
+      step3Html = '<span style="color:#0284c7;font-weight:600;">● 3. Confirmed (Ready to Pack)</span>';
     } else if (isCancelled) {
       step3Html = '<span style="color:#dc2626;">✕ 3. Cancelled</span>';
     } else {
@@ -1235,9 +1550,9 @@ window.INDIAN_STATES = [
     if (isStep4Done) {
       step4Html = '<span style="color:#16a34a;">✓ 4. Delivered</span>';
     } else if (isOutForDelivery) {
-      step4Html = '<span style="color:#0284c7;font-weight:900;">● 4. Out For Delivery</span>';
+      step4Html = '<span style="color:#0284c7;font-weight:600;">● 4. Out For Delivery</span>';
     } else if (st === 'shipped') {
-      step4Html = '<span style="color:#0284c7;font-weight:900;">● 4. Shipped</span>';
+      step4Html = '<span style="color:#0284c7;font-weight:600;">● 4. Shipped</span>';
     } else {
       step4Html = '<span style="color:#94a3b8;">4. Shipped</span>';
     }
@@ -1250,8 +1565,13 @@ window.INDIAN_STATES = [
       isStep1Done,
       isStep2Done,
       isPaymentRejected,
+      isVerificationPending,
+      isAwaitingProof,
       step2Text,
       step2Color,
+      paymentBadgeText,
+      paymentBadgeBg,
+      paymentBadgeColor,
       isStep3Done,
       step3Html,
       isStep4Done,
@@ -1263,6 +1583,10 @@ window.INDIAN_STATES = [
   }
 
   function showOrderDetails(ord, isBackgroundRefresh = false) {
+    const escapeHtml = window.escapeHtml || function(s) {
+      if (s === null || s === undefined) return '';
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    };
     const accPanel = document.getElementById('lane4-account-panel');
     const detailsPanel = document.getElementById('lane4-order-details-panel');
     const content = document.getElementById('lane4-order-details-content');
@@ -1320,16 +1644,16 @@ window.INDIAN_STATES = [
           : (window.LANE4 && itemSubtotalPaise ? window.LANE4.formatINR(itemSubtotalPaise) : `₹${((itemSubtotalPaise || 0)/100).toFixed(2)}`));
 
       return `
-        <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f1f5f9;">
-          <img src="${imgUrl}" alt="${it.name || 'Product'}" style="width:50px;height:50px;border-radius:8px;object-fit:cover;border:1px solid #e2e8f0;flex-shrink:0;" onerror="this.onerror=null;this.src='6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg';" />
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #e5e5e5;">
+          <img src="${imgUrl}" alt="${escapeHtml(it.name || 'Product')}" style="width:50px;height:50px;border-radius:0px;object-fit:cover;border:1.5px solid #000000;flex-shrink:0;" onerror="this.onerror=null;this.src='6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg';" />
           <div style="flex:1;min-width:0;">
-            <div style="font-size:13.5px;font-weight:800;color:#0f172a;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${it.name || 'Lane4 Item'}</div>
-            ${variantDesc ? `<div style="font-size:11.5px;color:#64748b;margin-top:2px;">${variantDesc}</div>` : ''}
-            <div style="font-size:12px;color:#475569;margin-top:4px;">
+            <div style="font-size:13.5px;font-weight:600;color:#000000;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(it.name || 'Lane4 Item')}</div>
+            ${variantDesc ? `<div style="font-size:11.5px;color:#555555;margin-top:2px;">${escapeHtml(variantDesc)}</div>` : ''}
+            <div style="font-size:12px;color:#333333;margin-top:4px;">
               <span>Qty: <strong>${qty}</strong> &times; ${unitPriceFormatted}</span>
             </div>
           </div>
-          <div style="font-size:13.5px;font-weight:800;color:#0f172a;text-align:right;white-space:nowrap;">
+          <div style="font-size:13.5px;font-weight:600;color:#000000;text-align:right;white-space:nowrap;">
             ${itemSubtotalFormatted}
           </div>
         </div>
@@ -1346,34 +1670,34 @@ window.INDIAN_STATES = [
 
     content.innerHTML = `
       <!-- Order Header Card -->
-      <div style="background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:10px;padding:14px;margin-bottom:14px;">
+      <div style="background:#ffffff;border:1.5px solid #000000;border-radius:0px;padding:16px;margin-bottom:14px;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
           <div>
-            <div style="font-size:10.5px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;">Order Reference</div>
-            <div style="font-size:18px;font-weight:900;color:#0f172a;">#${orderNum}</div>
+            <div style="font-size:10.5px;font-weight:600;color:#666666;text-transform:uppercase;letter-spacing: 0.3px;">Order Reference</div>
+            <div style="font-size:18px;font-weight:600;color:#000000;">#${escapeHtml(orderNum)}</div>
           </div>
           <div style="text-align:right;">
-            <div style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;">Total Paid</div>
-            <div style="font-size:18px;font-weight:900;color:#0f172a;">${payableText}</div>
+            <div style="font-size:10.5px;font-weight:600;color:#666666;text-transform:uppercase;letter-spacing: 0.3px;">Total Paid</div>
+            <div style="font-size:18px;font-weight:600;color:#000000;">${payableText}</div>
           </div>
         </div>
-        <div style="font-size:11.5px;color:#64748b;margin-bottom:10px;">
+        <div style="font-size:11.5px;color:#555555;margin-bottom:10px;">
           Placed on ${formatOrderTimestamp(ord.createdAt)}
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <span style="font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:4px;background:#e2e8f0;color:#334155;text-transform:uppercase;">
+          <span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:0px;border:1px solid #000000;background:#ffffff;color:#000000;text-transform:uppercase;letter-spacing:0.8px;">
             ${getOrderStatusBadge(ord.status)}
           </span>
-          <span style="font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:4px;background:${stepper.isStep2Done ? '#dcfce7' : (stepper.isPaymentRejected ? '#fee2e2' : '#fef3c7')};color:${stepper.isStep2Done ? '#15803d' : (stepper.isPaymentRejected ? '#b91c1c' : '#92400e')};text-transform:uppercase;">
-            ${stepper.isStep2Done ? 'Payment Verified' : (stepper.isPaymentRejected ? 'Payment Rejected' : (ord.paymentStatus || 'Awaiting Verification').replace(/_/g, ' '))}
+          <span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:0px;border:1px solid #000000;background:${stepper.paymentBadgeBg};color:${stepper.paymentBadgeColor};text-transform:uppercase;letter-spacing:0.8px;">
+            ${stepper.paymentBadgeText}
           </span>
         </div>
       </div>
 
       <!-- Fulfillment Progress Stepper -->
-      <div style="background:#ffffff;border:1.5px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:14px;">
-        <div style="font-size:11px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Order &amp; Fulfillment Progress</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:800;text-align:center;">
+      <div style="background:#ffffff;border:1.5px solid #000000;border-radius:0px;padding:14px;margin-bottom:14px;">
+        <div style="font-size:10.5px;font-weight:600;color:#000000;text-transform:uppercase;letter-spacing: 0.3px;margin-bottom:10px;">Order &amp; Fulfillment Progress</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:600;text-align:center;">
           <div style="color:#16a34a;">
             <div>✓ 1. Placed</div>
           </div>
@@ -1392,80 +1716,223 @@ window.INDIAN_STATES = [
         </div>
       </div>
 
-      <!-- Products Done (What Products Done) -->
-      <div style="background:#ffffff;border:1.5px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:14px;">
-        <div style="font-size:11px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">
+      <!-- Products Purchased -->
+      <div style="background:#ffffff;border:1.5px solid #000000;border-radius:0px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:10.5px;font-weight:600;color:#000000;text-transform:uppercase;letter-spacing: 0.3px;margin-bottom:6px;">
           Products Purchased (${items.reduce((sum, it) => sum + (it.quantity || 1), 0)} items)
         </div>
-        <div>${itemsHtml || '<div style="font-size:12px;color:#64748b;">No product items recorded for this order.</div>'}</div>
+        <div>${itemsHtml || '<div style="font-size:12px;color:#666666;">No product items recorded for this order.</div>'}</div>
       </div>
 
-      <!-- Billing Breakdown (Image 5 style) -->
-      <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:14px;">
-        <div style="font-size:11px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Billing &amp; Payment Breakdown</div>
+      <!-- Billing Breakdown -->
+      <div style="background:#ffffff;border:1.5px solid #000000;border-radius:0px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:10.5px;font-weight:600;color:#000000;text-transform:uppercase;letter-spacing: 0.3px;margin-bottom:12px;">Billing &amp; Payment Breakdown</div>
         
-        <div style="display:flex;justify-content:space-between;font-size:13px;color:#334155;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#333333;margin-bottom:8px;">
           <span>Item total</span>
           <span style="font-weight:700;">${subtotalText}</span>
         </div>
 
         ${discountPaise > 0 ? `
           <div style="display:flex;justify-content:space-between;font-size:13px;color:#16a34a;margin-bottom:8px;">
-            <span>Coupon ${ord.coupon && ord.coupon.code ? `<span style="font-weight:800;background:#dcfce7;padding:1px 5px;border-radius:4px;font-size:11px;">${ord.coupon.code}</span>` : ''}</span>
-            <span style="font-weight:800;">-${discountText}</span>
+            <span>Coupon ${ord.coupon && ord.coupon.code ? `<span style="font-weight:600;background:#ffffff;border:1px solid #16a34a;padding:1px 6px;border-radius:0px;font-size:11px;">${ord.coupon.code}</span>` : ''}</span>
+            <span style="font-weight:600;">-${discountText}</span>
           </div>
         ` : ''}
 
-        <div style="display:flex;justify-content:space-between;font-size:13px;color:#334155;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#333333;margin-bottom:10px;">
           <span>Delivery fee</span>
-          <span style="font-weight:700;color:${shippingPaise === 0 ? '#16a34a' : '#334155'};">${shippingText}</span>
+          <span style="font-weight:700;color:${shippingPaise === 0 ? '#16a34a' : '#333333'};">${shippingText}</span>
         </div>
 
-        <div style="border-top:1.5px solid #cbd5e1;padding-top:10px;display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:14px;font-weight:800;color:#0f172a;">To pay</span>
-          <span style="font-size:16px;font-weight:900;color:#0f172a;">${payableText}</span>
+        <div style="border-top:1.5px solid #000000;padding-top:10px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13.5px;font-weight:600;color:#000000;text-transform:uppercase;letter-spacing:0.8px;">To pay</span>
+          <span style="font-size:17px;font-weight:600;color:#000000;">${payableText}</span>
         </div>
 
-        <div style="margin-top:12px;padding-top:10px;border-top:1px dashed #e2e8f0;text-align:center;font-size:11.5px;color:#64748b;display:flex;align-items:center;justify-content:center;gap:6px;">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px dashed #cccccc;text-align:center;font-size:11px;color:#666666;display:flex;align-items:center;justify-content:center;gap:6px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           <span>Payments are secure and encrypted</span>
         </div>
       </div>
 
       <!-- Shipping Destination Details -->
-      <div style="background:#ffffff;border:1.5px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:14px;">
-        <div style="font-size:11px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Delivery Destination</div>
-        <div style="font-size:13.5px;font-weight:800;color:#0f172a;">${shipping.addressee || ord.customerName || 'Swimmer'}</div>
-        <div style="font-size:12px;color:#475569;line-height:1.45;margin-top:3px;">
-          ${shipping.addressLine1 || ''}${shipping.addressLine2 ? `, ${shipping.addressLine2}` : ''}<br />
-          ${shipping.city ? `${shipping.city}, ` : ''}${shipping.state ? `${shipping.state} ` : ''}${shipping.postalCode ? `PIN ${shipping.postalCode}` : ''}
+      <div style="background:#ffffff;border:1.5px solid #000000;border-radius:0px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:10.5px;font-weight:600;color:#000000;text-transform:uppercase;letter-spacing: 0.3px;margin-bottom:6px;">Delivery Destination</div>
+        <div style="font-size:13.5px;font-weight:600;color:#000000;">${escapeHtml(shipping.addressee || ord.customerName || 'Swimmer')}</div>
+        <div style="font-size:12px;color:#444444;line-height:1.45;margin-top:3px;">
+          ${escapeHtml(shipping.addressLine1 || '')}${shipping.addressLine2 ? `, ${escapeHtml(shipping.addressLine2)}` : ''}<br />
+          ${shipping.city ? `${escapeHtml(shipping.city)}, ` : ''}${shipping.state ? `${escapeHtml(shipping.state)} ` : ''}${shipping.postalCode ? `PIN ${escapeHtml(shipping.postalCode)}` : ''}
         </div>
-        ${shipping.phone ? `<div style="font-size:12px;color:#64748b;margin-top:6px;">Contact Phone: <strong>${shipping.phone}</strong></div>` : ''}
+        ${shipping.phone ? `<div style="font-size:12px;color:#555555;margin-top:6px;">Contact Phone: <strong>${escapeHtml(shipping.phone)}</strong></div>` : ''}
       </div>
 
       <!-- Payment Method -->
-      <div style="background:#ffffff;border:1.5px solid #e2e8f0;border-radius:10px;padding:14px;">
-        <div style="font-size:11px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Payment Information</div>
-        <div style="font-size:13px;font-weight:800;color:#0f172a;">${paymentMethodLabel}</div>
+      <div style="background:#ffffff;border:1.5px solid #000000;border-radius:0px;padding:16px;">
+        <div style="font-size:10.5px;font-weight:600;color:#000000;text-transform:uppercase;letter-spacing: 0.3px;margin-bottom:6px;">Payment Information</div>
+        <div style="font-size:13px;font-weight:600;color:#000000;">${escapeHtml(paymentMethodLabel)}</div>
         ${payment.upiReferenceNumber ? `
-          <div style="font-size:12px;color:#475569;margin-top:4px;">
-            Transaction UTR / Ref: <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-weight:700;">${payment.upiReferenceNumber}</code>
+          <div style="font-size:12px;color:#444444;margin-top:4px;">
+            Transaction UTR / Ref: <code style="background:#f5f5f5;border:1px solid #000000;padding:2px 6px;border-radius:0px;font-weight:600;">${escapeHtml(payment.upiReferenceNumber)}</code>
           </div>
         ` : ''}
       </div>
 
+      <!-- Payment Proof Upload (New Submission or Resubmission if Rejected) -->
+      ${(ord.status === 'payment_rejected' || ord.paymentStatus === 'rejected' || stepper.isAwaitingProof) ? `
+        <div id="lane4-proof-upload-container" style="background:#ffffff;border:1.5px solid ${stepper.isPaymentRejected ? '#dc2626' : '#000000'};border-radius:0px;padding:16px;margin-top:14px;">
+          <div style="display:flex;align-items:center;gap:8px;color:${stepper.isPaymentRejected ? '#991b1b' : '#000000'};font-weight:600;font-size:13px;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <span>${stepper.isPaymentRejected ? 'Payment Proof Action Required' : 'Upload Manual UPI Payment Proof'}</span>
+          </div>
+          <div style="font-size:12px;color:#333333;line-height:1.5;margin-bottom:12px;">
+            ${stepper.isPaymentRejected
+              ? `Your previous payment verification was not approved. Please ensure you have transferred <strong>${payableText}</strong> to UPI ID <code>lane4swim@upi</code>, then upload a new payment screenshot with your valid 12-digit UTR number.`
+              : `Please transfer <strong>${payableText}</strong> to merchant UPI ID <code>lane4swim@upi</code>, then enter your 12-digit bank UTR reference and upload your payment screenshot below to confirm your order.`}
+          </div>
+          <form id="lane4-resubmit-payment-form">
+            <div class="lane4-auth-form-group" style="margin-bottom:10px;">
+              <label class="lane4-auth-label" style="color:${stepper.isPaymentRejected ? '#991b1b' : '#000000'};">12-Digit UPI Reference (UTR) *</label>
+              <input type="text" id="lane4-resubmit-utr" required maxlength="12" minlength="12" pattern="[0-9]{12}" class="lane4-auth-input" placeholder="e.g. 402812345678" style="background:#ffffff;" />
+            </div>
+            <div class="lane4-auth-form-group" style="margin-bottom:12px;">
+              <label class="lane4-auth-label" style="color:${stepper.isPaymentRejected ? '#991b1b' : '#000000'};">Upload Payment Screenshot *</label>
+              <input type="file" id="lane4-resubmit-screenshot" accept="image/*" required style="font-size:12px;width:100%;background:#ffffff;padding:8px;border:1.5px solid #000000;border-radius:0px;" />
+            </div>
+            <button type="submit" id="lane4-resubmit-btn" class="lane4-auth-submit-btn" style="background:${stepper.isPaymentRejected ? '#dc2626' : '#000000'};color:#ffffff;margin-top:0;">
+              <span>${stepper.isPaymentRejected ? 'RESUBMIT PAYMENT PROOF' : 'SUBMIT PAYMENT PROOF'}</span>
+            </button>
+          </form>
+        </div>
+      ` : ''}
+
+      <!-- Customer Self-Cancellation Action -->
+      ${['pending_payment', 'payment_verification', 'payment_rejected', 'confirmed'].includes(ord.status) ? `
+        <div style="margin-top:14px;">
+          <button type="button" id="lane4-order-cancel-btn" style="width:100%;background:#ffffff;color:#dc2626;border:1.5px solid #dc2626;padding:12px;border-radius:0px;font-size:12px;font-weight:600;letter-spacing: 0.3px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+            <span>Cancel Order</span>
+          </button>
+        </div>
+      ` : ''}
+
       <!-- Return / Exchange Action -->
-      <div style="margin-top:14px;">
-        <button type="button" id="lane4-order-return-btn" style="width:100%;background:#ffffff;color:#0f172a;border:1.5px solid #cbd5e1;padding:11px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s;">
+      <div style="margin-top:10px;">
+        <button type="button" id="lane4-order-return-btn" style="width:100%;background:#ffffff;color:#000000;border:1.5px solid #000000;padding:12px;border-radius:0px;font-size:12px;font-weight:600;letter-spacing: 0.3px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>
           <span>Request Return / Exchange</span>
         </button>
       </div>
+
+      <!-- GST Tax Invoice Action -->
+      ${(['confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered'].includes(ord.status) || ord.paymentStatus === 'verified') ? `
+        <div style="margin-top:10px;">
+          <button type="button" id="lane4-order-invoice-btn" style="width:100%;background:#000000;color:#ffffff;border:1.5px solid #000000;padding:12px;border-radius:0px;font-size:12px;font-weight:600;letter-spacing: 0.3px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            <span>View / Download Tax Invoice (GST)</span>
+          </button>
+        </div>
+      ` : ''}
     `;
 
     const returnBtn = document.getElementById('lane4-order-return-btn');
     if (returnBtn) {
       returnBtn.onclick = () => openReturnForm(ord);
+    }
+    const invoiceBtn = document.getElementById('lane4-order-invoice-btn');
+    if (invoiceBtn) {
+      invoiceBtn.onclick = () => window.downloadCustomerInvoice(ord.orderId || ord.id || orderNum, ord.orderAccessToken);
+    }
+
+    // Bind Resubmit Payment Proof handler
+    const resubmitForm = document.getElementById('lane4-resubmit-payment-form');
+    if (resubmitForm) {
+      resubmitForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const utrInput = document.getElementById('lane4-resubmit-utr');
+        const fileInput = document.getElementById('lane4-resubmit-screenshot');
+        const resubmitBtn = document.getElementById('lane4-resubmit-btn');
+        const cleanUtr = (utrInput.value || '').trim();
+        if (!/^\d{12}$/.test(cleanUtr)) {
+          showAlert('Please enter a valid 12-digit numeric UPI Reference / UTR Number.', 'error');
+          return;
+        }
+        if (!fileInput.files || fileInput.files.length === 0) {
+          showAlert('Please select a payment confirmation screenshot.', 'error');
+          return;
+        }
+
+        resubmitBtn.disabled = true;
+        resubmitBtn.textContent = 'Uploading Proof...';
+
+        try {
+          const formData = new FormData();
+          formData.append('orderId', ord.orderId || ord.id || orderNum);
+          formData.append('upiReferenceNumber', cleanUtr);
+          formData.append('screenshot', fileInput.files[0]);
+          if (ord.orderAccessToken) {
+            formData.append('orderAccessToken', ord.orderAccessToken);
+          }
+
+          const res = await window.lane4ApiRequest('/payments/proof', {
+            method: 'POST',
+            body: formData
+          });
+
+          showAlert('Payment proof resubmitted successfully! Our team is verifying your payment.', 'success');
+          const orderIdToFetch = ord.orderId || ord.id || orderNum;
+          try {
+            const updated = await window.lane4ApiRequest(`/orders/${orderIdToFetch}`);
+            if (updated && updated.data) {
+              showOrderDetails(updated.data, true);
+            }
+          } catch (_) {
+            loadCustomerOrders();
+          }
+        } catch (err) {
+          showAlert(err.message || 'Failed to submit payment proof. Please try again.', 'error');
+        } finally {
+          resubmitBtn.disabled = false;
+          resubmitBtn.innerHTML = '<span>RESUBMIT PAYMENT PROOF</span>';
+        }
+      };
+    }
+
+    // Bind Customer Self-Cancellation handler
+    const cancelBtn = document.getElementById('lane4-order-cancel-btn');
+    if (cancelBtn) {
+      cancelBtn.onclick = async () => {
+        const confirmed = confirm(`Are you sure you want to cancel Order #${orderNum}? This action cannot be undone.`);
+        if (!confirmed) return;
+
+        cancelBtn.disabled = true;
+        cancelBtn.textContent = 'Cancelling Order...';
+
+        try {
+          const orderIdToCancel = ord.orderId || ord.id || orderNum;
+          await window.lane4ApiRequest(`/orders/${orderIdToCancel}/cancel`, {
+            method: 'POST',
+            body: JSON.stringify({
+              reason: 'Customer requested cancellation via account dashboard',
+              orderAccessToken: ord.orderAccessToken || ''
+            })
+          });
+
+          showAlert('Order successfully cancelled.', 'success');
+          try {
+            const updated = await window.lane4ApiRequest(`/orders/${orderIdToCancel}`);
+            if (updated && updated.data) {
+              showOrderDetails(updated.data, true);
+            }
+          } catch (_) {
+            loadCustomerOrders();
+          }
+        } catch (err) {
+          showAlert(err.message || 'Unable to cancel order. Please contact support.', 'error');
+          cancelBtn.disabled = false;
+          cancelBtn.textContent = 'Cancel Order';
+        }
+      };
     }
 
     if (isBackgroundRefresh) {
@@ -1541,7 +2008,8 @@ window.INDIAN_STATES = [
             reason,
             upiIdForRefund,
             comments,
-            items: itemsToReturn
+            items: itemsToReturn,
+            orderAccessToken: ord.orderAccessToken || ''
           })
         });
 
@@ -1580,21 +2048,21 @@ window.INDIAN_STATES = [
 
     resultEl.style.display = 'block';
     resultEl.innerHTML = `
-      <div style="background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:10px;padding:16px;box-sizing:border-box;">
+      <div style="background:#ffffff;border:1.5px solid #000000;border-radius:0px;padding:16px;box-sizing:border-box;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
           <div>
-            <div style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Order Tracking Snapshot</div>
-            <div style="font-size:16px;font-weight:900;color:#0f172a;">#${ord.orderNumber || ord.orderId}</div>
+            <div style="font-size:10.5px;font-weight:600;color:#555555;text-transform:uppercase;letter-spacing: 0.3px;">Order Tracking Snapshot</div>
+            <div style="font-size:16px;font-weight:600;color:#000000;">#${ord.orderNumber || ord.orderId}</div>
           </div>
           <div style="text-align:right;">
-            <span style="font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:4px;background:${stepper.isStep2Done ? '#dcfce7' : (stepper.isPaymentRejected ? '#fee2e2' : '#fef3c7')};color:${stepper.isStep2Done ? '#15803d' : (stepper.isPaymentRejected ? '#b91c1c' : '#92400e')};text-transform:uppercase;">
-              ${stepper.isStep2Done ? 'Payment Verified' : (stepper.isPaymentRejected ? 'Payment Rejected' : (ord.paymentStatus || 'Awaiting Verification').replace(/_/g, ' '))}
+            <span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:0px;border:1px solid #000000;background:${stepper.paymentBadgeBg};color:${stepper.paymentBadgeColor};text-transform:uppercase;letter-spacing:0.5px;">
+              ${stepper.paymentBadgeText}
             </span>
           </div>
         </div>
 
         <!-- Status Stepper Bar -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0;padding:10px 12px;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;font-size:11px;font-weight:800;text-align:center;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0;padding:10px 12px;background:#ffffff;border:1.5px solid #000000;border-radius:0px;font-size:11px;font-weight:600;text-align:center;">
           <div style="color:#16a34a;">
             <div>✓ 1. Placed</div>
           </div>
@@ -1612,23 +2080,23 @@ window.INDIAN_STATES = [
           </div>
         </div>
 
-        <div style="font-size:12px;color:#334155;line-height:1.6;margin-bottom:12px;">
-          <div><strong>Current Fulfillment Status:</strong> <span style="text-transform:uppercase;font-weight:800;color:#0f172a;">${(ord.status || 'pending').replace(/_/g, ' ')}</span></div>
+        <div style="font-size:12px;color:#222222;line-height:1.6;margin-bottom:12px;">
+          <div><strong>Current Fulfillment Status:</strong> <span style="text-transform:uppercase;font-weight:600;color:#000000;">${(ord.status || 'pending').replace(/_/g, ' ')}</span></div>
           <div><strong>Delivery Destination:</strong> ${ord.shippingAddress ? `${ord.shippingAddress.city}, PIN ${ord.shippingAddress.postalCode}` : 'India'}</div>
           <div><strong>Payable Order Total:</strong> ${ord.pricing ? ord.pricing.finalPayableFormatted : ''}</div>
         </div>
 
         ${ord.fulfillment && ord.fulfillment.trackingNumber ? `
-          <div style="background:#ffffff;border:1px solid #bbf7d0;border-radius:8px;padding:12px;margin-top:10px;">
-            <div style="font-size:11px;font-weight:800;color:#166534;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Dispatched via ${ord.fulfillment.courierName || 'DTDC'}</div>
-            <div style="font-size:13px;font-weight:800;color:#0f172a;margin-bottom:8px;">AWB / Tracking #: <code>${ord.fulfillment.trackingNumber}</code></div>
-            <a href="${ord.fulfillment.trackingUrl || `https://www.google.com/search?q=${encodeURIComponent((ord.fulfillment.courierName || '') + ' ' + ord.fulfillment.trackingNumber)}`}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:#000000;color:#ffffff;padding:8px 14px;border-radius:6px;font-size:11.5px;font-weight:800;text-decoration:none;">
+          <div style="background:#ffffff;border:1.5px solid #000000;border-radius:0px;padding:12px;margin-top:10px;">
+            <div style="font-size:10.5px;font-weight:600;color:#166534;text-transform:uppercase;letter-spacing: 0.3px;margin-bottom:4px;">Dispatched via ${ord.fulfillment.courierName || 'DTDC'}</div>
+            <div style="font-size:13px;font-weight:600;color:#000000;margin-bottom:8px;">AWB / Tracking #: <code>${ord.fulfillment.trackingNumber}</code></div>
+            <a href="${ord.fulfillment.trackingUrl || `https://www.google.com/search?q=${encodeURIComponent((ord.fulfillment.courierName || '') + ' ' + ord.fulfillment.trackingNumber)}`}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:#000000;color:#ffffff;padding:8px 14px;border:1.5px solid #000000;border-radius:0px;font-size:11.5px;font-weight:600;text-decoration:none;letter-spacing: 0.3px;text-transform:uppercase;">
               <span>LIVE COURIER TRACKING</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
             </a>
           </div>
         ` : `
-          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;font-size:12px;color:#1e40af;">
+          <div style="background:#ffffff;border:1.5px solid #000000;border-radius:0px;padding:10px 12px;font-size:12px;color:#000000;">
             Order is confirmed and being prepared for packaging at our Nagpur store. You will receive courier dispatch information via email as soon as it ships.
           </div>
         `}
@@ -1642,13 +2110,13 @@ window.INDIAN_STATES = [
 
     if (!orders || orders.length === 0) {
       container.innerHTML = `
-        <div style="padding:22px 14px;text-align:center;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;">
-          <div style="width:38px;height:38px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;color:#64748b;">
+        <div style="padding:22px 14px;text-align:center;background:#ffffff;border:1.5px dashed #000000;border-radius:0px;">
+          <div style="width:38px;height:38px;border-radius:0px;background:#000000;border:1.5px solid #000000;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;color:#ffffff;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
           </div>
-          <div style="font-size:13.5px;font-weight:800;color:#0f172a;margin-bottom:4px;">No Orders Yet</div>
-          <div style="font-size:12px;color:#64748b;line-height:1.4;margin-bottom:14px;">You haven't placed any competitive swim orders yet. Discover our competition gear to elevate your training.</div>
-          <a href="shop.html" onclick="document.getElementById('lane4-auth-modal-wrapper').style.display='none';" style="display:inline-flex;align-items:center;gap:6px;background:#000000;color:#ffffff;padding:8px 16px;border-radius:6px;font-size:11.5px;font-weight:800;text-decoration:none;letter-spacing:0.5px;">
+          <div style="font-size:14px;font-weight:600;color:#000000;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">No Orders Yet</div>
+          <div style="font-size:12px;color:#555555;line-height:1.4;margin-bottom:14px;">You haven't placed any competitive swim orders yet. Discover our competition gear to elevate your training.</div>
+          <a href="shop.html" onclick="document.getElementById('lane4-auth-modal-wrapper').style.display='none';" style="display:inline-flex;align-items:center;gap:6px;background:#000000;color:#ffffff;padding:10px 18px;border:1.5px solid #000000;border-radius:0px;font-size:11.5px;font-weight:600;text-decoration:none;letter-spacing: 0.3px;text-transform:uppercase;">
             <span>EXPLORE SHOP</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </a>
@@ -1670,30 +2138,46 @@ window.INDIAN_STATES = [
       card.setAttribute('tabindex', '0');
       card.setAttribute('title', 'Click to view complete order items and billing breakdown');
       card.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;font-weight:800;font-size:13.5px;color:#0f172a;margin-bottom:4px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;font-weight:500;font-size:14px;color:#111111;margin-bottom:4px;">
           <span>#${orderRef}</span>
-          <span style="font-size:14px;font-weight:900;">${totalText}</span>
+          <span style="font-size:14px;font-weight:500;">${totalText}</span>
         </div>
-        <div style="font-size:11.5px;color:#64748b;margin-bottom:6px;">
+        <div style="font-size:11.5px;color:#777777;margin-bottom:6px;">
           ${itemCount} ${itemCount === 1 ? 'item' : 'items'} &bull; ${formatOrderTimestamp(ord.createdAt)}
         </div>
         <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
-          <span style="font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;background:#e2e8f0;color:#334155;text-transform:uppercase;">
+          <span style="font-size:10px;font-weight:500;padding:2px 7px;border-radius:0px;border:1px solid #e0e0e0;background:#fafafa;color:#222222;text-transform:uppercase;letter-spacing:0.5px;">
             ${getOrderStatusBadge(ord.status)}
           </span>
-          <span style="font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;background:${stepper.isStep2Done ? '#dcfce7' : (stepper.isPaymentRejected ? '#fee2e2' : '#fef3c7')};color:${stepper.isStep2Done ? '#15803d' : (stepper.isPaymentRejected ? '#b91c1c' : '#92400e')};text-transform:uppercase;">
-            ${stepper.isStep2Done ? 'Payment Verified' : (stepper.isPaymentRejected ? 'Payment Rejected' : 'Awaiting Verification')}
+          <span style="font-size:10px;font-weight:500;padding:2px 7px;border-radius:0px;border:1px solid #e0e0e0;background:${stepper.paymentBadgeBg};color:${stepper.paymentBadgeColor};text-transform:uppercase;letter-spacing:0.5px;">
+            ${stepper.paymentBadgeText}
           </span>
         </div>
+        ${(stepper.isAwaitingProof || stepper.isPaymentRejected) ? `
+          <div style="margin-top:8px;">
+            <button type="button" class="lane4-upload-proof-action" onclick="event.stopPropagation(); window.showOrderDetailsWithProof('${ord.orderId || ord.id || orderRef}');" style="display:inline-flex;align-items:center;gap:5px;background:#000000;color:#ffffff;padding:6px 12px;border:1px solid #000000;border-radius:0px;font-size:10.5px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:0.8px;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Upload Payment Proof</span>
+            </button>
+          </div>
+        ` : ''}
         ${ord.fulfillment && ord.fulfillment.trackingNumber ? `
-          <div style="margin-top:8px;padding-top:6px;border-top:1px dashed #cbd5e1;font-size:11.5px;color:#475569;">
+          <div style="margin-top:8px;padding-top:6px;border-top:1px dashed #e0e0e0;font-size:11.5px;color:#444444;">
             <strong>Courier:</strong> ${ord.fulfillment.courierName || 'DTDC'} &bull; <strong>AWB:</strong> <code>${ord.fulfillment.trackingNumber}</code>
           </div>
         ` : ''}
-        <div style="margin-top:10px;padding-top:8px;border-top:1px solid #e2e8f0;">
-          <button type="button" class="lane4-view-details-action" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f172a;color:#ffffff;padding:8px 12px;border:none;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;transition:background 0.15s ease;">
+        ${(['confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered'].includes(ord.status) || ord.paymentStatus === 'verified') ? `
+          <div style="margin-top:8px;padding-top:6px;border-top:1px dashed #e0e0e0;display:flex;justify-content:flex-end;">
+            <button type="button" class="lane4-invoice-btn" style="background:none;border:none;color:#111111;font-size:11.5px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:4px;letter-spacing:0.3px;text-transform:uppercase;text-decoration:underline;" onclick="event.stopPropagation(); window.downloadCustomerInvoice('${ord.orderId || ord.id}', '${ord.orderAccessToken || ''}')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <span>Download Tax Invoice (GST)</span>
+            </button>
+          </div>
+        ` : ''}
+        <div style="margin-top:10px;padding-top:8px;border-top:1px solid #f0f0f0;">
+          <button type="button" class="lane4-view-details-action" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;background:#ffffff;color:#111111;padding:9px 12px;border:1px solid #dcdcdc;border-radius:0px;font-size:11.5px;font-weight:500;cursor:pointer;letter-spacing:0.4px;text-transform:uppercase;transition:all 0.15s ease;">
             <span>View Order, Products &amp; Billing Details</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </button>
         </div>
       `;
@@ -1820,11 +2304,9 @@ window.INDIAN_STATES = [
     subtabs.querySelectorAll('.lane4-acc-subtab-btn').forEach(btn => {
       btn.onclick = () => {
         subtabs.querySelectorAll('.lane4-acc-subtab-btn').forEach(b => {
-          b.style.background = 'transparent';
-          b.style.color = '#64748b';
+          b.classList.remove('active');
         });
-        btn.style.background = '#000000';
-        btn.style.color = '#ffffff';
+        btn.classList.add('active');
 
         const subtab = btn.getAttribute('data-subtab');
         document.getElementById('lane4-acc-tab-orders').style.display = subtab === 'orders' ? 'block' : 'none';
@@ -1921,7 +2403,7 @@ window.INDIAN_STATES = [
       const addrs = (res && res.data) || [];
       if (addrs.length === 0) {
         listEl.innerHTML = `
-          <div style="padding:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;font-size:12.5px;color:#64748b;text-align:center;">
+          <div style="padding:14px;background:#ffffff;border:1.5px dashed #000000;border-radius:0px;font-size:12.5px;color:#555555;text-align:center;">
             No saved addresses found. Add a delivery address below for one-click checkout.
           </div>
         `;
@@ -1929,16 +2411,16 @@ window.INDIAN_STATES = [
       }
 
       listEl.innerHTML = addrs.map(a => `
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:8px;position:relative;">
+        <div style="background:#ffffff;border:1.5px solid #000000;border-radius:0px;padding:12px;margin-bottom:8px;position:relative;">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-            <div style="font-size:13px;font-weight:600;color:#0f172a;">${a.addressee || 'Delivery Address'}</div>
-            <button type="button" class="lane4-delete-addr-btn" data-id="${a.addressId || a.id}" style="background:none;border:none;color:#ef4444;font-size:11.5px;font-weight:600;cursor:pointer;padding:2px 6px;">Delete</button>
+            <div style="font-size:13px;font-weight:600;color:#000000;letter-spacing:0.5px;text-transform:uppercase;">${a.addressee || 'Delivery Address'}</div>
+            <button type="button" class="lane4-delete-addr-btn" data-id="${a.addressId || a.id}" style="background:#ffffff;border:1px solid #dc2626;color:#dc2626;border-radius:0px;font-size:10.5px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;cursor:pointer;padding:3px 8px;">Delete</button>
           </div>
-          <div style="font-size:12px;color:#475569;margin-top:4px;line-height:1.4;">
+          <div style="font-size:12px;color:#333333;margin-top:4px;line-height:1.4;">
             ${a.addressLine1}${a.addressLine2 ? ', ' + a.addressLine2 : ''}<br>
             ${a.city}, ${a.state} - PIN ${a.postalCode}
           </div>
-          ${a.phone ? `<div style="font-size:11.5px;color:#64748b;margin-top:3px;">Phone: ${a.phone}</div>` : ''}
+          ${a.phone ? `<div style="font-size:11.5px;color:#555555;margin-top:3px;">Phone: ${a.phone}</div>` : ''}
         </div>
       `).join('');
 
@@ -2089,15 +2571,227 @@ window.INDIAN_STATES = [
       renderCustomerOrders(orders);
     } catch (err) {
       container.innerHTML = `
-        <div style="padding:20px 14px;text-align:center;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;">
-          <div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:4px;">No Recent Orders Found</div>
-          <div style="font-size:12px;color:#64748b;line-height:1.4;margin-bottom:12px;">You haven't placed any orders with this swimmer account yet.</div>
-          <a href="shop.html" onclick="document.getElementById('lane4-auth-modal-wrapper').style.display='none';" style="display:inline-flex;align-items:center;gap:6px;background:#000000;color:#ffffff;padding:8px 14px;border-radius:6px;font-size:11px;font-weight:800;text-decoration:none;">
+        <div style="padding:20px 14px;text-align:center;background:#ffffff;border:1.5px dashed #000000;border-radius:0px;">
+          <div style="font-size:13.5px;font-weight:600;color:#000000;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">No Recent Orders Found</div>
+          <div style="font-size:12px;color:#555555;line-height:1.4;margin-bottom:12px;">You haven't placed any orders with this swimmer account yet.</div>
+          <a href="shop.html" onclick="document.getElementById('lane4-auth-modal-wrapper').style.display='none';" style="display:inline-flex;align-items:center;gap:6px;background:#000000;color:#ffffff;padding:8px 14px;border:1.5px solid #000000;border-radius:0px;font-size:11px;font-weight:600;text-decoration:none;letter-spacing: 0.3px;text-transform:uppercase;">
             <span>EXPLORE SHOP</span>
           </a>
         </div>
       `;
     }
+  }
+
+  // --- CUSTOMER PAYMENT PROOF DIRECT SHORTCUT ---
+  window.showOrderDetailsWithProof = function (orderRef) {
+    if (!orderRef) return;
+    const matched = (customerOrdersCache || []).find(o => (o.orderNumber === orderRef || o.orderId === orderRef || o.id === orderRef));
+    if (matched) {
+      showOrderDetails(matched);
+      setTimeout(() => {
+        const uploadBox = document.getElementById('lane4-proof-upload-container');
+        if (uploadBox) {
+          uploadBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const utrField = document.getElementById('lane4-resubmit-utr');
+          if (utrField) utrField.focus();
+        }
+      }, 150);
+    }
+  };
+
+  // --- CUSTOMER GST TAX INVOICE VIEWER ---
+  window.downloadCustomerInvoice = async function (orderId, orderAccessToken) {
+    if (!orderId) return;
+    try {
+      let url = `/orders/${encodeURIComponent(orderId)}/invoice`;
+      if (orderAccessToken) {
+        url += `?token=${encodeURIComponent(orderAccessToken)}`;
+      }
+      const token = localStorage.getItem('lane4_customer_token');
+      const headers = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      if (orderAccessToken) headers['x-order-token'] = orderAccessToken;
+
+      const res = await window.lane4ApiRequest(url, { headers });
+      if (!res || !res.data) {
+        throw new Error((res && res.message) || 'Unable to retrieve tax invoice.');
+      }
+      renderCustomerInvoiceModal(res.data);
+    } catch (err) {
+      showAlert(`Could not load tax invoice: ${err.message || 'Invoice unavailable'}`, 'error');
+    }
+  };
+
+  function renderCustomerInvoiceModal(inv) {
+    window.currentCustomerInvoice = inv;
+    const invoicePanel = document.getElementById('lane4-invoice-panel');
+    const invoiceContent = document.getElementById('lane4-invoice-content');
+    if (!invoicePanel || !invoiceContent) return;
+
+    // Hide other panels
+    const detailsPanel = document.getElementById('lane4-order-details-panel');
+    if (detailsPanel) detailsPanel.style.display = 'none';
+    const accPanel = document.getElementById('lane4-account-panel');
+    if (accPanel) accPanel.style.display = 'none';
+    const returnPanel = document.getElementById('lane4-return-panel');
+    if (returnPanel) returnPanel.style.display = 'none';
+    const tabs = document.getElementById('lane4-auth-tabs');
+    if (tabs) tabs.style.display = 'none';
+
+    invoicePanel.style.display = 'block';
+
+    const isInterState = inv.placeOfSupply && inv.placeOfSupply.taxType && inv.placeOfSupply.taxType.includes('INTER_STATE');
+    const isProvisional = !inv.seller.isCertifiedGstin || inv.isProvisionalDraft || !inv.seller.gstin;
+    const itemsHtml = (inv.items || []).map((it, idx) => `
+      <tr style="border-bottom:1px solid #e2e8f0;font-size:11.5px;">
+        <td style="padding:6px 4px;text-align:center;">${idx + 1}</td>
+        <td style="padding:6px 4px;">
+          <strong>${escapeHtml(it.description || it.name || 'Item')}</strong>
+          ${it.variantName ? `<div style="font-size:10px;color:#64748b;">${escapeHtml(it.variantName)}</div>` : ''}
+        </td>
+        <td style="padding:6px 4px;text-align:center;"><code>${escapeHtml(it.hsnCode || '—')}</code></td>
+        <td style="padding:6px 4px;text-align:center;">${it.quantity}</td>
+        <td style="padding:6px 4px;text-align:right;">₹${it.taxableAmountFormatted}</td>
+        ${!isInterState ? `
+          <td style="padding:6px 4px;text-align:right;">₹${it.cgstFormatted || '0.00'}</td>
+          <td style="padding:6px 4px;text-align:right;">₹${it.sgstFormatted || '0.00'}</td>
+        ` : `
+          <td style="padding:6px 4px;text-align:right;" colspan="2">₹${it.igstFormatted || '0.00'}</td>
+        `}
+        <td style="padding:6px 4px;text-align:right;font-weight:700;">₹${it.totalFormatted}</td>
+      </tr>
+    `).join('');
+
+    const shippingRow = inv.shipping && (inv.shipping.taxableAmountPaise > 0 || inv.shipping.grossAmountPaise > 0) ? `
+      <tr style="border-bottom:1px solid #e2e8f0;font-size:11.5px;background:#f8fafc;">
+        <td style="padding:6px 4px;text-align:center;">—</td>
+        <td style="padding:6px 4px;">
+          <strong>Express Doorstep Delivery</strong>
+          <div style="font-size:10px;color:#64748b;">SAC ${escapeHtml(inv.shipping.sacCode || '9968')}</div>
+        </td>
+        <td style="padding:6px 4px;text-align:center;"><code>${escapeHtml(inv.shipping.sacCode || '9968')}</code></td>
+        <td style="padding:6px 4px;text-align:center;">1</td>
+        <td style="padding:6px 4px;text-align:right;">₹${inv.shipping.taxableAmountFormatted}</td>
+        ${!isInterState ? `
+          <td style="padding:6px 4px;text-align:right;">₹${inv.shipping.cgstFormatted || '0.00'}</td>
+          <td style="padding:6px 4px;text-align:right;">₹${inv.shipping.sgstFormatted || '0.00'}</td>
+        ` : `
+          <td style="padding:6px 4px;text-align:right;" colspan="2">₹${inv.shipping.igstFormatted || '0.00'}</td>
+        `}
+        <td style="padding:6px 4px;text-align:right;font-weight:700;">₹${inv.shipping.totalFormatted}</td>
+      </tr>
+    ` : '';
+
+    invoiceContent.innerHTML = `
+      <div style="background:#ffffff;border:1.5px solid #000000;border-radius:0px;padding:16px;color:#000000;font-family:inherit;font-size:12px;">
+        ${isProvisional ? `
+          <div style="background:#fffbeb;border:1.5px solid #000000;border-radius:0px;padding:8px 12px;margin-bottom:12px;display:flex;align-items:flex-start;gap:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.5" style="flex-shrink:0;margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div>
+              <div style="font-size:11.5px;font-weight:600;color:#92400e;letter-spacing:0.5px;">PROVISIONAL ORDER ESTIMATE — OFFICIAL TAX INVOICE PENDING GST REGISTRATION</div>
+              <div style="font-size:10.5px;color:#b45309;margin-top:2px;">Store GSTIN registration is pending client confirmation. This document serves as an operational order receipt.</div>
+            </div>
+          </div>
+        ` : ''}
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #000000;padding-bottom:12px;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
+          <div>
+            <div style="font-size:16px;font-weight:600;color:#000000;letter-spacing: 0.3px;text-transform:uppercase;">${escapeHtml(inv.seller.legalName || 'The Lane4 Performance Store')}</div>
+            <div style="font-size:11px;color:#555555;margin-top:2px;">${escapeHtml(typeof inv.seller.address === 'string' ? inv.seller.address : ((inv.seller.address && inv.seller.address.street) || 'Nagpur, Maharashtra, India'))}</div>
+            <div style="font-size:11px;color:#555555;">
+              <strong>GSTIN:</strong> ${inv.seller.gstin && inv.seller.isCertifiedGstin ? `<code>${escapeHtml(inv.seller.gstin)}</code>` : `<span style="color:#b45309;font-weight:600;">Pending Registration</span>`}
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:13px;font-weight:600;color:${isProvisional ? '#d97706' : '#000000'};letter-spacing: 0.3px;text-transform:uppercase;">${isProvisional ? 'ORDER ESTIMATE' : 'TAX INVOICE'}</div>
+            <div style="font-size:12px;font-weight:600;color:#000000;">${escapeHtml(inv.invoiceNumber)}</div>
+            <div style="font-size:11px;color:#555555;">Date: ${escapeHtml(inv.invoiceDateFormatted || new Date(inv.invoiceDate).toLocaleDateString('en-IN'))}</div>
+            <div style="font-size:11px;color:#555555;">Order Ref: <strong>#${escapeHtml(inv.orderNumber || inv.orderId)}</strong></div>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;background:#ffffff;padding:10px;border-radius:0px;border:1.5px solid #000000;margin-bottom:12px;font-size:11.5px;flex-wrap:wrap;gap:10px;">
+          <div>
+            <div style="font-size:10px;font-weight:600;color:#555555;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:2px;">Billed &amp; Shipped To:</div>
+            <div style="font-weight:600;color:#000000;">${escapeHtml(inv.buyer.name || 'Customer')}</div>
+            <div>${escapeHtml(inv.buyer.addressLine1 || (inv.buyer.address ? inv.buyer.address.street : ''))}</div>
+            <div>${escapeHtml(inv.buyer.city || '')}${inv.buyer.state ? `, ${escapeHtml(inv.buyer.state)}` : ''} ${inv.buyer.postalCode ? `PIN ${escapeHtml(inv.buyer.postalCode)}` : ''}</div>
+            <div>Phone: ${escapeHtml(inv.buyer.phone || '—')}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:10px;font-weight:600;color:#555555;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:2px;">Place of Supply:</div>
+            <div style="font-weight:600;color:#000000;">${escapeHtml(inv.placeOfSupply.state)} (${escapeHtml(inv.placeOfSupply.stateCode)})</div>
+            <div style="font-size:10.5px;color:#000000;font-weight:600;">${escapeHtml(inv.placeOfSupply.taxType)}</div>
+            <div style="font-size:10.5px;color:#16a34a;font-weight:600;margin-top:2px;">Payment: ${(inv.paymentStatus || 'paid').toUpperCase()}</div>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;margin-bottom:12px;">
+          <table style="width:100%;border-collapse:collapse;border:1.5px solid #000000;">
+            <thead>
+              <tr style="background:#000000;color:#ffffff;font-size:10.5px;text-transform:uppercase;letter-spacing:0.8px;">
+                <th style="padding:6px 4px;text-align:center;">#</th>
+                <th style="padding:6px 4px;text-align:left;">Item Description</th>
+                <th style="padding:6px 4px;text-align:center;">HSN</th>
+                <th style="padding:6px 4px;text-align:center;">Qty</th>
+                <th style="padding:6px 4px;text-align:right;">Taxable Val</th>
+                ${!isInterState ? `
+                  <th style="padding:6px 4px;text-align:right;">CGST</th>
+                  <th style="padding:6px 4px;text-align:right;">SGST</th>
+                ` : `
+                  <th style="padding:6px 4px;text-align:right;" colspan="2">IGST</th>
+                `}
+                <th style="padding:6px 4px;text-align:right;">Total (₹)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+              ${shippingRow}
+            </tbody>
+          </table>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+          <div style="width:260px;background:#ffffff;border:1.5px solid #000000;border-radius:0px;padding:8px 12px;font-size:11.5px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+              <span>Total Taxable Amount:</span>
+              <span style="font-weight:600;color:#000000;">₹${inv.summary.totalTaxableFormatted}</span>
+            </div>
+            ${!isInterState ? `
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;color:#555555;">
+                <span>Total CGST:</span>
+                <span>₹${inv.summary.totalCgstFormatted}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;color:#555555;">
+                <span>Total SGST:</span>
+                <span>₹${inv.summary.totalSgstFormatted}</span>
+              </div>
+            ` : `
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;color:#555555;">
+                <span>Total IGST:</span>
+                <span>₹${inv.summary.totalIgstFormatted}</span>
+              </div>
+            `}
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;color:#000000;font-weight:600;">
+              <span>Total Tax:</span>
+              <span>₹${inv.summary.totalTaxFormatted}</span>
+            </div>
+            <div style="border-top:1.5px solid #000000;padding-top:4px;display:flex;justify-content:space-between;font-size:13px;font-weight:600;color:#000000;">
+              <span>Grand Total:</span>
+              <span>₹${inv.summary.grandTotalFormatted}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#f1f5f9;border-left:3px solid ${isProvisional ? '#d97706' : '#0284c7'};padding:6px 8px;font-size:10px;color:#64748b;">
+          <div><strong>Digital Integrity Seal:</strong> <code>${(inv.integrity && inv.integrity.fingerprint) ? inv.integrity.fingerprint.slice(0, 32) + '...' : (inv.sha256Fingerprint ? inv.sha256Fingerprint.slice(0, 32) + '...' : 'AUTHENTIC_VERIFIED')}</code></div>
+          ${!isProvisional ? `
+            <div>Computer-generated tax invoice issued in compliance with the Central Goods and Services Tax (CGST) Act, 2017.</div>
+          ` : `
+            <div style="color:#b45309;font-weight:600;margin-top:2px;">Provisional operational estimate. Official tax invoice issuance requires certified GST registration.</div>
+          `}
+        </div>
+      </div>
+    `;
   }
 
   function closeAuthModal() {

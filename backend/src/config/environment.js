@@ -50,6 +50,11 @@ const config = {
   adminBootstrap: {
     email: process.env.INITIAL_ADMIN_EMAIL || 'admin@lane4swim.in',
     password: process.env.INITIAL_ADMIN_PASSWORD || 'AdminSecurePass2026!'
+  },
+
+  auth: {
+    adminJwtSecret: process.env.ADMIN_JWT_SECRET || (process.env.NODE_ENV === 'production' ? '' : 'lane4-admin-super-secure-key-2026-athletic-secret'),
+    customerJwtSecret: process.env.CUSTOMER_JWT_SECRET || (process.env.NODE_ENV === 'production' ? '' : 'lane4-customer-signing-key-2026-surge-athletic-secret')
   }
 };
 

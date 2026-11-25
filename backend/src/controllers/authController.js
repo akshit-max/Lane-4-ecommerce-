@@ -4,6 +4,7 @@ const { sendSuccess, sendError } = require('../utils/response');
 const { getAuth, getDb } = require('../config/firebaseAdmin');
 const { config } = require('../config/environment');
 const { generateAdminJwt } = require('../utils/adminToken');
+const { generateCustomerJwt } = require('../utils/customerToken');
 
 class AuthController {
   async register(req, res, next) {
@@ -66,7 +67,13 @@ class AuthController {
             return sendError(res, 'INVALID_CREDENTIALS', 'Invalid email address or password. Please try again.', null, 401);
           }
 
-          const custToken = 'cust_token_' + Buffer.from(JSON.stringify({ uid: userDoc.id, email: cleanEmail, time: Date.now() })).toString('base64');
+          const custToken = generateCustomerJwt({
+            uid: userDoc.id,
+            email: cleanEmail,
+            displayName: userData.displayName || '',
+            phoneNumber: userData.phoneNumber || '',
+            emailVerified: Boolean(userData.emailVerified)
+          });
           return sendSuccess(res, {
             token: custToken,
             user: {
@@ -74,6 +81,7 @@ class AuthController {
               email: cleanEmail,
               displayName: userData.displayName || '',
               phoneNumber: userData.phoneNumber || '',
+              emailVerified: Boolean(userData.emailVerified),
               role: 'customer'
             }
           }, 'Signed in successfully.');
@@ -136,7 +144,15 @@ class AuthController {
         );
       }
 
+      const custToken = generateCustomerJwt({
+        uid: decoded.uid,
+        email: userEmail,
+        displayName: (profile && profile.displayName) || decoded.name || '',
+        phoneNumber: decoded.phoneNumber || (profile && profile.phoneNumber) || ''
+      });
+
       return sendSuccess(res, {
+        token: custToken,
         user: {
           uid: decoded.uid,
           email: decoded.email,
@@ -321,6 +337,69 @@ class AuthController {
         }
       }, 'Administrator session is valid.');
     } catch (err) {
+      next(err);
+    }
+  }
+
+  async forgotPassword(req, res, next) {
+    try {
+      const { email } = req.body;
+      const result = await authService.requestPasswordReset(email);
+      return sendSuccess(res, result, result.message);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async resetPassword(req, res, next) {
+    try {
+      const { token, newPassword } = req.body;
+      const result = await authService.resetPassword({ token, newPassword });
+      return sendSuccess(res, result, result.message);
+    } catch (err) {
+      if (err.statusCode) {
+        return res.status(err.statusCode).json({
+          success: false,
+          error: {
+            code: err.code || 'RESET_PASSWORD_ERROR',
+            message: err.message
+          }
+        });
+      }
+      next(err);
+    }
+  }
+
+  async sendVerificationEmail(req, res, next) {
+    try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: { code: 'UNAUTHORIZED', message: 'Authentication required' }
+        });
+      }
+      const result = await authService.sendVerificationEmail(req.user);
+      return sendSuccess(res, result, result.message);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async verifyEmail(req, res, next) {
+    try {
+      const { token } = req.body;
+      const result = await authService.verifyEmail(token);
+      return sendSuccess(res, result, result.message);
+    } catch (err) {
+      if (err.statusCode) {
+        return res.status(err.statusCode).json({
+          success: false,
+          error: {
+            code: err.code || 'VERIFY_EMAIL_ERROR',
+            message: err.message
+          }
+        });
+      }
       next(err);
     }
   }

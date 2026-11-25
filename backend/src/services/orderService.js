@@ -5,7 +5,9 @@ const shippingService = require('./shippingService');
 const cartService = require('./cartService');
 const { formatINR } = require('../utils/currency');
 const { sendMail, wrapBrandedTemplate } = require('../config/email');
+const { staffNotificationService } = require('./staffNotificationService');
 const { logger } = require('../utils/logger');
+const { generateOrderAccessToken } = require('../utils/orderSecurity');
 
 function toMillis(d) {
   if (!d) return 0;
@@ -237,6 +239,7 @@ class OrderService {
 
     // Transaction to reserve inventory and persist immutable order snapshot
     // CRITICAL: Firestore transactions strictly require ALL reads before ANY writes
+    const reservedInventoryItems = [];
     await db.runTransaction(async (transaction) => {
       // 1. Read and validate all inventory records first
       const inventoryUpdates = [];
@@ -251,12 +254,22 @@ class OrderService {
             throw new Error(`Insufficient stock for "${item.name} (${item.sku})". Only ${currentAvailable} left.`);
           }
 
+          const newAvailable = currentAvailable - item.quantity;
+          const newReserved = (invData.reservedQuantity || 0) + item.quantity;
+
+          reservedInventoryItems.push({
+            sku: item.sku,
+            name: item.name || item.title || 'Product',
+            remainingAvailable: newAvailable,
+            reservedQuantity: newReserved
+          });
+
           inventoryUpdates.push({
             ref: invRef,
             update: {
-              availableQuantity: currentAvailable - item.quantity,
-              reservedQuantity: (invData.reservedQuantity || 0) + item.quantity,
-              isOutOfStock: (currentAvailable - item.quantity) <= 0,
+              availableQuantity: newAvailable,
+              reservedQuantity: newReserved,
+              isOutOfStock: newAvailable <= 0,
               updatedAt: now
             }
           });
@@ -338,6 +351,31 @@ class OrderService {
       )
     });
 
+    // Notify staff of new order (non-blocking async)
+    staffNotificationService.notifyNewOrderPlaced({
+      orderId,
+      orderNumber,
+      customerEmail,
+      customerPhone,
+      shippingAddress: data.shippingAddress,
+      pricing: quote.pricing,
+      items: quote.items,
+      paymentMethod: data.paymentMethod || 'UPI_QR'
+    });
+
+    // Check for any inventory items that reached low-stock threshold during reservation
+    for (const resv of reservedInventoryItems) {
+      if (typeof resv.remainingAvailable === 'number') {
+        staffNotificationService.notifyLowStockAlert({
+          sku: resv.sku,
+          productName: resv.name,
+          availableQuantity: resv.remainingAvailable,
+          reservedQuantity: resv.reservedQuantity,
+          lowStockThreshold: 5
+        });
+      }
+    }
+
     return {
       orderId,
       orderNumber,
@@ -346,7 +384,8 @@ class OrderService {
       paymentStatus: 'awaiting_payment',
       pricing: quote.pricing,
       items: quote.items,
-      coupon: couponData
+      coupon: couponData,
+      orderAccessToken: generateOrderAccessToken(orderId, customerEmail)
     };
   }
 
@@ -373,14 +412,27 @@ class OrderService {
       order.tracking = order.tracking || order.fulfillment || null;
     }
 
-    // Security check: Customer can only view their own orders
-    if (user && user.role === 'customer') {
+    // Security check: Order details require authentication and ownership verification
+    if (!user) {
+      const err = new Error('Authentication required to access order details.');
+      err.statusCode = 401;
+      err.code = 'UNAUTHORIZED';
+      throw err;
+    }
+
+    const { ADMIN_ROLES } = require('../constants/roles');
+    const isAdmin = user.role && ADMIN_ROLES.includes(user.role);
+
+    if (!isAdmin) {
       const userEmail = (user.email || '').toLowerCase().trim();
       const ordEmail = (order.customerEmail || '').toLowerCase().trim();
       const matchUid = order.customerId && order.customerId === user.uid;
       const matchEmail = userEmail && ordEmail && userEmail === ordEmail;
       if (!matchUid && !matchEmail) {
-        throw new Error('UNAUTHORIZED: Access to requested order is denied.');
+        const err = new Error('UNAUTHORIZED: Access to requested order is denied.');
+        err.statusCode = 403;
+        err.code = 'FORBIDDEN';
+        throw err;
       }
     }
 
@@ -527,6 +579,8 @@ class OrderService {
         postalCode: order.shippingAddress ? order.shippingAddress.postalCode : ''
       },
       fulfillment: order.fulfillment || order.tracking || {},
+      tracking: order.tracking || order.fulfillment || null,
+      orderAccessToken: generateOrderAccessToken(orderDoc.id, recordEmail),
       createdAt: order.createdAt,
       updatedAt: order.updatedAt
     };
@@ -671,39 +725,43 @@ class OrderService {
             });
           }
 
-          // 2. Restore products collection variants & total stock
-          let pSnap = await db.collection('products').where('slug', '==', item.slug || item.productId).limit(1).get();
-          if (pSnap.empty && item.productId) {
-            const pDocDirect = await db.collection('products').doc(item.productId).get();
-            if (pDocDirect.exists) pSnap = { empty: false, docs: [pDocDirect] };
-          }
-          if (!pSnap.empty) {
-            const pDoc = pSnap.docs[0];
-            const pData = pDoc.data();
-            const variants = (pData.variants || []).map(v => {
-              if (v.sku === item.sku || v.variantId === item.variantId) {
-                return { ...v, stockQuantity: (v.stockQuantity || 0) + item.quantity };
-              }
-              return v;
-            });
-            const totalStock = variants.length > 0
-              ? variants.reduce((s, v) => s + (v.stockQuantity || 0), 0)
-              : (pData.stockQuantity || 0) + item.quantity;
-            await pDoc.ref.update({
-              variants,
-              stockQuantity: totalStock,
-              updatedAt: now
-            });
+          // 2. Restore products collection variants & total stock if physical stock was deducted
+          if (orderData.stockDeducted) {
+            let pSnap = await db.collection('products').where('slug', '==', item.slug || item.productId).limit(1).get();
+            if (pSnap.empty && item.productId) {
+              const pDocDirect = await db.collection('products').doc(item.productId).get();
+              if (pDocDirect.exists) pSnap = { empty: false, docs: [pDocDirect] };
+            }
+            if (!pSnap.empty) {
+              const pDoc = pSnap.docs[0];
+              const pData = pDoc.data();
+              const variants = (pData.variants || []).map(v => {
+                if (v.sku === item.sku || v.variantId === item.variantId) {
+                  return { ...v, stockQuantity: (v.stockQuantity || 0) + item.quantity };
+                }
+                return v;
+              });
+              const totalStock = variants.length > 0
+                ? variants.reduce((s, v) => s + (v.stockQuantity || 0), 0)
+                : (pData.stockQuantity || 0) + item.quantity;
+              await pDoc.ref.update({
+                variants,
+                stockQuantity: totalStock,
+                updatedAt: now
+              });
+            }
           }
         } catch (_) {}
       }
     }
 
-    // If order is returned, restore stock and update inspection status
-    if (newStatus === 'returned' && currentStatus !== 'returned') {
+    // If order is returned, restore stock and update inspection status (restores stock exactly once)
+    if (newStatus === 'returned' && currentStatus !== 'returned' && !orderData.returnStockRestored && !orderData.stockRestored) {
       orderUpdates.returnedAt = now;
       orderUpdates.returnedBy = adminUser.email || adminUser.uid;
       orderUpdates.financialStatus = 'returned_inspection_pending';
+      orderUpdates.returnStockRestored = true;
+      orderUpdates.returnStockRestoredAt = now;
 
       for (const item of orderData.items || []) {
         try {
@@ -711,10 +769,25 @@ class OrderService {
           const invDoc = await invRef.get();
           if (invDoc.exists) {
             const inv = invDoc.data();
+            const currentAvailable = typeof inv.availableQuantity === 'number' ? inv.availableQuantity : 0;
+            const newAvailable = currentAvailable + item.quantity;
             await invRef.update({
-              availableQuantity: (inv.availableQuantity || 0) + item.quantity,
-              isOutOfStock: false,
+              availableQuantity: newAvailable,
+              isOutOfStock: newAvailable <= 0,
               updatedAt: now
+            });
+
+            await invRef.collection('ledger').add({
+              type: 'return_restock',
+              quantityChanged: item.quantity,
+              previousQuantity: currentAvailable,
+              newBalance: newAvailable,
+              reservedQuantity: inv.reservedQuantity || 0,
+              orderId: orderId,
+              orderNumber: orderData.orderNumber || '',
+              reason: 'Order status changed to returned',
+              adjustedByUid: adminUser.email || adminUser.uid,
+              timestamp: now
             });
           }
 
@@ -944,6 +1017,208 @@ class OrderService {
       orderNumber: orderData.orderNumber || orderId,
       refundStatus: 'refunded',
       refundDetails
+    };
+  }
+
+  async cancelCustomerOrder(orderId, customer = null, { reason = '', orderAccessToken = '' } = {}) {
+    const db = getDb();
+    if (!db) throw new Error('Database unavailable');
+
+    let orderDoc = await db.collection('orders').doc(orderId).get();
+    let orderData = orderDoc.exists ? orderDoc.data() : null;
+    let actualOrderId = orderId;
+
+    if (!orderData) {
+      const cleanNum = orderId.toString().trim().replace(/^#/, '');
+      const snap = await db.collection('orders').where('orderNumber', '==', cleanNum).limit(1).get();
+      if (!snap.empty) {
+        orderDoc = snap.docs[0];
+        orderData = orderDoc.data();
+        actualOrderId = orderDoc.id;
+      }
+    }
+
+    if (!orderData) {
+      const err = new Error('Order not found');
+      err.statusCode = 404;
+      err.code = 'NOT_FOUND';
+      throw err;
+    }
+
+    // Ownership check
+    const { ADMIN_ROLES } = require('../constants/roles');
+    const isAdmin = customer && customer.role && ADMIN_ROLES.includes(customer.role);
+
+    if (!isAdmin) {
+      if (orderData.customerId) {
+        if (!customer || !customer.uid || customer.uid !== orderData.customerId) {
+          const err = new Error('UNAUTHORIZED: You can only cancel your own orders.');
+          err.statusCode = 403;
+          err.code = 'FORBIDDEN';
+          throw err;
+        }
+      } else {
+        // Guest order: verify orderAccessToken or verified email match
+        const { verifyOrderAccessToken } = require('../utils/orderSecurity');
+        const tokenValid = verifyOrderAccessToken(actualOrderId, orderData.customerEmail, orderAccessToken);
+        const verifiedEmailMatches = Boolean(
+          customer &&
+          customer.email &&
+          customer.emailVerified === true &&
+          orderData.customerEmail &&
+          customer.email.toLowerCase().trim() === orderData.customerEmail.toLowerCase().trim()
+        );
+
+        if (!tokenValid && !verifiedEmailMatches) {
+          const err = new Error('UNAUTHORIZED: Invalid verification credential for guest order cancellation.');
+          err.statusCode = 403;
+          err.code = 'FORBIDDEN';
+          throw err;
+        }
+      }
+    }
+
+    // Check cancellation eligibility & transition state atomically within transaction
+    const now = new Date();
+    const orderDocRef = db.collection('orders').doc(actualOrderId);
+    let orderUpdates;
+
+    await db.runTransaction(async (transaction) => {
+      const freshOrderDoc = await transaction.get(orderDocRef);
+      if (!freshOrderDoc.exists) throw new Error('Order not found');
+      const freshOrderData = freshOrderDoc.data();
+
+      const currentStatus = freshOrderData.status || freshOrderData.orderStatus || 'pending_payment';
+      if (currentStatus === 'cancelled') {
+        const err = new Error('Order is already cancelled.');
+        err.statusCode = 400;
+        err.code = 'ORDER_ALREADY_CANCELLED';
+        throw err;
+      }
+      if (['shipped', 'out_for_delivery', 'delivered'].includes(currentStatus)) {
+        const err = new Error(`Cannot cancel order in "${currentStatus}" status. Once dispatched, orders must follow the return process.`);
+        err.statusCode = 400;
+        err.code = 'CANNOT_CANCEL_DISPATCHED_ORDER';
+        throw err;
+      }
+      if (currentStatus === 'returned') {
+        const err = new Error('Cannot cancel an order that has already been returned.');
+        err.statusCode = 400;
+        err.code = 'ORDER_ALREADY_RETURNED';
+        throw err;
+      }
+
+      const eligibleStatuses = ['pending_payment', 'payment_verification', 'payment_rejected', 'confirmed'];
+      if (!eligibleStatuses.includes(currentStatus)) {
+        const err = new Error(`Order cannot be cancelled in status "${currentStatus}".`);
+        err.statusCode = 400;
+        err.code = 'INVALID_CANCELLATION_STATUS';
+        throw err;
+      }
+
+      orderUpdates = {
+        status: 'cancelled',
+        orderStatus: 'cancelled',
+        cancelledAt: now,
+        cancelledBy: customer ? customer.uid : 'guest_customer',
+        cancellationReason: (reason || 'Cancelled by customer').trim(),
+        updatedAt: now
+      };
+
+      if (freshOrderData.paymentStatus === 'verified') {
+        orderUpdates.refundStatus = 'pending_refund';
+        orderUpdates.financialStatus = 'cancelled_refund_pending';
+        orderUpdates.refundDetails = {
+          refundId: 'ref_cust_' + Date.now(),
+          originalAmountPaise: (freshOrderData.pricing && freshOrderData.pricing.finalPayablePaise) || 0,
+          refundAmountPaise: (freshOrderData.pricing && freshOrderData.pricing.finalPayablePaise) || 0,
+          status: 'pending_refund',
+          initiatedAt: now,
+          initiatedBy: customer ? customer.uid : 'customer',
+          reason: (reason || 'Order cancelled by customer - refund pending').trim()
+        };
+      }
+
+      transaction.update(orderDocRef, orderUpdates);
+    });
+
+    // Revert coupon if applied
+    const couponCode = (orderData.coupon && orderData.coupon.code) || (orderData.pricing && orderData.pricing.couponCode);
+    if (couponCode) {
+      try {
+        const couponService = require('./couponService');
+        await couponService.revertCouponRedemption(couponCode);
+      } catch (_) {}
+    }
+
+    // Inventory restoration (Restores stock exactly once)
+    for (const item of orderData.items || []) {
+      try {
+        // 1. Inventory collection
+        const invRef = db.collection('inventory').doc(item.sku);
+        const invDoc = await invRef.get();
+        if (invDoc.exists) {
+          const inv = invDoc.data();
+          await invRef.update({
+            availableQuantity: (inv.availableQuantity || 0) + item.quantity,
+            reservedQuantity: Math.max(0, (inv.reservedQuantity || 0) - item.quantity),
+            isOutOfStock: false,
+            updatedAt: now
+          });
+        }
+
+        // 2. Product variants if physical stock was deducted
+        if (orderData.stockDeducted) {
+          let pSnap = await db.collection('products').where('slug', '==', item.slug || item.productId).limit(1).get();
+          if (pSnap.empty && item.productId) {
+            const pDocDirect = await db.collection('products').doc(item.productId).get();
+            if (pDocDirect.exists) pSnap = { empty: false, docs: [pDocDirect] };
+          }
+          if (!pSnap.empty) {
+            const pDoc = pSnap.docs[0];
+            const pData = pDoc.data();
+            const variants = (pData.variants || []).map(v => {
+              if (v.sku === item.sku || v.variantId === item.variantId) {
+                return { ...v, stockQuantity: (v.stockQuantity || 0) + item.quantity };
+              }
+              return v;
+            });
+            const totalStock = variants.length > 0
+              ? variants.reduce((s, v) => s + (v.stockQuantity || 0), 0)
+              : (pData.stockQuantity || 0) + item.quantity;
+            await pDoc.ref.update({
+              variants,
+              stockQuantity: totalStock,
+              updatedAt: now
+            });
+          }
+        }
+      } catch (_) {}
+    }
+
+    // Send customer email notification
+    sendMail({
+      to: orderData.customerEmail,
+      subject: `Order #${orderData.orderNumber || actualOrderId} Cancelled`,
+      templateName: 'order_cancelled',
+      html: wrapBrandedTemplate(
+        `Order #${orderData.orderNumber || actualOrderId} Cancelled`,
+        `
+          <p>Hi ${orderData.shippingAddress ? orderData.shippingAddress.addressee : 'Customer'},</p>
+          <p>Your order #${orderData.orderNumber || actualOrderId} has been successfully cancelled as requested.</p>
+          ${orderData.paymentStatus === 'verified' ? '<p><strong>Refund Notice:</strong> Since your payment was received, our finance team has initiated your refund. You will receive the credit to your source payment method within 3-5 business days.</p>' : ''}
+          <p>If you have any questions or wish to place a new order, please visit us at lane4swim.in.</p>
+        `
+      )
+    });
+
+    return {
+      orderId: actualOrderId,
+      orderNumber: orderData.orderNumber || actualOrderId,
+      status: 'cancelled',
+      orderStatus: 'cancelled',
+      refundStatus: orderUpdates.refundStatus || null,
+      updatedAt: now
     };
   }
 }

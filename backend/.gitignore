@@ -25,3 +25,9 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# Test suites and test artifacts
+tests/
+*.test.js
+*.spec.js
+coverage/

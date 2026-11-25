@@ -10,6 +10,8 @@ const storeSettingsService = require('../services/storeSettingsService');
 const enquiryService = require('../services/enquiryService');
 const reviewService = require('../services/reviewService');
 const returnService = require('../services/returnService');
+const gstInvoiceService = require('../services/gstInvoiceService');
+const { csvExportService } = require('../services/csvExportService');
 const { uploadImageBuffer } = require('../config/cloudinary');
 const { getDb } = require('../config/firebaseAdmin');
 const { sendSuccess, sendError } = require('../utils/response');
@@ -144,12 +146,34 @@ class AdminController {
         isPrivate: false
       });
 
+      const existingData = paymentDoc.data();
+      const priorHistory = Array.isArray(existingData.proofHistory) ? [...existingData.proofHistory] : [];
+      if (existingData.proofScreenshot && (existingData.proofScreenshot.secureUrl || existingData.proofScreenshot.url)) {
+        const oldUrl = existingData.proofScreenshot.secureUrl || existingData.proofScreenshot.url;
+        const oldPublicId = existingData.proofScreenshot.publicId || null;
+        const isDuplicate = priorHistory.some(h =>
+          (h.secureUrl && h.secureUrl === oldUrl) ||
+          (oldPublicId && h.publicId && h.publicId === oldPublicId)
+        );
+        if (!isDuplicate) {
+          priorHistory.push({
+            publicId: oldPublicId,
+            secureUrl: oldUrl,
+            upiReferenceNumber: existingData.upiReferenceNumber || null,
+            uploadedAt: existingData.proofScreenshot.uploadedAt || existingData.updatedAt || new Date(),
+            supersededAt: new Date(),
+            uploadedBy: req.user?.email || req.user?.uid || 'admin'
+          });
+        }
+      }
+
       await paymentRef.update({
         proofScreenshot: {
           publicId: uploadResult.publicId,
           secureUrl: uploadResult.secureUrl,
           uploadedAt: new Date()
         },
+        proofHistory: priorHistory,
         updatedAt: new Date()
       });
 
@@ -476,6 +500,50 @@ class AdminController {
     try {
       const result = await returnService.updateReturnStatus(req.params.id, req.body, req.user);
       return sendSuccess(res, result, 'Return request updated.');
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // GST Invoice
+  async getOrderInvoice(req, res, next) {
+    try {
+      const invoice = await gstInvoiceService.getOrCreateInvoice(req.params.id, req.user);
+      return sendSuccess(res, invoice, 'GST tax invoice retrieved successfully.');
+    } catch (err) {
+      if (err.statusCode) {
+        return res.status(err.statusCode).json({
+          success: false,
+          error: {
+            code: err.code || 'INVOICE_ERROR',
+            message: err.message
+          }
+        });
+      }
+      next(err);
+    }
+  }
+
+  // Data Exports
+  async exportOrders(req, res, next) {
+    try {
+      await csvExportService.exportOrders(res, req.query);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async exportInventory(req, res, next) {
+    try {
+      await csvExportService.exportInventory(res, req.query);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async exportCustomers(req, res, next) {
+    try {
+      await csvExportService.exportCustomers(res, req.query);
     } catch (err) {
       next(err);
     }
