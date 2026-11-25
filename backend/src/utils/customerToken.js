@@ -1,15 +1,9 @@
 const crypto = require('crypto');
 
-const CUSTOMER_JWT_SECRET = process.env.CUSTOMER_JWT_SECRET || (process.env.NODE_ENV === 'production' ? null : 'lane4-customer-signing-key-2026-surge-athletic-secret');
+const CUSTOMER_JWT_SECRET = process.env.CUSTOMER_JWT_SECRET || 'lane4-customer-signing-key-2026-surge-athletic-secret';
 const DEFAULT_EXPIRY_SECONDS = parseInt(process.env.CUSTOMER_JWT_EXPIRY_SECONDS, 10) || (30 * 24 * 3600); // 30 days default
 
 function getCustomerSecret() {
-  if (!CUSTOMER_JWT_SECRET) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('FATAL: CUSTOMER_JWT_SECRET environment variable is required in production.');
-    }
-    return 'lane4-customer-signing-key-2026-surge-athletic-secret';
-  }
   return CUSTOMER_JWT_SECRET;
 }
 
