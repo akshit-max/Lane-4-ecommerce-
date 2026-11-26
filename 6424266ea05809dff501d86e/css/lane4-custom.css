@@ -536,5 +536,46 @@ a.footer-link,
   }
 }
 
+/* =========================================================
+   Webflow Scroll-Reveal Safety Net (never leave content stuck invisible)
+   ========================================================= */
+@keyframes lane4ForceReveal {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.cta-content,
+.home-product,
+.categories-cta,
+.hs-content,
+.cr-grid,
+.sp-grid,
+.filtering,
+.shop-product,
+.product-details,
+.collection-list-categories,
+.collection-list-wrapper-category,
+.collection-list-multi-images,
+.hero-about,
+.af-text-wrapper,
+.af-card,
+.about-mission,
+.hbt-content,
+.quote,
+.sb-card,
+.sb-wrapper,
+.ah-inner,
+.terms-body,
+.hch-paragraph ._450px,
+.hero-wrapper .title-h2,
+.hero-wrapper .square-white-button,
+.hch-title .title-h1,
+.hp-text-wrapper .title-h4 {
+  animation: lane4ForceReveal 0.35s ease 0.15s forwards;
+}
+
+
 
 

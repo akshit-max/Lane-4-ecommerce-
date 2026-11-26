@@ -232,6 +232,7 @@
     const subCatSlug = subCatMatch ? subCatMatch[2] : (querySubSlug || null);
     const currentCatSlug = subCatSlug || parentCatSlug;
     const isCategoryPage = window.location.pathname.includes('/category/');
+    let categoryNotFound = false;
 
     if (parentCatSlug || currentCatSlug) {
       applyCategoryMeta(parentCatSlug || currentCatSlug, null, subCatSlug ? { slug: subCatSlug } : null);
@@ -246,12 +247,42 @@
               renderSubcategoryBar(catRes.data, subCatSlug);
             }
           }
-        }).catch(() => {});
+        }).catch((err) => {
+          const isGenericDetail = /\/category\/detail/i.test(window.location.pathname) ||
+            docSlug === 'detail' ||
+            (isCategoryPage && !STATIC_CATEGORY_SLUGS.has(String(parentCatSlug || '').toLowerCase()));
+          if (isGenericDetail && err && /not found|404/i.test(String(err.message || ''))) {
+            categoryNotFound = true;
+            document.title = '404 — Category Not Found | The Lane4 Performance Store';
+            const metaRobots = document.createElement('meta');
+            metaRobots.name = 'robots';
+            metaRobots.content = 'noindex';
+            document.head.appendChild(metaRobots);
+            const hero = document.querySelector('.hero-shop') || document.querySelector('.section');
+            if (hero) {
+              hero.innerHTML = `
+                <div style="max-width:540px;margin:48px auto;padding:44px 28px;border:1px solid #dcdcdc;background:#fafafa;text-align:center;font-family:'Generalsans','General Sans',sans-serif;">
+                  <div style="font-size:11px;font-weight:500;letter-spacing:1.2px;text-transform:uppercase;color:#64748b;margin-bottom:10px;">Error 404</div>
+                  <h1 class="title-h1" style="margin:0 0 12px;font-size:32px;line-height:1.15;font-weight:500;color:#111111;">Category Not Found</h1>
+                  <p style="font-size:14.5px;line-height:1.6;color:#555555;margin:0 0 24px;">This category is unavailable or has been removed from our catalog.</p>
+                  <a href="/shop.html" style="display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:12px 24px;background:#000000;color:#ffffff;text-decoration:none;font-size:12px;font-weight:500;letter-spacing:0.8px;text-transform:uppercase;">Browse Shop</a>
+                </div>
+              `;
+            }
+            const catRowSec = document.querySelector('.category-row')?.closest('.section');
+            if (catRowSec) catRowSec.style.display = 'none';
+            const discSec = document.getElementById('lane4-discover-other-section');
+            if (discSec) discSec.style.display = 'none';
+            const ctaSec = document.querySelector('.categories-cta')?.closest('.section');
+            if (ctaSec) ctaSec.style.display = 'none';
+          }
+        });
       } catch (_) {}
     }
 
     try {
       const res = await window.lane4ApiRequest('/products');
+      if (categoryNotFound) return;
       const products = (res && res.data && res.data.products) || (Array.isArray(res && res.data) ? res.data : []);
 
       const productMap = new Map();
