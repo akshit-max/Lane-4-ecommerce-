@@ -433,6 +433,67 @@ class ProductService {
     }
   }
 
+  async _hydrateProductsStock(db, productsList) {
+    if (!db || !Array.isArray(productsList) || productsList.length === 0) return productsList;
+    try {
+      const invSnap = await db.collection('inventory').get();
+      const invMap = new Map();
+      invSnap.docs.forEach(d => {
+        const data = d.data();
+        if (data && data.sku) invMap.set(data.sku, data);
+        if (d.id) invMap.set(d.id, data);
+      });
+
+      return productsList.map(p => {
+        if (!p) return p;
+        const copy = { ...p };
+        if (Array.isArray(copy.variants) && copy.variants.length > 0) {
+          copy.variants = copy.variants.map(v => {
+            const inv = invMap.get(v.sku) || invMap.get(v.variantId);
+            const liveQty = inv && typeof inv.availableQuantity === 'number' ? inv.availableQuantity : (v.stockQuantity || 0);
+            return { ...v, stockQuantity: liveQty };
+          });
+          copy.stockQuantity = copy.variants.reduce((sum, v) => sum + (v.stockQuantity || 0), 0);
+        } else if (copy.sku) {
+          const inv = invMap.get(copy.sku);
+          if (inv && typeof inv.availableQuantity === 'number') {
+            copy.stockQuantity = inv.availableQuantity;
+          }
+        }
+        return copy;
+      });
+    } catch (_) {
+      return productsList;
+    }
+  }
+
+  async _hydrateSingleProductStock(db, product) {
+    if (!db || !product) return product;
+    const copy = { ...product };
+    try {
+      if (Array.isArray(copy.variants) && copy.variants.length > 0) {
+        const updatedVars = await Promise.all(copy.variants.map(async v => {
+          if (!v.sku) return v;
+          try {
+            const invDoc = await db.collection('inventory').doc(v.sku).get();
+            if (invDoc.exists && typeof invDoc.data().availableQuantity === 'number') {
+              return { ...v, stockQuantity: invDoc.data().availableQuantity };
+            }
+          } catch (_) {}
+          return v;
+        }));
+        copy.variants = updatedVars;
+        copy.stockQuantity = updatedVars.reduce((sum, v) => sum + (v.stockQuantity || 0), 0);
+      } else if (copy.sku) {
+        const invDoc = await db.collection('inventory').doc(copy.sku).get();
+        if (invDoc.exists && typeof invDoc.data().availableQuantity === 'number') {
+          copy.stockQuantity = invDoc.data().availableQuantity;
+        }
+      }
+    } catch (_) {}
+    return copy;
+  }
+
   async listProducts(filters = {}) {
     const db = getDb();
     if (!db) return { products: [], total: 0 };
@@ -511,7 +572,7 @@ class ProductService {
     const page = parseInt(filters.page, 10) || 1;
     const limit = parseInt(filters.limit, 10) || 20;
     const startIndex = (page - 1) * limit;
-    const paginated = products.slice(startIndex, startIndex + limit);
+    const paginated = await this._hydrateProductsStock(db, products.slice(startIndex, startIndex + limit));
 
     return {
       products: paginated,
@@ -545,7 +606,7 @@ class ProductService {
       return null;
     }
 
-    return data;
+    return this._hydrateSingleProductStock(db, data);
   }
 
   async getProductById(id) {
@@ -556,7 +617,7 @@ class ProductService {
     if (!doc.exists) return null;
     const data = doc.data();
     if (data.isDeleted) return null;
-    return data;
+    return this._hydrateSingleProductStock(db, data);
   }
 
   async createProduct(data, adminUser) {

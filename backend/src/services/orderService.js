@@ -59,6 +59,14 @@ function getEffectiveUnitPricePaise(product, variant) {
   return product.pricePaise || 0;
 }
 
+function normalizeIndianPhone(phone) {
+  if (!phone) return '';
+  let digits = String(phone).replace(/\D/g, '');
+  if (digits.length > 10 && digits.startsWith('91')) digits = digits.slice(2);
+  else if (digits.length > 10 && digits.startsWith('0')) digits = digits.slice(1);
+  return digits;
+}
+
 class OrderService {
   _generateOrderNumber() {
     const year = new Date().getFullYear().toString().slice(-2);
@@ -192,7 +200,21 @@ class OrderService {
     const isCustomerUser = customer && (customer.role === 'customer' || !customer.role);
     let customerId = isCustomerUser ? customer.uid : null;
     const customerEmail = data.customerEmail || (isCustomerUser ? customer.email : null);
-    const customerPhone = data.customerPhone || '';
+    const rawCustomerPhone = data.customerPhone || (data.shippingAddress && data.shippingAddress.phone) || '';
+    const rawShipPhone = (data.shippingAddress && data.shippingAddress.phone) || rawCustomerPhone;
+    const customerPhone = rawCustomerPhone ? normalizeIndianPhone(rawCustomerPhone) : '';
+    const shipPhone = rawShipPhone ? normalizeIndianPhone(rawShipPhone) : '';
+
+    if (rawCustomerPhone && (!/^[6-9]\d{9}$/.test(customerPhone) || /[a-zA-Z]/.test(String(rawCustomerPhone)))) {
+      const err = new Error('Please enter a valid 10-digit Indian mobile number.');
+      err.statusCode = 400;
+      throw err;
+    }
+    if (rawShipPhone && (!/^[6-9]\d{9}$/.test(shipPhone) || /[a-zA-Z]/.test(String(rawShipPhone)))) {
+      const err = new Error('Please enter a valid 10-digit Indian mobile number.');
+      err.statusCode = 400;
+      throw err;
+    }
 
     if (!customerEmail || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(customerEmail)) {
       throw new Error('Please provide a valid standard email address.');
@@ -297,7 +319,7 @@ class OrderService {
         coupon: couponData,
         shippingAddress: {
           addressee: data.shippingAddress.addressee || customerEmail,
-          phone: data.shippingAddress.phone || customerPhone,
+          phone: shipPhone || customerPhone,
           addressLine1: data.shippingAddress.addressLine1,
           addressLine2: data.shippingAddress.addressLine2 || '',
           city: data.shippingAddress.city || 'Nagpur',
@@ -382,6 +404,9 @@ class OrderService {
       status: 'pending_payment',
       orderStatus: 'pending_payment',
       paymentStatus: 'awaiting_payment',
+      customerEmail: customerEmail.toLowerCase().trim(),
+      customerPhone: customerPhone || '',
+      shippingAddress: { ...data.shippingAddress },
       pricing: quote.pricing,
       items: quote.items,
       coupon: couponData,
@@ -544,14 +569,18 @@ class OrderService {
     }
 
     if (!orderDoc) {
-      throw new Error(`No order found matching reference #${cleanNum}. Please verify your order number and email.`);
+      const err = new Error('No order found matching those details. Please verify your order number and email.');
+      err.statusCode = 404;
+      throw err;
     }
 
     const order = orderDoc.data();
     const recordEmail = (order.customerEmail || '').toLowerCase().trim();
 
     if (recordEmail !== cleanEmail) {
-      throw new Error('The email address provided does not match the customer record for this order.');
+      const err = new Error('No order found matching those details. Please verify your order number and email.');
+      err.statusCode = 404;
+      throw err;
     }
 
     return {
@@ -816,6 +845,34 @@ class OrderService {
           }
         } catch (_) {}
       }
+    }
+
+    // Ensure returned orders always appear in the Returns & Refunds queue
+    if (newStatus === 'returned' && currentStatus !== 'returned') {
+      try {
+        const existingRet = await db.collection('returns').where('orderId', '==', orderId).limit(1).get();
+        if (existingRet.empty) {
+          const retRef = db.collection('returns').doc();
+          const returnId = `L4-RET-${Math.floor(1000 + Math.random() * 9000)}`;
+          await retRef.set({
+            returnId,
+            docId: retRef.id,
+            orderId,
+            orderNumber: orderData.orderNumber || orderId,
+            customerId: orderData.customerId || null,
+            customerEmail: orderData.customerEmail || '',
+            items: orderData.items || [],
+            reason: 'Order marked returned by Admin',
+            customerUpiId: '',
+            status: 'received',
+            createdAt: now,
+            updatedAt: now
+          });
+          orderUpdates.returnRequested = true;
+          orderUpdates.returnId = returnId;
+          orderUpdates.returnStatus = 'received';
+        }
+      } catch (_) {}
     }
 
     await orderRef.update(orderUpdates);

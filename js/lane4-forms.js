@@ -12,12 +12,19 @@
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(email).trim());
   };
 
+  window.LANE4_VALIDATION.cleanPhone = function (phone) {
+    let clean = String(phone || '').replace(/[\s\-\(\)\+]/g, '').replace(/\D/g, '');
+    if (clean.length > 10 && clean.startsWith('91')) clean = clean.slice(2);
+    else if (clean.length > 10 && clean.startsWith('0')) clean = clean.slice(1);
+    return clean;
+  };
+
   window.LANE4_VALIDATION.isValidIndianPhone = function (phone) {
     if (!phone) return false;
     const str = String(phone).trim();
     if (/[a-zA-Z]/.test(str)) return false; // STRICT: NO TEXT ALLOWED
-    const clean = str.replace(/[\s\-\(\)\+]/g, '');
-    return /^(?:91)?[6-9]\d{9}$/.test(clean);
+    const clean = window.LANE4_VALIDATION.cleanPhone(str);
+    return /^[6-9]\d{9}$/.test(clean);
   };
 
   window.LANE4_VALIDATION.isValidName = function (name) {
@@ -35,13 +42,6 @@
     return /^[1-9][0-9]{5}$/.test(String(pin).trim());
   };
 
-  window.LANE4_VALIDATION.cleanPhone = function (phone) {
-    let clean = String(phone || '').replace(/[\s\-\(\)]/g, '');
-    if (clean.startsWith('+91')) clean = clean.substring(3);
-    else if (clean.startsWith('91') && clean.length === 12) clean = clean.substring(2);
-    return clean.trim();
-  };
-
   function getOrCreateErrorElement(inputEl) {
     if (!inputEl) return null;
     const parent = inputEl.closest('.cf-input') || inputEl.closest('.newsletter-input') || inputEl.parentElement;
@@ -50,7 +50,7 @@
     if (!errEl) {
       errEl = document.createElement('div');
       errEl.className = 'lane4-input-error';
-      errEl.style.cssText = 'color:#dc2626;font-size:11.5px;font-weight:700;margin-top:4px;line-height:1.3;display:none;text-align:left;';
+      errEl.style.cssText = 'width:100%;color:#b91c1c;font-size:11.5px;font-weight:500;margin-top:5px;line-height:1.35;display:none;text-align:left;';
       parent.appendChild(errEl);
     }
     return errEl;
@@ -58,7 +58,7 @@
 
   function showFieldError(inputEl, message) {
     if (!inputEl) return;
-    inputEl.style.borderColor = '#dc2626';
+    inputEl.style.borderColor = '#b91c1c';
     inputEl.style.backgroundColor = '#fef2f2';
     const errEl = getOrCreateErrorElement(inputEl);
     if (errEl) {
@@ -397,7 +397,7 @@
           if (firstInvalid) firstInvalid.focus();
           if (failMsg) {
             failMsg.style.display = 'block';
-            failMsg.innerHTML = '<div style="font-weight:700;">Please correct the highlighted fields before submitting.</div>';
+            failMsg.innerHTML = '<div style="font-weight:500;">Please correct the highlighted fields above before submitting.</div>';
           }
           return;
         }
@@ -425,17 +425,21 @@
           form.style.display = 'none';
           if (failMsg) failMsg.style.display = 'none';
           if (successMsg) {
+            const safeName = String(nameVal || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             successMsg.style.display = 'block';
             successMsg.innerHTML = `
-              <div style="position:relative;background:#ffffff;padding:32px 24px 24px 24px;border-radius:12px;box-shadow:0 20px 40px rgba(0,0,0,0.18);text-align:center;max-width:440px;margin:0 auto;box-sizing:border-box;">
-                <button type="button" class="lane4-modal-close-cross" aria-label="Close modal" style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:24px;line-height:1;color:#64748b;cursor:pointer;padding:4px 8px;border-radius:6px;transition:color 0.15s,background-color 0.15s;">&times;</button>
-                <div style="font-size:20px;font-weight:900;color:#16a34a;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:6px;">
-                  <span>✓ Message Received!</span>
+              <div style="position:relative;background:#ffffff;padding:34px 28px 28px;border-radius:0px;text-align:center;width:100%;box-sizing:border-box;font-family:'Generalsans','General Sans',sans-serif;">
+                <button type="button" class="lane4-modal-close-cross" aria-label="Close modal" style="position:absolute;top:14px;right:14px;width:30px;height:30px;background:#ffffff;border:1px solid #e5e5e5;border-radius:0px;font-size:18px;line-height:1;color:#111111;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background-color 0.15s,border-color 0.15s;">&times;</button>
+                <div style="width:40px;height:40px;background:#000000;color:#ffffff;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;border-radius:0px;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 </div>
-                <div style="font-size:14px;color:#334155;line-height:1.5;margin-bottom:20px;">
-                  Thank you, <strong>${nameVal}</strong>! Your message has been sent to the LANE4 Nagpur team. We will get back to you shortly.
+                <div style="font-size:18px;font-weight:500;color:#000000;margin-bottom:8px;">
+                  Message Received
                 </div>
-                <button type="button" class="lane4-modal-close-btn" style="background:#0f172a;color:#ffffff;border:none;padding:10px 24px;border-radius:6px;font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;transition:background 0.15s;">
+                <div style="font-size:13.5px;color:#555555;line-height:1.55;margin-bottom:22px;">
+                  Thank you, <strong style="color:#111111;font-weight:500;">${safeName}</strong>. Your enquiry has been sent to the LANE4 Nagpur team. We will get back to you shortly.
+                </div>
+                <button type="button" class="lane4-modal-close-btn" style="width:100%;height:44px;background:#000000;color:#ffffff;border:1px solid #000000;border-radius:0px;padding:0 24px;font-size:12px;font-weight:500;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:background-color 0.15s;">
                   Close
                 </button>
               </div>
@@ -461,13 +465,13 @@
             const crossBtn = successMsg.querySelector('.lane4-modal-close-cross');
             const closeBtn = successMsg.querySelector('.lane4-modal-close-btn');
             if (crossBtn) {
-              crossBtn.onmouseenter = () => { crossBtn.style.color = '#0f172a'; crossBtn.style.backgroundColor = '#f1f5f9'; };
-              crossBtn.onmouseleave = () => { crossBtn.style.color = '#64748b'; crossBtn.style.backgroundColor = 'transparent'; };
+              crossBtn.onmouseenter = () => { crossBtn.style.borderColor = '#000000'; crossBtn.style.backgroundColor = '#f5f5f5'; };
+              crossBtn.onmouseleave = () => { crossBtn.style.borderColor = '#e5e5e5'; crossBtn.style.backgroundColor = '#ffffff'; };
               crossBtn.onclick = handleClose;
             }
             if (closeBtn) {
-              closeBtn.onmouseenter = () => { closeBtn.style.backgroundColor = '#1e293b'; };
-              closeBtn.onmouseleave = () => { closeBtn.style.backgroundColor = '#0f172a'; };
+              closeBtn.onmouseenter = () => { closeBtn.style.backgroundColor = '#222222'; };
+              closeBtn.onmouseleave = () => { closeBtn.style.backgroundColor = '#000000'; };
               closeBtn.onclick = handleClose;
             }
           }

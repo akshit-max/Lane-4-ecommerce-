@@ -1791,10 +1791,10 @@ var formatDateString = window.formatDateString || formatDateTime;
                     ${m.recentPayments.length === 0 ? '<tr><td colspan="4" style="text-align:center;padding:24px;color:#888;">No pending payments!</td></tr>' : 
                       m.recentPayments.map(p => `
                         <tr>
-                          <td><strong>#${p.orderNumber}</strong></td>
+                          <td><strong>#${escapeHtml(p.orderNumber)}</strong></td>
                           <td>${window.LANE4.formatINR(p.amountPaise)}</td>
-                          <td><code>${p.upiReferenceNumber}</code></td>
-                          <td><button class="btn btn-outline" style="padding:4px 8px;font-size:11px;" onclick="viewPaymentDetail('${p.paymentId || p.orderId}')">Review Proof</button></td>
+                          <td><code>${escapeHtml(p.upiReferenceNumber)}</code></td>
+                          <td><button class="btn btn-outline" style="padding:4px 8px;font-size:11px;" onclick="viewPaymentDetail('${escapeHtml(p.paymentId || p.orderId)}')">Review Proof</button></td>
                         </tr>
                       `).join('')}
                   </tbody>
@@ -1824,10 +1824,10 @@ var formatDateString = window.formatDateString || formatDateTime;
                     ${m.recentOrders.length === 0 ? '<tr><td colspan="4" style="text-align:center;padding:24px;color:#888;">No orders placed yet.</td></tr>' :
                       m.recentOrders.map(o => `
                         <tr>
-                          <td><strong>#${o.orderNumber || o.orderId}</strong></td>
-                          <td>${o.customerEmail}</td>
-                          <td><span class="badge badge-${o.status}">${o.status.replace(/_/g, ' ')}</span></td>
-                          <td>${o.pricing ? o.pricing.finalPayableFormatted : ''}</td>
+                          <td><strong>#${escapeHtml(o.orderNumber || o.orderId)}</strong></td>
+                          <td>${escapeHtml(o.customerEmail || '—')}</td>
+                          <td><span class="badge badge-${escapeHtml(o.status)}">${escapeHtml((o.status || '').replace(/_/g, ' '))}</span></td>
+                          <td>${escapeHtml(o.pricing ? o.pricing.finalPayableFormatted : '')}</td>
                         </tr>
                       `).join('')}
                   </tbody>
@@ -1911,9 +1911,9 @@ var formatDateString = window.formatDateString || formatDateTime;
                       const proofUrl = p.proofScreenshot && p.proofScreenshot.secureUrl ? resolveProofUrl(p.proofScreenshot.secureUrl) : '';
                       return `
                         <tr>
-                          <td><strong>#${p.orderNumber || p.orderId}</strong></td>
+                          <td><strong>#${escapeHtml(p.orderNumber || p.orderId)}</strong></td>
                           <td><strong>${window.LANE4.formatINR(p.amountPaise)}</strong></td>
-                          <td><code style="background:#f1f5f9;padding:4px 8px;border-radius:0px;font-weight:700;letter-spacing:0.5px;">${p.upiReferenceNumber}</code></td>
+                          <td><code style="background:#f1f5f9;padding:4px 8px;border-radius:0px;font-weight:700;letter-spacing:0.5px;">${escapeHtml(p.upiReferenceNumber)}</code></td>
                           <td style="vertical-align:middle;">
                             ${proofUrl ? `
                               <div style="display:inline-flex;align-items:center;gap:10px;">
@@ -2047,7 +2047,7 @@ var formatDateString = window.formatDateString || formatDateTime;
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                 </div>
                 <div style="color:#ffffff;font-size:15px;font-weight:800;margin-bottom:6px;">No Customer Screenshot Uploaded Yet</div>
-                <p style="color:#94a3b8;font-size:12.5px;max-width:380px;line-height:1.5;margin:0 auto;">This order was placed with 12-digit UTR <strong style="color:#f8fafc;">${p.upiReferenceNumber}</strong>, but the customer has not uploaded their screenshot proof yet.</p>
+                <p style="color:#94a3b8;font-size:12.5px;max-width:380px;line-height:1.5;margin:0 auto;">This order was placed with 12-digit UTR <strong style="color:#f8fafc;">${escapeHtml(p.upiReferenceNumber)}</strong>, but the customer has not uploaded their screenshot proof yet.</p>
               </div>
             `}
           </div>
@@ -2057,13 +2057,13 @@ var formatDateString = window.formatDateString || formatDateTime;
           <div>
             <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">12-Digit UPI / UTR Ref</div>
             <div style="margin-top:4px;display:flex;align-items:center;gap:8px;">
-              <code style="font-size:15px;font-weight:800;background:#ffffff;border:1px solid #cbd5e1;padding:4px 8px;border-radius:0px;color:#111111;letter-spacing:1px;">${p.upiReferenceNumber || 'N/A'}</code>
-              <button type="button" class="btn btn-outline" style="padding:3px 7px;font-size:11px;" onclick="navigator.clipboard.writeText('${p.upiReferenceNumber}');showToast('UTR copied to clipboard!');">Copy</button>
+              <code style="font-size:15px;font-weight:800;background:#ffffff;border:1px solid #cbd5e1;padding:4px 8px;border-radius:0px;color:#111111;letter-spacing:1px;">${escapeHtml(p.upiReferenceNumber || 'N/A')}</code>
+              <button type="button" class="btn btn-outline" style="padding:3px 7px;font-size:11px;" data-copy="${escapeHtml(p.upiReferenceNumber || '')}" onclick="navigator.clipboard.writeText(this.getAttribute('data-copy')||'');showToast('UTR copied to clipboard!');">Copy</button>
             </div>
           </div>
           <div>
             <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Verification Status</div>
-            <div style="margin-top:4px;"><span class="badge badge-${p.status}">${(p.status || '').replace(/_/g, ' ')}</span></div>
+            <div style="margin-top:4px;"><span class="badge badge-${escapeHtml(p.status)}">${escapeHtml((p.status || '').replace(/_/g, ' '))}</span></div>
           </div>
           <div>
             <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Submitted At</div>
@@ -2072,14 +2072,14 @@ var formatDateString = window.formatDateString || formatDateTime;
           ${(p.status === 'rejected' || p.rejection) ? `
             <div>
               <div style="font-size:11px;font-weight:700;color:#ef4444;text-transform:uppercase;">Rejected By</div>
-              <div style="margin-top:4px;font-size:13px;font-weight:600;color:#991b1b;">${(p.rejection && p.rejection.rejectedByName) || 'Admin Staff'} (${formatDateTime(p.rejection ? p.rejection.rejectedAt : p.updatedAt)})</div>
-              <div style="font-size:11px;color:#b91c1c;font-style:italic;">Reason: "${(p.rejection && p.rejection.reason) || p.rejectionReason || 'Payment verification failed'}"</div>
+              <div style="margin-top:4px;font-size:13px;font-weight:600;color:#991b1b;">${escapeHtml((p.rejection && p.rejection.rejectedByName) || 'Admin Staff')} (${formatDateTime(p.rejection ? p.rejection.rejectedAt : p.updatedAt)})</div>
+              <div style="font-size:11px;color:#b91c1c;font-style:italic;">Reason: "${escapeHtml((p.rejection && p.rejection.reason) || p.rejectionReason || 'Payment verification failed')}"</div>
             </div>
           ` : (p.verification && p.verification.verifiedByName ? `
             <div>
               <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Verified By</div>
-              <div style="margin-top:4px;font-size:13px;font-weight:600;color:#1e293b;">${p.verification.verifiedByName} (${formatDateTime(p.verification.verifiedAt)})</div>
-              <div style="font-size:11px;color:#64748b;font-style:italic;">"${p.verification.internalNotes || ''}"</div>
+              <div style="margin-top:4px;font-size:13px;font-weight:600;color:#1e293b;">${escapeHtml(p.verification.verifiedByName)} (${formatDateTime(p.verification.verifiedAt)})</div>
+              <div style="font-size:11px;color:#64748b;font-style:italic;">"${escapeHtml(p.verification.internalNotes || '')}"</div>
             </div>
           ` : '')}
         </div>
@@ -2407,21 +2407,30 @@ var formatDateString = window.formatDateString || formatDateTime;
       allOrders.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
       window.currentOrders = allOrders;
 
+      const pendingPaymentCount = allOrders.filter(o => o.status === 'pending_payment').length;
+      const verificationCount = allOrders.filter(o => o.status === 'payment_verification').length;
       const confirmedCount = allOrders.filter(o => o.status === 'confirmed').length;
       const processingCount = allOrders.filter(o => o.status === 'processing').length;
-      const shippedCount = allOrders.filter(o => o.status === 'shipped' || o.status === 'out_for_delivery').length;
+      const shippedCount = allOrders.filter(o => o.status === 'shipped').length;
+      const outForDeliveryCount = allOrders.filter(o => o.status === 'out_for_delivery').length;
       const deliveredCount = allOrders.filter(o => o.status === 'delivered').length;
-      const pendingCount = allOrders.filter(o => o.status === 'pending_payment' || o.status === 'payment_verification').length;
+      const returnedCount = allOrders.filter(o => o.status === 'returned').length;
       const cancelledCount = allOrders.filter(o => o.status === 'cancelled').length;
+      const paymentRejectedCount = allOrders.filter(o => o.status === 'payment_rejected').length;
 
       // Filter based on active tab
       const orders = allOrders.filter(o => {
+        if (window.orderFilter === 'pending_payment') return o.status === 'pending_payment';
+        if (window.orderFilter === 'payment_verification') return o.status === 'payment_verification';
+        if (window.orderFilter === 'pending') return o.status === 'pending_payment' || o.status === 'payment_verification';
         if (window.orderFilter === 'confirmed') return o.status === 'confirmed';
         if (window.orderFilter === 'processing') return o.status === 'processing';
-        if (window.orderFilter === 'shipped') return o.status === 'shipped' || o.status === 'out_for_delivery';
+        if (window.orderFilter === 'shipped') return o.status === 'shipped';
+        if (window.orderFilter === 'out_for_delivery') return o.status === 'out_for_delivery';
         if (window.orderFilter === 'delivered') return o.status === 'delivered';
-        if (window.orderFilter === 'pending') return o.status === 'pending_payment' || o.status === 'payment_verification';
+        if (window.orderFilter === 'returned') return o.status === 'returned';
         if (window.orderFilter === 'cancelled') return o.status === 'cancelled';
+        if (window.orderFilter === 'payment_rejected') return o.status === 'payment_rejected';
         return true;
       });
 
@@ -2460,14 +2469,26 @@ var formatDateString = window.formatDateString || formatDateTime;
             <button type="button" class="btn ${window.orderFilter === 'shipped' ? 'btn-primary' : 'btn-outline'}" style="padding:5px 12px;font-size:12px;border-radius:20px;cursor:pointer;${window.orderFilter === 'shipped' ? 'background:#000;color:#fff;' : ''}" onclick="window.setOrderFilter('shipped')">
               Shipped (${shippedCount})
             </button>
+            <button type="button" class="btn ${window.orderFilter === 'out_for_delivery' ? 'btn-primary' : 'btn-outline'}" style="padding:5px 12px;font-size:12px;border-radius:20px;cursor:pointer;${window.orderFilter === 'out_for_delivery' ? 'background:#000;color:#fff;' : ''}" onclick="window.setOrderFilter('out_for_delivery')">
+              Out for Delivery (${outForDeliveryCount})
+            </button>
             <button type="button" class="btn ${window.orderFilter === 'delivered' ? 'btn-primary' : 'btn-outline'}" style="padding:5px 12px;font-size:12px;border-radius:20px;cursor:pointer;${window.orderFilter === 'delivered' ? 'background:#000;color:#fff;' : ''}" onclick="window.setOrderFilter('delivered')">
               Delivered (${deliveredCount})
             </button>
-            <button type="button" class="btn ${window.orderFilter === 'pending' ? 'btn-primary' : 'btn-outline'}" style="padding:5px 12px;font-size:12px;border-radius:20px;cursor:pointer;${window.orderFilter === 'pending' ? 'background:#000;color:#fff;' : ''}" onclick="window.setOrderFilter('pending')">
-              Pending Payment (${pendingCount})
+            <button type="button" class="btn ${window.orderFilter === 'pending_payment' ? 'btn-primary' : 'btn-outline'}" style="padding:5px 12px;font-size:12px;border-radius:20px;cursor:pointer;${window.orderFilter === 'pending_payment' ? 'background:#000;color:#fff;' : ''}" onclick="window.setOrderFilter('pending_payment')">
+              Pending Payment (${pendingPaymentCount})
+            </button>
+            <button type="button" class="btn ${window.orderFilter === 'payment_verification' ? 'btn-primary' : 'btn-outline'}" style="padding:5px 12px;font-size:12px;border-radius:20px;cursor:pointer;${window.orderFilter === 'payment_verification' ? 'background:#000;color:#fff;' : ''}" onclick="window.setOrderFilter('payment_verification')">
+              Payment Verification (${verificationCount})
+            </button>
+            <button type="button" class="btn ${window.orderFilter === 'returned' ? 'btn-primary' : 'btn-outline'}" style="padding:5px 12px;font-size:12px;border-radius:20px;cursor:pointer;${window.orderFilter === 'returned' ? 'background:#000;color:#fff;' : ''}" onclick="window.setOrderFilter('returned')">
+              Returned (${returnedCount})
             </button>
             <button type="button" class="btn ${window.orderFilter === 'cancelled' ? 'btn-primary' : 'btn-outline'}" style="padding:5px 12px;font-size:12px;border-radius:20px;cursor:pointer;${window.orderFilter === 'cancelled' ? 'background:#ef4444;color:#fff;' : 'border-color:#fca5a5;color:#b91c1c;'}" onclick="window.setOrderFilter('cancelled')">
               Cancelled (${cancelledCount})
+            </button>
+            <button type="button" class="btn ${window.orderFilter === 'payment_rejected' ? 'btn-primary' : 'btn-outline'}" style="padding:5px 12px;font-size:12px;border-radius:20px;cursor:pointer;${window.orderFilter === 'payment_rejected' ? 'background:#ef4444;color:#fff;' : 'border-color:#fca5a5;color:#b91c1c;'}" onclick="window.setOrderFilter('payment_rejected')">
+              Payment Rejected (${paymentRejectedCount})
             </button>
           </div>
 
@@ -2492,6 +2513,9 @@ var formatDateString = window.formatDateString || formatDateTime;
                       const orderNum = o.orderNumber || orderRefId;
                       const isConfirmed = o.status === 'confirmed';
                       const isShipped = o.status === 'shipped' || o.status === 'out_for_delivery' || o.status === 'delivered';
+                      const orderPhone = (o.shippingAddress && o.shippingAddress.phone) || o.customerPhone || o.phone || '';
+                      const isPaidForTracking = (o.paymentStatus === 'verified' || ['confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered'].includes(o.status)) &&
+                        !['pending_payment', 'payment_verification', 'payment_rejected', 'cancelled', 'returned'].includes(o.status);
 
                       return `
                         <tr style="${isConfirmed ? 'background:#f0fdf4;' : ''}">
@@ -2502,11 +2526,16 @@ var formatDateString = window.formatDateString || formatDateTime;
                           <td>
                             <div style="font-weight:800;color:#111111;">${escapeHtml((o.shippingAddress && o.shippingAddress.addressee) || 'Customer')}</div>
                             <div style="font-size:12px;color:#475569;">${escapeHtml(o.customerEmail || '—')}</div>
+                            ${orderPhone ? `<div style="font-size:11.5px;color:#475569;">${escapeHtml(orderPhone)}</div>` : ''}
                             <div style="font-size:11px;color:#64748b;">${o.shippingAddress ? `${escapeHtml(o.shippingAddress.city || '')}, PIN ${escapeHtml(o.shippingAddress.postalCode || '')}` : ''}</div>
                           </td>
                           <td>
                             <div style="font-size:12.5px;color:#334155;">
-                              ${(o.items || []).map(it => `<div><strong>${it.quantity}&times;</strong> ${escapeHtml(it.name)} ${it.size ? `<span style="font-size:11px;color:#64748b;">(${it.size})</span>` : ''}</div>`).join('')}
+                              ${(o.items || []).map(it => {
+                                const variantParts = [it.size, it.color].filter(Boolean);
+                                const variantLabel = variantParts.length ? variantParts.join(' · ') : (it.variantTitle || '');
+                                return `<div><strong>${it.quantity}&times;</strong> ${escapeHtml(it.name)}${variantLabel ? ` <span style="font-size:11px;color:#64748b;">(${escapeHtml(variantLabel)})</span>` : ''}</div>`;
+                              }).join('')}
                             </div>
                           </td>
                           <td>
@@ -2556,7 +2585,7 @@ var formatDateString = window.formatDateString || formatDateTime;
                                 <strong style="color:#111111;">${escapeHtml(o.fulfillment.courierName || 'Courier')}</strong><br />
                                 <code style="font-size:11.5px;background:#e2e8f0;padding:2px 6px;border-radius:0px;">${escapeHtml(o.fulfillment.trackingNumber)}</code>
                               </div>
-                            ` : `
+                            ` : (isPaidForTracking ? `
                               ${isConfirmed ? `
                                 <button type="button" class="btn-dispatch" onclick="openTrackingModal('${orderRefId}')" title="Dispatch order and provide courier tracking">
                                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -2575,7 +2604,9 @@ var formatDateString = window.formatDateString || formatDateTime;
                                   <span>Add Tracking</span>
                                 </button>
                               `}
-                            `}
+                            ` : `
+                              <span style="font-size:11.5px;color:#94a3b8;font-style:italic;">${['cancelled', 'returned', 'payment_rejected'].includes(o.status) ? 'Unavailable' : 'Awaiting payment'}</span>
+                            `)}
                             <div style="margin-top:6px;">
                               <button type="button" class="btn btn-outline" style="font-size:11px;padding:3px 8px;border-radius:0px;display:inline-flex;align-items:center;gap:4px;cursor:pointer;" onclick="viewAdminInvoice('${orderRefId}')" title="View / Download GST Invoice">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
@@ -2855,9 +2886,9 @@ var formatDateString = window.formatDateString || formatDateTime;
                 <tbody>
                   ${items.map(it => `
                     <tr>
-                      <td><code>${it.sku}</code></td>
-                      <td style="font-weight:700;">${it.productName}</td>
-                      <td>${it.variantLabel || 'Standard'}</td>
+                      <td><code>${escapeHtml(it.sku)}</code></td>
+                      <td style="font-weight:700;">${escapeHtml(it.productName)}</td>
+                      <td>${escapeHtml(it.variantLabel || 'Standard')}</td>
                       <td style="font-size:15px;font-weight:900;color:${it.availableQuantity <= (it.lowStockThreshold || 5) ? '#dc2626' : '#16a34a'};">${it.availableQuantity} units</td>
                       <td>${it.reservedQuantity || 0}</td>
                       <td>
@@ -4685,7 +4716,7 @@ var formatDateString = window.formatDateString || formatDateTime;
 
     try {
       const res = await window.lane4ApiRequest('/admin/enquiries');
-      const enqs = res.data || [];
+      const enqs = (res.data || []).slice().sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
       c.innerHTML = `
         <div class="card">
           <div class="card-header"><div class="card-title">Support &amp; Contact Enquiries (${enqs.length})</div></div>
@@ -4696,13 +4727,14 @@ var formatDateString = window.formatDateString || formatDateTime;
                   <tr>
                     <th style="width:110px;">Type</th>
                     <th style="width:150px;">Name</th>
-                    <th style="width:200px;">Email</th>
-                    <th style="min-width:300px;">Message</th>
+                    <th style="width:190px;">Email</th>
+                    <th style="width:130px;">Phone</th>
+                    <th style="min-width:280px;">Message</th>
                     <th style="width:120px;text-align:right;">Date</th>
                   </tr>
                 </thead>
                 <tbody>
-                  ${enqs.length === 0 ? '<tr><td colspan="5" style="text-align:center;padding:24px;color:#888;">No support enquiries submitted.</td></tr>' :
+                  ${enqs.length === 0 ? '<tr><td colspan="6" style="text-align:center;padding:24px;color:#888;">No support enquiries submitted.</td></tr>' :
                     enqs.map(eq => {
                       const rawType = (eq.type || 'General').toUpperCase();
                       let typeBadgeBg = '#f1f5f9';
@@ -4728,6 +4760,9 @@ var formatDateString = window.formatDateString || formatDateTime;
                           <td style="vertical-align:top;font-size:13px;"><strong style="color:#111111;">${escapeHtml(eq.name || 'Anonymous')}</strong></td>
                           <td style="vertical-align:top;font-size:12.5px;color:#475569;">
                             ${eq.email ? `<a href="mailto:${escapeHtml(eq.email)}" style="color:#2563eb;text-decoration:none;">${escapeHtml(eq.email)}</a>` : '—'}
+                          </td>
+                          <td style="vertical-align:top;font-size:12.5px;color:#334155;white-space:nowrap;">
+                            ${eq.phone ? `<a href="tel:${escapeHtml(eq.phone)}" style="color:#111111;text-decoration:none;font-weight:500;">${escapeHtml(eq.phone)}</a>` : '—'}
                           </td>
                           <td style="vertical-align:top;max-width:440px;min-width:240px;">
                             <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:0px;padding:9px 12px;font-size:12.5px;color:#334155;line-height:1.55;max-height:130px;overflow-y:auto;overflow-x:hidden;word-break:break-word;overflow-wrap:anywhere;white-space:pre-wrap;">${escapeHtml(eq.message || '—')}</div>
@@ -4761,8 +4796,19 @@ var formatDateString = window.formatDateString || formatDateTime;
     showTopLoader();
 
     try {
-      const res = await window.lane4ApiRequest('/admin/reviews');
-      const reviews = res.data || [];
+      const [revRes, prodRes] = await Promise.all([
+        window.lane4ApiRequest('/admin/reviews'),
+        window.lane4ApiRequest('/admin/products').catch(() => window.lane4ApiRequest('/products').catch(() => ({ data: [] })))
+      ]);
+      const reviews = revRes.data || [];
+      const prodList = Array.isArray(prodRes && prodRes.data)
+        ? prodRes.data
+        : ((prodRes && prodRes.data && prodRes.data.products) || []);
+      const prodNameMap = new Map();
+      prodList.forEach(p => {
+        if (p.id && p.name) prodNameMap.set(String(p.id), p.name);
+        if (p.slug && p.name) prodNameMap.set(String(p.slug).toLowerCase(), p.name);
+      });
       window.currentReviews = reviews;
 
       container.innerHTML = `
@@ -4793,10 +4839,11 @@ var formatDateString = window.formatDateString || formatDateTime;
                   ${reviews.length === 0 ? '<tr><td colspan="8" style="text-align:center;padding:24px;color:#888;">No reviews submitted yet.</td></tr>' :
                     reviews.map(r => {
                       const stars = '★'.repeat(r.rating || 5) + '☆'.repeat(Math.max(0, 5 - (r.rating || 5)));
+                      const resolvedProdName = r.productName || prodNameMap.get(String(r.productId || '')) || prodNameMap.get(String(r.productId || '').toLowerCase()) || r.productId || 'Swimming Gear';
                       return `
                         <tr>
                           <td><code>${escapeHtml(r.reviewId ? r.reviewId.slice(0, 8) : '—')}</code></td>
-                          <td><strong>${escapeHtml(r.productName || r.productId || 'Swimming Gear')}</strong></td>
+                          <td><strong>${escapeHtml(resolvedProdName)}</strong></td>
                           <td>
                             <div style="font-weight:600;color:#111111;">${escapeHtml(r.authorName || 'Verified Swimmer')}</div>
                             ${r.isVerifiedPurchase ? '<span style="font-size:10px;color:#16a34a;font-weight:600;">✓ Verified Buyer</span>' : ''}
@@ -5132,7 +5179,7 @@ var formatDateString = window.formatDateString || formatDateTime;
 
             <div class="card-body" style="padding:22px;">
               <!-- Live Configuration Summary Table -->
-              <div style="margin-bottom:20px;border:1px solid #e2e8f0;border-radius:0px;overflow:hidden;background:#ffffff;">
+              <div class="table-responsive" style="margin-bottom:20px;border:1px solid #e2e8f0;border-radius:0px;background:#ffffff;">
                 <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
                   <thead>
                     <tr style="background:#f8fafc;border-bottom:1.5px solid #e2e8f0;">
@@ -5242,7 +5289,7 @@ var formatDateString = window.formatDateString || formatDateTime;
 
                 <div style="margin-bottom:20px;">
                   <label style="display:block;font-size:11.5px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Instructions for Swimmers</label>
-                  <textarea id="set-instructions" rows="3" style="width:100%;padding:11px 14px;border:1.5px solid #cbd5e1;border-radius:0px;background:#f8fafc;font-family:inherit;font-size:13.5px;color:#111111;line-height:1.5;box-sizing:border-box;">${p.instructions || 'Pay via any UPI app (GPay, PhonePe, Paytm). Enter the 12-digit UTR and upload a payment receipt screenshot.'}</textarea>
+                  <textarea id="set-instructions" rows="3" style="width:100%;padding:11px 14px;border:1.5px solid #cbd5e1;border-radius:0px;background:#f8fafc;font-family:inherit;font-size:13.5px;color:#111111;line-height:1.5;box-sizing:border-box;">${escapeHtml(p.instructions || 'Pay via any UPI app (GPay, PhonePe, Paytm). Enter the 12-digit UTR and upload a payment receipt screenshot.')}</textarea>
                 </div>
 
                 <button type="submit" id="btn-save-upi" class="btn" style="background:#111111;color:#ffffff;width:100%;justify-content:center;padding:12px;font-size:13.5px;font-weight:800;border-radius:0px;letter-spacing:0.3px;box-shadow:0 4px 12px rgba(15,23,42,0.15);cursor:pointer;transition:all 0.2s;">
@@ -5270,7 +5317,7 @@ var formatDateString = window.formatDateString || formatDateTime;
 
             <div class="card-body" style="padding:22px;">
               <!-- Live Shipping Tier Summary Table -->
-              <div style="margin-bottom:20px;border:1px solid #e2e8f0;border-radius:0px;overflow:hidden;background:#ffffff;">
+              <div class="table-responsive" style="margin-bottom:20px;border:1px solid #e2e8f0;border-radius:0px;background:#ffffff;">
                 <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
                   <thead>
                     <tr style="background:#f8fafc;border-bottom:1.5px solid #e2e8f0;">

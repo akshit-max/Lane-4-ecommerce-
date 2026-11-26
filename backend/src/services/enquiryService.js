@@ -1,6 +1,16 @@
 const { getDb } = require('../config/firebaseAdmin');
 const { logger } = require('../utils/logger');
 
+function toEnquiryMillis(val) {
+  if (!val) return 0;
+  if (typeof val === 'number') return val;
+  if (typeof val.toMillis === 'function') return val.toMillis();
+  if (typeof val._seconds === 'number') return val._seconds * 1000 + (val._nanoseconds || 0) / 1e6;
+  if (typeof val.seconds === 'number') return val.seconds * 1000 + (val.nanoseconds || 0) / 1e6;
+  const t = new Date(val).getTime();
+  return Number.isFinite(t) ? t : 0;
+}
+
 class EnquiryService {
   async submitEnquiry({ type = 'general', name, email, phone = '', message }) {
     const db = getDb();
@@ -74,7 +84,7 @@ class EnquiryService {
 
     const snap = await query.get();
     let enquiries = snap.docs.map(d => d.data());
-    enquiries.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    enquiries.sort((a, b) => toEnquiryMillis(b.createdAt) - toEnquiryMillis(a.createdAt));
     return enquiries;
   }
 

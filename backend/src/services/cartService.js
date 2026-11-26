@@ -31,10 +31,17 @@ function getEffectiveUnitPricePaise(product, variant) {
 }
 
 class CartService {
+  _httpError(message, statusCode = 400, code = 'CART_ERROR') {
+    const err = new Error(message);
+    err.statusCode = statusCode;
+    err.code = code;
+    return err;
+  }
+
   _getCartKey(customerId, guestId) {
     if (customerId) return `user_${customerId}`;
     if (guestId) return `guest_${guestId}`;
-    throw new Error('Either customerId or guestId must be provided to access cart.');
+    throw this._httpError('Either customerId or guestId must be provided to access cart.', 400, 'CART_IDENTITY_REQUIRED');
   }
 
   async getCart(customerId, guestId) {
@@ -111,13 +118,17 @@ class CartService {
     const db = getDb();
     if (!db) throw new Error('Database unavailable');
 
-    const qty = Math.max(1, parseInt(quantity, 10) || 1);
+    const rawQty = Number(quantity);
+    if (!Number.isInteger(rawQty) || rawQty < 1) {
+      throw this._httpError('Quantity must be an integer of at least 1.', 400, 'INVALID_QUANTITY');
+    }
+    const qty = rawQty;
     let product = await productService.getProductById(productId);
     if (!product) {
       product = await productService.getProductBySlug(productId);
     }
     if (!product) {
-      throw new Error('Product not found or is no longer available.');
+      throw this._httpError('Product not found or is no longer available.', 404, 'PRODUCT_NOT_FOUND');
     }
 
     // Find requested variant
@@ -128,18 +139,26 @@ class CartService {
     }
 
     if (variant && variant.isActive === false) {
-      throw new Error('Selected product variant is inactive.');
+      throw this._httpError('Selected product variant is inactive.', 400, 'INACTIVE_VARIANT');
     }
 
-    // Check available stock
-    const availableStock = variant ? variant.stockQuantity : 999;
+    const itemSku = variant ? variant.sku : product.sku;
+    let availableStock = variant ? variant.stockQuantity : (typeof product.stockQuantity === 'number' ? product.stockQuantity : 999);
+    if (itemSku) {
+      try {
+        const invDoc = await db.collection('inventory').doc(itemSku).get();
+        if (invDoc.exists && typeof invDoc.data().availableQuantity === 'number') {
+          availableStock = invDoc.data().availableQuantity;
+        }
+      } catch (_) {}
+    }
+
     if (availableStock <= 0) {
-      throw new Error(`Item "${product.name}" is currently out of stock.`);
+      throw this._httpError(`Item "${product.name}" is out of stock (0 left in stock).`, 409, 'INSUFFICIENT_STOCK');
     }
 
     const unitPricePaise = getEffectiveUnitPricePaise(product, variant);
     const variantLabel = variant ? `${variant.size || ''} ${variant.color || ''}`.trim() : '';
-    const itemSku = variant ? variant.sku : product.sku;
     const imageUrl = (product.images && product.images[0] && product.images[0].url) || '';
 
     const cartKey = this._getCartKey(customerId, guestId);
@@ -157,13 +176,13 @@ class CartService {
     if (existingIndex > -1) {
       const newQty = items[existingIndex].quantity + qty;
       if (newQty > availableStock) {
-        throw new Error(`Cannot add ${qty} more. Only ${availableStock} units available in stock.`);
+        throw this._httpError(`Only ${availableStock} left in stock.`, 409, 'INSUFFICIENT_STOCK');
       }
       items[existingIndex].quantity = newQty;
       items[existingIndex].pricePaise = unitPricePaise; // refresh price
     } else {
       if (qty > availableStock) {
-        throw new Error(`Only ${availableStock} units available in stock.`);
+        throw this._httpError(`Only ${availableStock} left in stock.`, 409, 'INSUFFICIENT_STOCK');
       }
       items.push({
         itemId,
@@ -204,39 +223,50 @@ class CartService {
 
   async updateItemQuantity(customerId, guestId, itemId, quantity) {
     const db = getDb();
-    const qty = parseInt(quantity, 10);
+    const qty = Number(quantity);
+    if (!Number.isInteger(qty) || qty < 1) {
+      throw this._httpError('Quantity must be an integer of at least 1.', 400, 'INVALID_QUANTITY');
+    }
     const cartKey = this._getCartKey(customerId, guestId);
     const cartRef = db.collection('carts').doc(cartKey);
     const cartDoc = await cartRef.get();
 
     if (!cartDoc.exists) {
-      throw new Error('Cart not found');
+      throw this._httpError('Cart not found', 404, 'CART_NOT_FOUND');
     }
 
     let items = cartDoc.data().items || [];
     const itemIndex = items.findIndex(it => it.itemId === itemId);
     if (itemIndex === -1) {
-      throw new Error('Item not found in cart');
+      throw this._httpError('Item not found in cart', 404, 'CART_ITEM_NOT_FOUND');
     }
 
-    if (qty <= 0) {
-      // Remove if quantity set to 0 or negative
-      items.splice(itemIndex, 1);
-    } else {
-      // Validate against current stock
-      const item = items[itemIndex];
-      const product = await productService.getProductById(item.productId);
-      if (product) {
-        const variant = (product.variants || []).find(v => v.variantId === item.variantId || v.sku === item.sku);
-        const availableStock = variant ? variant.stockQuantity : 999;
-        if (qty > availableStock) {
-          throw new Error(`Requested quantity (${qty}) exceeds available stock (${availableStock}).`);
-        }
-        item.pricePaise = getEffectiveUnitPricePaise(product, variant);
+    // Validate against current stock (inventory as single source of truth)
+    const item = items[itemIndex];
+    const product = await productService.getProductById(item.productId);
+    if (product) {
+      const variant = (product.variants || []).find(v => v.variantId === item.variantId || v.sku === item.sku);
+      const skuToCheck = item.sku || (variant && variant.sku) || product.sku;
+      let availableStock = variant ? variant.stockQuantity : (typeof product.stockQuantity === 'number' ? product.stockQuantity : 999);
+      if (skuToCheck) {
+        try {
+          const invDoc = await db.collection('inventory').doc(skuToCheck).get();
+          if (invDoc.exists && typeof invDoc.data().availableQuantity === 'number') {
+            availableStock = invDoc.data().availableQuantity;
+          }
+        } catch (_) {}
       }
-      items[itemIndex].quantity = qty;
+      if (qty > availableStock) {
+        throw this._httpError(`Only ${availableStock} left in stock.`, 409, 'INSUFFICIENT_STOCK');
+      }
+      item.pricePaise = getEffectiveUnitPricePaise(product, variant);
     }
+    items[itemIndex].quantity = qty;
 
+    return this._persistCartItems(cartRef, cartKey, customerId, guestId, items);
+  }
+
+  async _persistCartItems(cartRef, cartKey, customerId, guestId, items) {
     const subtotalPaise = items.reduce((sum, it) => sum + (it.pricePaise * it.quantity), 0);
     const totalItemsCount = items.reduce((sum, it) => sum + it.quantity, 0);
 
@@ -258,7 +288,23 @@ class CartService {
   }
 
   async removeItem(customerId, guestId, itemId) {
-    return this.updateItemQuantity(customerId, guestId, itemId, 0);
+    const db = getDb();
+    const cartKey = this._getCartKey(customerId, guestId);
+    const cartRef = db.collection('carts').doc(cartKey);
+    const cartDoc = await cartRef.get();
+
+    if (!cartDoc.exists) {
+      throw this._httpError('Cart not found', 404, 'CART_NOT_FOUND');
+    }
+
+    const items = cartDoc.data().items || [];
+    const itemIndex = items.findIndex(it => it.itemId === itemId);
+    if (itemIndex === -1) {
+      throw this._httpError('Item not found in cart', 404, 'CART_ITEM_NOT_FOUND');
+    }
+
+    items.splice(itemIndex, 1);
+    return this._persistCartItems(cartRef, cartKey, customerId, guestId, items);
   }
 
   async clearCart(customerId, guestId) {

@@ -3,11 +3,12 @@ const { getDb } = require('../config/firebaseAdmin');
 class NewsletterService {
   async subscribe(email, sourcePage = 'footer') {
     const db = getDb();
-    if (!email || !email.includes('@')) {
-      throw new Error('Please enter a valid email address.');
+    const cleanEmail = (email || '').toLowerCase().trim();
+    if (!cleanEmail || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(cleanEmail)) {
+      const err = new Error('Please enter a valid email address.');
+      err.statusCode = 400;
+      throw err;
     }
-
-    const cleanEmail = email.toLowerCase().trim();
     // Unique ID from sanitized email
     const docId = cleanEmail.replace(/[^a-z0-9]/g, '_');
     const docRef = db.collection('newsletterSubscribers').doc(docId);

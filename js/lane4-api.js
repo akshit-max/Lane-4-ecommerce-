@@ -39,6 +39,9 @@
       return url;
     }
     const cleanUrl = url.replace(/^(\.\.\/|\.\/|\/)+/, '');
+    if (typeof window !== 'undefined' && window.location && window.location.protocol !== 'file:') {
+      return `/${cleanUrl}`;
+    }
     const path = (typeof window !== 'undefined' && window.location && window.location.pathname) || '';
     const isSubfolder = /\/(product|category|blog|authors|utility-pages|category-blog|admin)(\/|$)/i.test(path);
 

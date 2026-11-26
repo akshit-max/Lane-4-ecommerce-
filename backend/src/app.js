@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
+const fs = require('fs');
 
 const { config, checkEnvironmentStatus } = require('./config/environment');
 const { sendSuccess } = require('./utils/response');
@@ -188,6 +189,86 @@ if (config.env === 'production' && process.env.SERVE_FRONTEND !== 'true') {
   };
   app.use('/uploads', express.static(path.join(frontendRoot, 'uploads'), staticOpts));
   app.use(express.static(frontendRoot, staticOpts));
+
+  // Route dynamic categories, subcategories & products cleanly to detail templates in local dev, or 404 when missing
+  app.get(['/category/:cat/:subcat', '/category/:cat/:subcat.html'], async (req, res) => {
+    const catSlug = (req.params.cat || '').replace(/\.html$/i, '').toLowerCase().trim();
+    const subSlug = (req.params.subcat || '').replace(/\.html$/i, '').toLowerCase().trim();
+    try {
+      const { getDb } = require('./config/firebaseAdmin');
+      const db = getDb();
+      if (db) {
+        const snap = await db.collection('categories')
+          .where('slug', '==', catSlug)
+          .where('isDeleted', '==', false)
+          .limit(1)
+          .get();
+        if (!snap.empty) {
+          const catData = snap.docs[0].data();
+          if (catData.isPublished !== false) {
+            const subs = Array.isArray(catData.subcategories) ? catData.subcategories : [];
+            const hasMatchingSub = subs.some(s => String(s.slug || '').toLowerCase().trim() === subSlug);
+            if (hasMatchingSub) {
+              return res.sendFile(path.join(frontendRoot, 'category', 'detail.html'));
+            }
+            const prodSnap = await db.collection('products')
+              .where('categorySlug', '==', catSlug)
+              .where('subcategorySlug', '==', subSlug)
+              .where('isPublished', '==', true)
+              .where('isDeleted', '==', false)
+              .limit(1)
+              .get();
+            if (!prodSnap.empty) {
+              return res.sendFile(path.join(frontendRoot, 'category', 'detail.html'));
+            }
+          }
+        }
+      }
+    } catch (_) {}
+    return res.status(404).sendFile(path.join(frontendRoot, '404.html'));
+  });
+
+  app.get(['/category/:slug', '/category/:slug.html'], async (req, res, next) => {
+    const slug = (req.params.slug || '').replace(/\.html$/i, '');
+    const candidate = path.join(frontendRoot, 'category', `${slug}.html`);
+    if (fs.existsSync(candidate)) return res.sendFile(candidate);
+    if (['index.htm', 'about', 'shop', 'gallery', 'contact-us', 'faq', 'checkout', 'blog'].includes(slug)) {
+      return res.redirect(slug === 'index.htm' ? '/' : `/${slug}.html`);
+    }
+    try {
+      const { getDb } = require('./config/firebaseAdmin');
+      const db = getDb();
+      if (db) {
+        const snap = await db.collection('categories')
+          .where('slug', '==', slug)
+          .where('isDeleted', '==', false)
+          .limit(1)
+          .get();
+        if (!snap.empty && snap.docs[0].data().isPublished !== false) {
+          return res.sendFile(path.join(frontendRoot, 'category', 'detail.html'));
+        }
+      }
+    } catch (_) {}
+    return res.status(404).sendFile(path.join(frontendRoot, '404.html'));
+  });
+
+  app.get(['/product/:slug', '/product/:slug.html'], async (req, res, next) => {
+    const slug = (req.params.slug || '').replace(/\.html$/i, '');
+    const candidate = path.join(frontendRoot, 'product', `${slug}.html`);
+    if (fs.existsSync(candidate)) return res.sendFile(candidate);
+    if (['index.htm', 'about', 'shop', 'gallery', 'contact-us', 'faq', 'checkout', 'blog'].includes(slug)) {
+      return res.redirect(slug === 'index.htm' ? '/' : `/${slug}.html`);
+    }
+    try {
+      const productService = require('./services/productService');
+      const prod = await productService.getProductBySlug(slug, false);
+      if (prod) {
+        return res.sendFile(path.join(frontendRoot, 'product', 'detail.html'));
+      }
+    } catch (_) {}
+    return res.status(404).sendFile(path.join(frontendRoot, '404.html'));
+  });
+
   app.use(['/product', '/category', '/blog', '/authors', '/utility-pages', '/category-blog', '/admin'], express.static(frontendRoot, staticOpts));
 
   app.get('/', (req, res) => {
@@ -198,6 +279,12 @@ if (config.env === 'production' && process.env.SERVE_FRONTEND !== 'true') {
   app.get(['/admin', '/admin/'], (req, res) => {
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(frontendRoot, 'admin/index.html'));
+  });
+
+  // Catch-all 404 page for unknown non-API storefront routes
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api') || req.path === '/health') return next();
+    return res.status(404).sendFile(path.join(frontendRoot, '404.html'));
   });
 }
 

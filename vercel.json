@@ -1,6 +1,7 @@
 {
   "version": 2,
   "cleanUrls": true,
+  "trailingSlash": false,
   "outputDirectory": ".",
   "rewrites": [
     { "source": "/health", "destination": "https://lane-4-ecommerce.onrender.com/health" },
@@ -11,10 +12,12 @@
     { "source": "/graphql", "destination": "https://lane-4-ecommerce.onrender.com/graphql" },
     { "source": "/admin", "destination": "/admin/index.html" },
     { "source": "/admin/", "destination": "/admin/index.html" },
-    { "source": "/product/:slug.html", "destination": "/product/detail.html" },
-    { "source": "/product/:slug", "destination": "/product/detail.html" },
-    { "source": "/category/:slug.html", "destination": "/category/detail.html" },
-    { "source": "/category/:slug", "destination": "/category/detail.html" }
+    { "source": "/product/:slug.html", "destination": "/product/detail" },
+    { "source": "/product/:slug", "destination": "/product/detail" },
+    { "source": "/category/:cat/:subcat.html", "destination": "/category/detail" },
+    { "source": "/category/:cat/:subcat", "destination": "/category/detail" },
+    { "source": "/category/:slug.html", "destination": "/category/detail" },
+    { "source": "/category/:slug", "destination": "/category/detail" }
   ],
   "headers": [
     {

@@ -17,13 +17,15 @@
         position: fixed;
         bottom: 24px;
         right: 24px;
-        z-index: 99999999;
+        z-index: 2147483647;
         max-width: 380px;
-        padding: 12px 18px;
-        border-radius: 8px;
-        font-size: 13.5px;
-        font-weight: 600;
-        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2), 0 8px 10px -6px rgba(0,0,0,0.1);
+        padding: 13px 18px;
+        border-radius: 0px;
+        font-family: 'Generalsans', 'General Sans', sans-serif;
+        font-size: 13px;
+        font-weight: 400;
+        letter-spacing: 0.2px;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.18);
         display: flex;
         align-items: center;
         gap: 10px;
@@ -31,16 +33,17 @@
         transform: translateY(30px);
         opacity: 0;
         pointer-events: none;
+        -webkit-font-smoothing: antialiased;
       `;
       document.body.appendChild(toast);
     }
 
     const isErr = type === 'error';
-    toast.style.background = '#0f172a';
+    toast.style.background = '#000000';
     toast.style.color = '#ffffff';
-    toast.style.border = isErr ? '1.5px solid #ef4444' : '1.5px solid #22c55e';
+    toast.style.border = isErr ? '1px solid #dc2626' : '1px solid #000000';
     toast.innerHTML = `
-      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${isErr ? '#ef4444' : '#22c55e'};flex-shrink:0;"></span>
+      <span style="display:inline-block;width:6px;height:6px;border-radius:0px;background:${isErr ? '#ef4444' : '#22c55e'};flex-shrink:0;"></span>
       <span style="flex:1;line-height:1.4;">${message}</span>
     `;
 
@@ -154,7 +157,7 @@
         min-width: 20px;
         height: 20px;
         padding: 0 6px;
-        border-radius: 10px;
+        border-radius: 0px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -456,6 +459,9 @@
           </div>
         </div>
 
+        <!-- Inline Cart Alert -->
+        <div id="lane4-cart-inline-err" role="alert" style="display:none;background:#fef2f2;color:#991b1b;border-bottom:1px solid #fecaca;padding:10px 24px;font-size:12.5px;font-weight:500;line-height:1.45;"></div>
+
         <!-- Cart Body (Scrollable items / Empty state) -->
         <div id="lane4-cart-body" class="lane4-cart-body"></div>
 
@@ -504,7 +510,7 @@
         return;
       }
       const isInSubfolder = /\/(product|category|blog|authors|utility-pages|category-blog)\//i.test(window.location.pathname);
-      window.location.href = isInSubfolder ? '../checkout.html' : 'checkout.html';
+      window.location.href = window.location.protocol !== 'file:' ? '/checkout.html' : (isInSubfolder ? '../checkout.html' : 'checkout.html');
     };
 
     // Escape key to close
@@ -541,6 +547,21 @@
     createCartDrawerDOM();
 
     const bodyEl = document.getElementById('lane4-cart-body');
+    const inlineErrEl = document.getElementById('lane4-cart-inline-err');
+    function showCartDrawerError(msg) {
+      if (inlineErrEl) {
+        if (msg) {
+          inlineErrEl.textContent = msg;
+          inlineErrEl.style.display = 'block';
+          clearTimeout(inlineErrEl._timer);
+          inlineErrEl._timer = setTimeout(() => { inlineErrEl.style.display = 'none'; }, 5000);
+        } else {
+          inlineErrEl.style.display = 'none';
+        }
+      }
+      if (msg) showStorefrontToast(msg, 'error');
+    }
+    if (inlineErrEl) inlineErrEl.style.display = 'none';
     const footerEl = document.getElementById('lane4-cart-footer');
     const shippingSec = document.getElementById('lane4-free-shipping-section');
     const shippingMsg = document.getElementById('lane4-shipping-msg');
@@ -568,7 +589,7 @@
       footerEl.style.display = 'none';
       shippingSec.style.display = 'none';
       const isInSubfolder = /\/(product|category|blog|authors|utility-pages|category-blog)\//i.test(window.location.pathname);
-      const shopUrl = isInSubfolder ? '../shop.html' : 'shop.html';
+      const shopUrl = window.location.protocol !== 'file:' ? '/shop.html' : (isInSubfolder ? '../shop.html' : 'shop.html');
 
       bodyEl.innerHTML = `
         <div class="lane4-cart-empty">
@@ -663,8 +684,9 @@
           updateCartBadge();
           renderCartDrawer();
         } catch (err) {
-          showStorefrontToast(err.message || 'Error updating item quantity', 'error');
-          refreshCart();
+          const msg = (err && err.message) || 'Error updating item quantity';
+          await refreshCart();
+          showCartDrawerError(msg);
         }
       };
     });
@@ -1050,25 +1072,27 @@
           };
         });
 
-        // Dynamic variants dropdown
+        // Dynamic variants dropdown (Swiss Architectural Monochrome Theme)
         if (product.variants && product.variants.length > 0) {
           let variantContainer = form.querySelector('#lane4-variant-selector-wrapper');
           if (!variantContainer) {
             variantContainer = document.createElement('div');
             variantContainer.id = 'lane4-variant-selector-wrapper';
-            variantContainer.style.margin = '14px 0';
+            variantContainer.style.cssText = 'margin:20px 0 6px;width:100%;';
 
             const optionsHtml = product.variants.map((v, i) => `
               <option value="${v.variantId}" ${i === 0 ? 'selected' : ''}>
-                ${v.size ? `Size: ${v.size}` : ''} ${v.color ? `· Color: ${v.color}` : ''} ${v.stockQuantity <= 3 ? `(Only ${v.stockQuantity} left!)` : ''}
+                ${v.size ? `Size: ${v.size}` : ''}${v.size && v.color ? '  |  ' : ''}${v.color ? `Color: ${v.color}` : ''}${v.stockQuantity <= 3 ? ` (Only ${v.stockQuantity} left)` : ''}
               </option>
             `).join('');
 
+            const chevronSvg = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23111111' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\")";
+
             variantContainer.innerHTML = `
-              <label style="display:block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;color:#0f172a;">
+              <label for="lane4-variant-select" style="display:block;font-family:'Generalsans','General Sans',sans-serif;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:1.1px;margin-bottom:8px;color:#555555;-webkit-font-smoothing:antialiased;">
                 Select Option / Size / Color
               </label>
-              <select id="lane4-variant-select" style="width:100%;max-width:320px;padding:10px 14px;border:1.5px solid #0f172a;border-radius:6px;font-size:14px;background:#fff;font-family:inherit;font-weight:700;">
+              <select id="lane4-variant-select" style="width:100%;max-width:440px;height:48px;padding:0 40px 0 14px;border:1px solid #000000;border-radius:0px;font-size:14px;font-weight:400;letter-spacing:0.2px;color:#111111;background-color:#ffffff;background-image:${chevronSvg};background-repeat:no-repeat;background-position:right 14px center;font-family:'Generalsans','General Sans',sans-serif;appearance:none;-webkit-appearance:none;cursor:pointer;box-sizing:border-box;-webkit-font-smoothing:antialiased;">
                 ${optionsHtml}
               </select>
             `;
@@ -1082,6 +1106,26 @@
         initProductReviews(product);
       } catch (err) {
         console.warn('Could not load dynamic product variants:', err);
+        const isGenericDetail = /\/product\/detail/i.test(window.location.pathname) ||
+          document.documentElement.getAttribute('data-wf-item-slug') === 'detail';
+        if (isGenericDetail && err && /not found|404/i.test(String(err.message || ''))) {
+          document.title = '404 — Product Not Found | The Lane4 Performance Store';
+          const metaRobots = document.createElement('meta');
+          metaRobots.name = 'robots';
+          metaRobots.content = 'noindex';
+          document.head.appendChild(metaRobots);
+          const hero = document.querySelector('.product-hero') || document.querySelector('.section');
+          if (hero) {
+            hero.innerHTML = `
+              <div style="max-width:540px;margin:48px auto;padding:44px 28px;border:1px solid #dcdcdc;background:#fafafa;text-align:center;font-family:'Generalsans','General Sans',sans-serif;">
+                <div style="font-size:11px;font-weight:500;letter-spacing:1.2px;text-transform:uppercase;color:#64748b;margin-bottom:10px;">Error 404</div>
+                <h1 class="title-h1" style="margin:0 0 12px;font-size:32px;line-height:1.15;font-weight:500;color:#111111;">Product Not Found</h1>
+                <p style="font-size:14.5px;line-height:1.6;color:#555555;margin:0 0 24px;">This product is unavailable or has been removed from our catalog.</p>
+                <a href="/shop.html" style="display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:12px 24px;background:#000000;color:#ffffff;text-decoration:none;font-size:12px;font-weight:500;letter-spacing:0.8px;text-transform:uppercase;">Browse Shop</a>
+              </div>
+            `;
+          }
+        }
       }
     })();
   }
@@ -1089,11 +1133,98 @@
   async function initProductReviews(product) {
     if (!product || document.getElementById('lane4-product-reviews-section')) return;
 
+    function escRev(str) {
+      return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function renderEmptyReviewsHtml() {
+      return `
+        <div style="padding:36px 24px;background:#fafafa;border:1px solid #e5e5e5;border-radius:0px;text-align:center;">
+          <div style="font-size:15px;font-weight:500;color:#111111;margin-bottom:6px;letter-spacing:0.1px;">Be the first swimmer to review!</div>
+          <div style="font-size:13px;color:#737373;line-height:1.5;">Share your training or race-day experience with fellow swimmers.</div>
+        </div>
+      `;
+    }
+
+    if (!document.getElementById('lane4-review-styles')) {
+      const styleEl = document.createElement('style');
+      styleEl.id = 'lane4-review-styles';
+      styleEl.textContent = `
+        #lane4-product-reviews-section,
+        #lane4-product-reviews-section * {
+          font-family: 'Generalsans', 'General Sans', sans-serif !important;
+          box-sizing: border-box;
+        }
+        .lane4-rev-btn-primary {
+          background: #000000;
+          color: #ffffff;
+          border: 1px solid #000000;
+          border-radius: 0px;
+          padding: 12px 24px;
+          font-size: 11.5px;
+          font-weight: 500;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+          cursor: pointer;
+          transition: background 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          line-height: 18px;
+        }
+        .lane4-rev-btn-primary:hover {
+          background: #222222;
+          border-color: #222222;
+        }
+        .lane4-rev-btn-secondary {
+          background: #ffffff;
+          color: #111111;
+          border: 1px solid #dcdcdc;
+          border-radius: 0px;
+          padding: 12px 20px;
+          font-size: 11.5px;
+          font-weight: 500;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+          cursor: pointer;
+          transition: border-color 0.18s ease, background 0.18s ease;
+          line-height: 18px;
+        }
+        .lane4-rev-btn-secondary:hover {
+          border-color: #000000;
+          background: #fafafa;
+        }
+        .lane4-rev-input {
+          width: 100%;
+          padding: 11px 14px;
+          border: 1px solid #dcdcdc;
+          border-radius: 0px;
+          background: #ffffff;
+          color: #111111;
+          font-size: 13.5px;
+          font-weight: 400;
+          transition: border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+        .lane4-rev-input:focus {
+          outline: none;
+          border-color: #000000;
+          box-shadow: 0 0 0 1px #000000;
+        }
+      `;
+      document.head.appendChild(styleEl);
+    }
+
     // Look for mounting location: place directly below product-hero across full container width
     const hero = document.querySelector('.product-hero');
     const reviewSection = document.createElement('div');
     reviewSection.id = 'lane4-product-reviews-section';
-    reviewSection.style.cssText = 'width:100%;margin:56px 0 40px;padding-top:40px;border-top:1.5px solid #e2e8f0;font-family:inherit;color:#0f172a;clear:both;';
+    reviewSection.style.cssText = 'width:100%;margin:56px 0 40px;padding-top:40px;border-top:1px solid #e5e5e5;color:#111111;clear:both;';
 
     if (hero && hero.parentNode) {
       hero.parentNode.insertBefore(reviewSection, hero.nextSibling);
@@ -1108,12 +1239,12 @@
     if (heading && !document.getElementById('lane4-quick-review-anchor')) {
       const quickAnchor = document.createElement('div');
       quickAnchor.id = 'lane4-quick-review-anchor';
-      quickAnchor.style.cssText = 'display:inline-flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer;font-size:13px;color:#0284c7;font-weight:600;';
+      quickAnchor.style.cssText = 'display:inline-flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer;font-size:12.5px;color:#111111;font-weight:500;';
       quickAnchor.innerHTML = `
-        <span style="color:#f59e0b;font-size:14px;">★★★★★</span>
-        <span id="lane4-quick-rating-text" style="color:#64748b;font-size:12.5px;">Customer Reviews</span>
-        <span style="color:#cbd5e1;">·</span>
-        <span style="text-decoration:underline;color:#0284c7;">Add a review</span>
+        <span style="color:#111111;font-size:13px;letter-spacing:1px;">★★★★★</span>
+        <span id="lane4-quick-rating-text" style="color:#666666;font-size:12.5px;font-weight:400;">Customer Reviews</span>
+        <span style="color:#cccccc;">·</span>
+        <span style="text-decoration:underline;text-underline-offset:3px;color:#111111;">Add a review</span>
       `;
       quickAnchor.onclick = () => {
         reviewSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1127,29 +1258,29 @@
     }
 
     reviewSection.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:24px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:28px;">
         <div>
-          <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#64748b;margin-bottom:4px;">Swimmer Feedback</div>
-          <h3 style="font-size:22px;font-weight:600;margin:0 0 6px;color:#0f172a;">Customer Reviews &amp; Ratings</h3>
-          <div id="lane4-review-summary-stars" style="display:flex;align-items:center;gap:8px;font-size:14px;color:#f59e0b;">
-            <span>★★★★★</span>
-            <span style="font-size:13px;color:#64748b;font-weight:600;" id="lane4-review-count-label">Loading reviews...</span>
+          <div style="font-size:10.5px;font-weight: 500;letter-spacing:1.6px;text-transform:uppercase;color:#737373;margin-bottom:6px;">Swimmer Feedback</div>
+          <h3 style="font-size:24px;font-weight:500;letter-spacing:-0.3px;margin:0 0 8px;color:#000000;line-height:1.25;">Customer Reviews &amp; Ratings</h3>
+          <div id="lane4-review-summary-stars" style="display:flex;align-items:center;gap:10px;font-size:14px;color:#111111;">
+            <span style="letter-spacing:1.5px;">★★★★★</span>
+            <span style="font-size:13px;color:#666666;font-weight:400;" id="lane4-review-count-label">Loading reviews...</span>
           </div>
         </div>
-        <button type="button" id="lane4-write-review-toggle" style="background:#0f172a;color:#ffffff;border:none;padding:10px 18px;border-radius:6px;font-size:12.5px;font-weight:600;letter-spacing:0.8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+        <button type="button" id="lane4-write-review-toggle" class="lane4-rev-btn-primary">
           <span>Write a Review</span>
         </button>
       </div>
 
       <!-- Write Review Form Container (collapsible) -->
-      <div id="lane4-write-review-container" style="display:none;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:10px;padding:24px;margin-bottom:28px;max-width:760px;box-shadow:0 4px 14px rgba(15,23,42,0.05);">
-        <h4 style="font-size:16px;font-weight:600;margin:0 0 14px;color:#0f172a;">Share Your Review for ${product.name}</h4>
+      <div id="lane4-write-review-container" style="display:none;background:#ffffff;border:1px solid #dcdcdc;border-radius:0px;padding:28px;margin-bottom:28px;max-width:760px;box-shadow:0 12px 32px rgba(0,0,0,0.06);">
+        <h4 style="font-size:16px;font-weight:500;margin:0 0 18px;color:#000000;padding-bottom:14px;border-bottom:1px solid #eeeeee;">Share Your Review for ${escRev(product.name)}</h4>
         <form id="lane4-write-review-form">
-          <div style="margin-bottom:14px;">
-            <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:#334155;margin-bottom:6px;">
+          <div style="margin-bottom:16px;">
+            <label style="display:block;font-size:11px;font-weight: 500;text-transform:uppercase;letter-spacing:0.8px;color:#333333;margin-bottom:8px;">
               Overall Rating *
             </label>
-            <div id="lane4-star-selector" style="display:flex;gap:6px;font-size:24px;cursor:pointer;color:#cbd5e1;">
+            <div id="lane4-star-selector" style="display:flex;gap:6px;font-size:22px;cursor:pointer;color:#d4d4d4;">
               <span data-star="1">★</span>
               <span data-star="2">★</span>
               <span data-star="3">★</span>
@@ -1159,37 +1290,37 @@
             <input type="hidden" id="lane4-selected-rating" value="5" />
           </div>
 
-          <div style="margin-bottom:14px;">
-            <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:#334155;margin-bottom:6px;">
+          <div style="margin-bottom:16px;">
+            <label style="display:block;font-size:11px;font-weight: 500;text-transform:uppercase;letter-spacing:0.8px;color:#333333;margin-bottom:6px;">
               Your Name *
             </label>
-            <input type="text" id="lane4-review-author" required placeholder="e.g. Swimmer Rohan" style="width:100%;max-width:400px;padding:9px 12px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13.5px;font-family:inherit;" />
-          </div>
-
-          <div style="margin-bottom:14px;">
-            <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:#334155;margin-bottom:6px;">
-              Headline / Summary
-            </label>
-            <input type="text" id="lane4-review-title" placeholder="e.g. Outstanding hydrodynamic fit in open water" style="width:100%;max-width:550px;padding:9px 12px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13.5px;font-family:inherit;" />
+            <input type="text" id="lane4-review-author" required placeholder="e.g. Swimmer Rohan" class="lane4-rev-input" style="max-width:420px;" />
           </div>
 
           <div style="margin-bottom:16px;">
-            <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:#334155;margin-bottom:6px;">
-              Detailed Review *
+            <label style="display:block;font-size:11px;font-weight: 500;text-transform:uppercase;letter-spacing:0.8px;color:#333333;margin-bottom:6px;">
+              Headline / Summary
             </label>
-            <textarea id="lane4-review-comment" required rows="4" placeholder="How did this gear perform in practice or competition? Tell other swimmers about fit, feel, durability..." style="width:100%;padding:10px 12px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13.5px;font-family:inherit;"></textarea>
+            <input type="text" id="lane4-review-title" placeholder="e.g. Outstanding hydrodynamic fit in open water" class="lane4-rev-input" style="max-width:560px;" />
           </div>
 
-          <div style="display:flex;gap:10px;">
-            <button type="submit" id="lane4-submit-review-btn" style="background:#0f172a;color:#ffffff;border:none;padding:12px 22px;border-radius:6px;font-size:12.5px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">
+          <div style="margin-bottom:20px;">
+            <label style="display:block;font-size:11px;font-weight: 500;text-transform:uppercase;letter-spacing:0.8px;color:#333333;margin-bottom:6px;">
+              Detailed Review *
+            </label>
+            <textarea id="lane4-review-comment" required rows="4" placeholder="How did this gear perform in practice or competition? Tell other swimmers about fit, feel, durability..." class="lane4-rev-input"></textarea>
+          </div>
+
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <button type="submit" id="lane4-submit-review-btn" class="lane4-rev-btn-primary">
               Submit Review
             </button>
-            <button type="button" id="lane4-cancel-review-btn" style="background:#e2e8f0;color:#475569;border:none;padding:12px 18px;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer;">
+            <button type="button" id="lane4-cancel-review-btn" class="lane4-rev-btn-secondary">
               Cancel
             </button>
           </div>
         </form>
-        <div id="lane4-review-alert" style="display:none;margin-top:14px;padding:12px;border-radius:6px;font-size:13px;font-weight:600;"></div>
+        <div id="lane4-review-alert" style="display:none;margin-top:16px;padding:12px 14px;border-radius:0px;font-size:13px;font-weight:500;"></div>
       </div>
 
       <!-- Approved Reviews List -->
@@ -1201,7 +1332,7 @@
     const stars = reviewSection.querySelectorAll('#lane4-star-selector span');
     function updateStarUI(val) {
       stars.forEach((s, idx) => {
-        s.style.color = idx < val ? '#f59e0b' : '#cbd5e1';
+        s.style.color = idx < val ? '#111111' : '#d4d4d4';
       });
     }
     updateStarUI(5);
@@ -1282,19 +1413,19 @@
           const listContainer = reviewSection.querySelector('#lane4-approved-reviews-list');
           listContainer.parentNode.insertBefore(successBanner, listContainer);
         }
-        successBanner.style.cssText = 'background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:20px 24px;margin-bottom:28px;box-shadow:0 4px 14px rgba(22,101,52,0.08);';
+        successBanner.style.cssText = 'background:#ffffff;border:1px solid #111111;border-radius:0px;padding:22px 24px;margin-bottom:28px;';
         successBanner.innerHTML = `
           <div style="display:flex;align-items:flex-start;gap:14px;">
-            <div style="width:36px;height:36px;border-radius:50%;background:#dcfce7;color:#166534;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            <div style="width:32px;height:32px;border-radius:0px;background:#111111;color:#ffffff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
             </div>
             <div style="flex:1;">
-              <div style="font-size:15px;font-weight:700;color:#166534;margin-bottom:4px;">Review Submitted Successfully!</div>
-              <div style="font-size:13px;color:#15803d;line-height:1.5;">
-                Thank you, <strong>${authorName}</strong>! Your review (${'★'.repeat(rating)}) has been recorded and submitted for store verification. Once approved, it will be published below.
+              <div style="font-size:14.5px;font-weight:500;color:#111111;margin-bottom:4px;">Review Submitted Successfully</div>
+              <div style="font-size:13px;color:#555555;line-height:1.5;">
+                Thank you, <strong style="color:#111111;">${escRev(authorName)}</strong>. Your review (${'★'.repeat(rating)}) has been recorded and submitted for store verification.
               </div>
-              <div style="margin-top:8px;display:inline-flex;align-items:center;gap:6px;background:#dcfce7;color:#166534;padding:3px 10px;border-radius:4px;font-size:11.5px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">
-                <span>●</span> Review Status: Pending Verification
+              <div style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;border:1px solid #dcdcdc;background:#fafafa;color:#111111;padding:4px 10px;border-radius:0px;font-size:10.5px;font-weight:500;letter-spacing:0.8px;text-transform:uppercase;">
+                <span>Pending Verification</span>
               </div>
             </div>
           </div>
@@ -1324,12 +1455,7 @@
         countLabel.textContent = 'No reviews yet';
         const quickRatingText = document.getElementById('lane4-quick-rating-text');
         if (quickRatingText) quickRatingText.textContent = 'No reviews yet';
-        listContainer.innerHTML = `
-          <div style="padding:24px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;text-align:center;">
-            <div style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:4px;">Be the first swimmer to review!</div>
-            <div style="font-size:12.5px;color:#64748b;">Share your training or race-day experience with fellow swimmers.</div>
-          </div>
-        `;
+        listContainer.innerHTML = renderEmptyReviewsHtml();
         return;
       }
 
@@ -1361,17 +1487,17 @@
         const dateStr = formatReviewDate(r.createdAt);
 
         return `
-          <div style="border-bottom:1px solid #f1f5f9;padding:16px 0;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span style="color:#f59e0b;font-size:15px;letter-spacing:1px;">${starStr}</span>
-                <span style="font-size:13.5px;font-weight:600;color:#0f172a;">${r.authorName || 'Verified Swimmer'}</span>
-                ${r.isVerifiedPurchase ? `<span style="font-size:10px;font-weight:600;background:#dcfce7;color:#166534;padding:2px 6px;border-radius:4px;text-transform:uppercase;">Verified Purchase</span>` : ''}
+          <div style="border-bottom:1px solid #eeeeee;padding:20px 0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span style="color:#111111;font-size:14px;letter-spacing:1.5px;">${starStr}</span>
+                <span style="font-size:13.5px;font-weight:500;color:#111111;">${escRev(r.authorName || 'Verified Swimmer')}</span>
+                ${r.isVerifiedPurchase ? `<span style="font-size:10px;font-weight:500;border:1px solid #111111;background:#ffffff;color:#111111;padding:2px 7px;border-radius:0px;letter-spacing:0.6px;text-transform:uppercase;">Verified Purchase</span>` : ''}
               </div>
-              <div style="font-size:12px;color:#94a3b8;">${dateStr}</div>
+              <div style="font-size:12px;color:#888888;">${escRev(dateStr)}</div>
             </div>
-            ${r.title ? `<div style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:4px;">${r.title}</div>` : ''}
-            <div style="font-size:13px;color:#475569;line-height:1.5;">${r.comment}</div>
+            ${r.title ? `<div style="font-size:14px;font-weight:500;color:#111111;margin-bottom:4px;">${escRev(r.title)}</div>` : ''}
+            <div style="font-size:13.5px;color:#555555;line-height:1.55;">${escRev(r.comment)}</div>
           </div>
         `;
       }).join('');
@@ -1383,12 +1509,7 @@
       const quickRatingText = document.getElementById('lane4-quick-rating-text');
       if (quickRatingText) quickRatingText.textContent = 'No reviews yet';
       if (listContainer) {
-        listContainer.innerHTML = `
-          <div style="padding:24px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;text-align:center;">
-            <div style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:4px;">Be the first swimmer to review!</div>
-            <div style="font-size:12.5px;color:#64748b;">Share your training or race-day experience with fellow swimmers.</div>
-          </div>
-        `;
+        listContainer.innerHTML = renderEmptyReviewsHtml();
       }
     }
   }
@@ -1401,7 +1522,7 @@
       modal.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.88);z-index:999999;display:flex;align-items:center;justify-content:center;padding:20px;cursor:zoom-out;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);';
       modal.innerHTML = `
         <div style="position:relative;max-width:92vw;max-height:92vh;display:flex;align-items:center;justify-content:center;" onclick="event.stopPropagation()">
-          <img id="lane4-lightbox-img" src="" alt="" style="max-width:100%;max-height:90vh;object-fit:contain;border-radius:8px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);" />
+          <img id="lane4-lightbox-img" src="" alt="" style="max-width:100%;max-height:90vh;object-fit:contain;border-radius:0px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);" />
           <button id="lane4-lightbox-close" style="position:absolute;top:-38px;right:-4px;background:none;border:none;color:#fff;font-size:32px;cursor:pointer;line-height:1;padding:4px 8px;" aria-label="Close">&times;</button>
         </div>
       `;

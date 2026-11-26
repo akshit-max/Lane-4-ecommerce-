@@ -89,8 +89,7 @@ window.INDIAN_STATES = [
   function createAuthModalDOM() {
     if (document.getElementById('lane4-auth-modal-wrapper')) return;
 
-    const isInSubfolder = /\/(product|category|blog|authors|utility-pages|category-blog)\//i.test(window.location.pathname);
-    const logoUrl = (isInSubfolder ? '../' : '') + '6424266ea05809dff501d86e/lane4-logo.png';
+    const logoUrl = (window.location.protocol === 'file:' ? '' : '/') + '6424266ea05809dff501d86e/lane4-logo.png';
 
     // Inject styles for Auth Modal (OG LANE4 Architectural Enterprise Theme)
     const styleEl = document.createElement('style');
@@ -400,9 +399,9 @@ window.INDIAN_STATES = [
         border-color: #86efac;
       }
       .lane4-auth-alert.info {
-        background: #f8fafc;
-        color: #0f172a;
-        border-color: #e2e8f0;
+        background: #fafafa;
+        color: #111111;
+        border-color: #dcdcdc;
       }
       .lane4-order-card {
         border: 1px solid #ebebeb;
@@ -1333,6 +1332,9 @@ window.INDIAN_STATES = [
   }
 
   function openAuthModal(view = 'login') {
+    if (!document.getElementById('lane4-auth-modal-wrapper')) {
+      createAuthModalDOM();
+    }
     const wrapper = document.getElementById('lane4-auth-modal-wrapper');
     if (!wrapper) return;
     wrapper.style.display = 'flex';
@@ -1816,13 +1818,15 @@ window.INDIAN_STATES = [
         </div>
       ` : ''}
 
-      <!-- Return / Exchange Action -->
-      <div style="margin-top:10px;">
-        <button type="button" id="lane4-order-return-btn" style="width:100%;background:#ffffff;color:#000000;border:1.5px solid #000000;padding:12px;border-radius:0px;font-size:12px;font-weight:600;letter-spacing: 0.3px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>
-          <span>Request Return / Exchange</span>
-        </button>
-      </div>
+      <!-- Return / Exchange Action (only after delivery) -->
+      ${ord.status === 'delivered' ? `
+        <div style="margin-top:10px;">
+          <button type="button" id="lane4-order-return-btn" style="width:100%;background:#ffffff;color:#000000;border:1.5px solid #000000;padding:12px;border-radius:0px;font-size:12px;font-weight:600;letter-spacing: 0.3px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>
+            <span>Request Return / Exchange</span>
+          </button>
+        </div>
+      ` : ''}
 
       <!-- GST Tax Invoice Action -->
       ${(['confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered'].includes(ord.status) || ord.paymentStatus === 'verified') ? `
@@ -2027,7 +2031,7 @@ window.INDIAN_STATES = [
         if (returnSuccess) {
           returnSuccess.style.display = 'block';
           document.getElementById('lane4-return-success-msg').innerHTML = `
-            Reference ID: <strong style="color:#0f172a;">${ret.returnId || 'L4-RET'}</strong>.<br>
+            Reference ID: <strong style="color:#111111;">${ret.returnId || 'L4-RET'}</strong>.<br>
             Our operations team has been notified. We will inspect your request and dispatch DTDC pickup instructions to your email (<code>${ord.customerEmail || ''}</code>).
           `;
         }
@@ -2342,13 +2346,20 @@ window.INDIAN_STATES = [
     } catch (_) {}
   }
 
+  function normalizeAuthPhone(raw) {
+    let digits = String(raw || '').replace(/\D/g, '');
+    if (digits.length > 10 && digits.startsWith('91')) digits = digits.slice(2);
+    else if (digits.length > 10 && digits.startsWith('0')) digits = digits.slice(1);
+    return digits.slice(0, 10);
+  }
+
   function initProfileForm() {
     const form = document.getElementById('lane4-profile-form');
     if (!form) return;
     form.onsubmit = async (e) => {
       e.preventDefault();
       const displayName = document.getElementById('lane4-profile-name').value.trim();
-      const phoneNumber = document.getElementById('lane4-profile-phone').value.trim();
+      const phoneNumber = normalizeAuthPhone(document.getElementById('lane4-profile-phone').value.trim());
 
       if (!displayName) {
         showAlert('Please enter your full name.', 'error');
@@ -2469,19 +2480,21 @@ window.INDIAN_STATES = [
     const phoneInput = document.getElementById('lane4-addr-phone');
     if (phoneInput) {
       phoneInput.setAttribute('inputmode', 'tel');
-      phoneInput.setAttribute('maxlength', '10');
-      phoneInput.addEventListener('keydown', (e) => {
-        if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
-        if ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x'].includes(e.key.toLowerCase())) return;
-        if (!/^[0-9]$/.test(e.key)) e.preventDefault();
-      });
+      phoneInput.setAttribute('maxlength', '16');
       phoneInput.addEventListener('input', () => {
-        phoneInput.value = phoneInput.value.replace(/\D/g, '').slice(0, 10);
+        const cleanRaw = phoneInput.value.replace(/[^0-9+\-\s()]/g, '');
+        if (phoneInput.value !== cleanRaw) phoneInput.value = cleanRaw;
+        if (cleanRaw.replace(/\D/g, '').length > 10) {
+          phoneInput.value = normalizeAuthPhone(cleanRaw);
+        }
       });
       phoneInput.addEventListener('paste', (e) => {
         e.preventDefault();
         const text = (e.clipboardData || window.clipboardData).getData('text') || '';
-        phoneInput.value = text.replace(/\D/g, '').slice(0, 10);
+        phoneInput.value = normalizeAuthPhone(text);
+      });
+      phoneInput.addEventListener('blur', () => {
+        if (phoneInput.value) phoneInput.value = normalizeAuthPhone(phoneInput.value);
       });
     }
 
@@ -2491,7 +2504,7 @@ window.INDIAN_STATES = [
         const user = window.LANE4.getUser();
         if (user) {
           if (!document.getElementById('lane4-addr-name').value) document.getElementById('lane4-addr-name').value = user.displayName || '';
-          if (!document.getElementById('lane4-addr-phone').value) document.getElementById('lane4-addr-phone').value = user.phoneNumber || '';
+          if (!document.getElementById('lane4-addr-phone').value) document.getElementById('lane4-addr-phone').value = normalizeAuthPhone(user.phoneNumber || '');
         }
       }
     };
@@ -2505,7 +2518,8 @@ window.INDIAN_STATES = [
     newForm.onsubmit = async (e) => {
       e.preventDefault();
       const addressee = document.getElementById('lane4-addr-name').value.trim();
-      const phone = document.getElementById('lane4-addr-phone').value.trim();
+      const rawAddrPhone = document.getElementById('lane4-addr-phone').value.trim();
+      const phone = normalizeAuthPhone(rawAddrPhone);
       const addressLine1 = document.getElementById('lane4-addr-line1').value.trim();
       const addressLine2 = document.getElementById('lane4-addr-line2').value.trim();
       const state = document.getElementById('lane4-addr-state').value;
@@ -2848,6 +2862,10 @@ window.INDIAN_STATES = [
     }
   }, true);
 
-  document.addEventListener('DOMContentLoaded', initAuthUI);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAuthUI);
+  } else {
+    initAuthUI();
+  }
   window.addEventListener('lane4:auth-changed', initAuthUI);
 })();

@@ -44,6 +44,17 @@
     "Tripura": ["Agartala", "Dharmanagar", "Udaipur", "Other"]
   };
 
+  function normalizeIndianPhoneInput(raw) {
+    let digits = String(raw || '').replace(/\D/g, '');
+    if (digits.length > 10 && digits.startsWith('91')) digits = digits.slice(2);
+    else if (digits.length > 10 && digits.startsWith('0')) digits = digits.slice(1);
+    return digits.slice(0, 10);
+  }
+
+  function formatIndianPhoneDisplay(raw) {
+    return normalizeIndianPhoneInput(raw);
+  }
+
   let checkoutQuote = null;
   let paymentSettings = null;
   let activeCoupon = null;
@@ -91,7 +102,7 @@
       const candidateName = user.displayName || user.name || user.fullName || (user.email ? user.email.split('@')[0].charAt(0).toUpperCase() + user.email.split('@')[0].slice(1) : '');
       if (nameInput && !nameInput.value && candidateName) nameInput.value = candidateName;
       const phoneInput = document.querySelector('#lane4-checkout-phone, input[type="tel"]');
-      if (phoneInput && !phoneInput.value && user.phoneNumber) phoneInput.value = user.phoneNumber;
+      if (phoneInput && !phoneInput.value && user.phoneNumber) phoneInput.value = normalizeIndianPhoneInput(user.phoneNumber);
     } else {
       setTimeout(() => {
         if (window.LANE4_AUTH && window.LANE4_AUTH.open) {
@@ -106,18 +117,18 @@
       if (mainContainer && !document.getElementById('lane4-checkout-auth-banner')) {
         const banner = document.createElement('div');
         banner.id = 'lane4-checkout-auth-banner';
-        banner.style.cssText = 'margin-bottom:24px;background:#fef2f2;border:2px solid #ef4444;border-radius:0px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;font-family:inherit;';
+        banner.style.cssText = 'margin-bottom:24px;background:#ffffff;border:1px solid #111111;border-left:3px solid #b91c1c;border-radius:0px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;font-family:\'Generalsans\',\'General Sans\',sans-serif;';
         banner.innerHTML = `
           <div style="display:flex;align-items:center;gap:12px;">
-            <div style="width:40px;height:40px;border-radius:50%;background:#fee2e2;color:#b91c1c;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            <div style="width:36px;height:36px;border-radius:0px;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="0" ry="0"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
             </div>
             <div>
-              <div style="font-size:14.5px;font-weight:600;color:#991b1b;">Login Required to Complete Checkout</div>
-              <div style="font-size:12.5px;color:#7f1d1d;line-height:1.4;">Please sign in or create a swimmer account to complete your order and submit payment.</div>
+              <div style="font-size:14px;font-weight:500;color:#111111;">Sign In Required to Complete Checkout</div>
+              <div style="font-size:12.5px;color:#666666;line-height:1.4;">Please sign in or create a swimmer account to complete your order and submit payment.</div>
             </div>
           </div>
-          <button type="button" id="lane4-checkout-login-trigger" style="background:#000000;color:#ffffff;border:none;padding:10px 18px;border-radius:0px;font-size:12px;font-weight:600;letter-spacing:0.4px;text-transform:uppercase;cursor:pointer;">
+          <button type="button" id="lane4-checkout-login-trigger" style="background:#000000;color:#ffffff;border:1px solid #000000;padding:10px 18px;border-radius:0px;font-size:11.5px;font-weight:500;letter-spacing:0.8px;text-transform:uppercase;cursor:pointer;">
             SIGN IN / REGISTER &rarr;
           </button>
         `;
@@ -227,10 +238,10 @@
       phoneWrapper.id = 'lane4-checkout-phone-wrapper';
       phoneWrapper.style.cssText = 'margin-bottom:14px;';
       phoneWrapper.innerHTML = `
-        <label class="w-commerce-commercecheckoutlabel" style="font-size:12px;font-weight:600;color:#222222;margin-bottom:6px;display:block;">
+        <label class="w-commerce-commercecheckoutlabel" style="font-size:11px;font-weight: 500;text-transform:uppercase;letter-spacing:0.8px;color:#333333;margin-bottom:6px;display:block;">
           Mobile Phone Number (for shipment updates) *
         </label>
-        <input type="tel" id="lane4-checkout-phone" class="w-input lane4-phone-input" placeholder="+91 98765 43210" style="width:100%;font-size:14px;height:46px;padding:10px 14px;border:1.5px solid #000000;border-radius:0px;box-sizing:border-box;" value="${user.phoneNumber || ''}" />
+        <input type="tel" id="lane4-checkout-phone" class="w-input lane4-phone-input lane4-checkout-input" placeholder="10-digit mobile number" value="${normalizeIndianPhoneInput(user.phoneNumber || '')}" />
       `;
       const nameInput = document.querySelector('input.w-commerce-commercecheckoutshippingfullname, input[name="name"]');
       if (nameInput && nameInput.parentElement) {
@@ -249,11 +260,11 @@
       if (!savedAddrWrapper) {
         savedAddrWrapper = document.createElement('div');
         savedAddrWrapper.id = 'lane4-saved-addresses-selector-wrapper';
-        savedAddrWrapper.style.cssText = 'margin-bottom:18px;background:#ffffff;border:1.5px solid #000000;border-radius:0px;padding:12px 14px;';
+        savedAddrWrapper.style.cssText = 'margin-bottom:18px;background:#fafafa;border:1px solid #dcdcdc;border-radius:0px;padding:14px 16px;';
         savedAddrWrapper.innerHTML = `
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            <span style="font-size:12px;font-weight:600;color:#000000;text-transform:uppercase;letter-spacing:0.5px;">Deliver to Saved Address</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span style="font-size:11px;font-weight: 500;color:#111111;text-transform:uppercase;letter-spacing:0.8px;">Deliver to Saved Address</span>
           </div>
           <select id="lane4-saved-addr-select" class="lane4-checkout-select" style="margin-top:6px;">
             <option value="">Choose a Saved Delivery Address (or fill below)</option>
@@ -279,7 +290,7 @@
           if (nameEl) nameEl.value = a.addressee || '';
 
           const phoneEl = document.getElementById('lane4-checkout-phone');
-          if (phoneEl) phoneEl.value = a.phone || '';
+          if (phoneEl) phoneEl.value = normalizeIndianPhoneInput(a.phone || '');
 
           const line1El = document.querySelector('input[name="address_line1"], input.w-commerce-commercecheckoutshippingstreetaddress:not(#lane4-checkout-phone)');
           if (line1El) line1El.value = a.addressLine1 || '';
@@ -363,18 +374,18 @@
       const variantText = [it.size ? `Size: ${it.size}` : '', it.color ? `Color: ${it.color}` : ''].filter(Boolean).join(' · ');
 
       return `
-        <div style="display:flex;align-items:center;padding:14px 0;border-bottom:1px solid #f1f5f9;gap:14px;">
-          <img src="${imgUrl}" alt="${it.name}" style="width:58px;height:58px;object-fit:cover;border-radius:0px;background:#ffffff;border:1px solid #e2e8f0;flex-shrink:0;" />
+        <div style="display:flex;align-items:center;padding:14px 0;border-bottom:1px solid #eeeeee;gap:14px;">
+          <img src="${imgUrl}" alt="${it.name}" style="width:58px;height:58px;object-fit:cover;border-radius:0px;background:#ffffff;border:1px solid #e5e5e5;flex-shrink:0;" />
           <div style="flex:1;min-width:0;">
-            <div style="font-weight:600;font-size:13.5px;color:#000000;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${it.name}</div>
-            ${variantText ? `<div style="font-size:12px;color:#64748b;margin-top:2px;">${variantText}</div>` : ''}
-            <div style="font-size:12px;color:#475569;margin-top:4px;">
-              <span>Qty: <strong>${it.quantity}</strong></span>
-              <span style="color:#94a3b8;margin:0 4px;">•</span>
+            <div style="font-weight:500;font-size:13.5px;color:#111111;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${it.name}</div>
+            ${variantText ? `<div style="font-size:12px;color:#737373;margin-top:2px;">${variantText}</div>` : ''}
+            <div style="font-size:12px;color:#555555;margin-top:4px;">
+              <span>Qty: <strong style="font-weight:500;color:#111111;">${it.quantity}</strong></span>
+              <span style="color:#cccccc;margin:0 5px;">·</span>
               <span>${it.unitPriceFormatted} each</span>
             </div>
           </div>
-          <div style="font-weight:600;font-size:14.5px;color:#000000;text-align:right;">
+          <div style="font-weight:500;font-size:14px;color:#111111;text-align:right;">
             ${it.totalPriceFormatted}
           </div>
         </div>
@@ -399,11 +410,11 @@
 
     if (shippingBadge) {
       shippingBadge.textContent = shippingText;
-      shippingBadge.style.color = isFree ? '#16a34a' : '#0f172a';
+      shippingBadge.style.color = isFree ? '#16a34a' : '#111111';
     }
     if (shippingSummary) {
       shippingSummary.textContent = shippingText;
-      shippingSummary.style.color = isFree ? '#16a34a' : '#0f172a';
+      shippingSummary.style.color = isFree ? '#16a34a' : '#111111';
     }
 
     // Coupon Discount Row
@@ -496,13 +507,7 @@
 
     qrWrapper = document.createElement('div');
     qrWrapper.id = 'lane4-qr-checkout-container';
-    qrWrapper.style.padding = '22px';
-    qrWrapper.style.border = '2px solid #0f172a';
-    qrWrapper.style.borderRadius = '10px';
-    qrWrapper.style.background = '#ffffff';
-    qrWrapper.style.marginTop = '16px';
-    qrWrapper.style.marginBottom = '24px';
-    qrWrapper.style.boxShadow = '0 6px 20px rgba(0,0,0,0.04)';
+    qrWrapper.style.cssText = 'padding:24px;border:1px solid #dcdcdc;border-radius:0px;background:#ffffff;margin-top:16px;margin-bottom:28px;font-family:\'Generalsans\',\'General Sans\',sans-serif;';
 
     const upiId = paymentSettings.upiId || 'lane4swim@upi';
     const upiName = paymentSettings.upiAccountName || 'THE LANE4 PERFORMANCE STORE';
@@ -510,66 +515,66 @@
     const instructions = (paymentSettings.paymentInstructions || '').replace(/\n/g, '<br/>');
 
     qrWrapper.innerHTML = `
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-        <span style="display:inline-block;background:#000000;color:#fff;font-weight:600;font-size:11px;padding:3px 8px;border-radius:0px;letter-spacing:0.4px;">STEP 3</span>
-        <h4 style="margin:0;font-size:18px;font-weight:600;color:#000000;">Scan &amp; Pay via UPI</h4>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid #eeeeee;">
+        <span style="display:inline-block;background:#000000;color:#ffffff;font-weight:500;font-size:10.5px;padding:3px 9px;border-radius:0px;letter-spacing:0.8px;">STEP 3</span>
+        <h4 style="margin:0;font-size:18px;font-weight:500;color:#000000;">Scan &amp; Pay via UPI</h4>
       </div>
 
-      <div style="background:#ffffff;border:1.5px solid #e2e8f0;border-radius:0px;padding:14px;margin-bottom:20px;text-align:center;">
-        <div style="font-size:11px;color:#64748b;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;margin-bottom:4px;">PAYABLE ORDER AMOUNT:</div>
-        <div id="lane4-qr-amount-display" style="font-size:28px;font-weight:600;color:#000000;letter-spacing:0.5px;">
+      <div style="background:#fafafa;border:1px solid #eeeeee;border-radius:0px;padding:16px;margin-bottom:20px;text-align:center;">
+        <div style="font-size:10.5px;color:#737373;font-weight: 500;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px;">Payable Order Amount</div>
+        <div id="lane4-qr-amount-display" style="font-size:26px;font-weight:500;color:#000000;letter-spacing:0.3px;">
           ${checkoutQuote ? checkoutQuote.pricing.finalPayableFormatted : 'Calculating...'}
         </div>
       </div>
 
-      <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:center;margin-bottom:20px;">
+      <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:center;margin-bottom:20px;">
         <!-- QR Code Card with Tap to Enlarge -->
-        <div id="lane4-checkout-qr-card" style="text-align:center;flex:0 0 170px;margin:0 auto;cursor:pointer;position:relative;background:#ffffff;border:1.5px solid #000000;border-radius:0px;padding:10px;box-shadow:0 4px 12px rgba(15,23,42,0.06);transition:all 0.2s cubic-bezier(0.16, 1, 0.3, 1);" title="Click to enlarge QR code for easy scanning">
+        <div id="lane4-checkout-qr-card" style="text-align:center;flex:0 0 170px;margin:0 auto;cursor:pointer;position:relative;background:#ffffff;border:1px solid #000000;border-radius:0px;padding:10px;transition:all 0.2s cubic-bezier(0.16, 1, 0.3, 1);" title="Click to enlarge QR code for easy scanning">
           <div style="position:relative;width:150px;height:150px;margin:0 auto;background:#ffffff;display:flex;align-items:center;justify-content:center;">
             <img id="lane4-qr-img-display" src="${qrUrl}" alt="LANE4 Store UPI QR Code" style="width:150px;height:150px;object-fit:contain;border-radius:0px;display:block;" />
-            <div style="position:absolute;bottom:4px;background:rgba(15,23,42,0.92);color:#ffffff;font-size:9.5px;font-weight:600;letter-spacing:0.5px;padding:3px 8px;border-radius:0px;display:flex;align-items:center;gap:4px;box-shadow:0 2px 6px rgba(0,0,0,0.25);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+            <div style="position:absolute;bottom:4px;background:rgba(0,0,0,0.88);color:#ffffff;font-size:9px;font-weight:500;letter-spacing:0.8px;padding:3px 8px;border-radius:0px;display:flex;align-items:center;gap:4px;">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
               <span>TAP TO ENLARGE</span>
             </div>
           </div>
-          <div style="font-size:11.5px;font-weight:600;color:#000000;margin-top:8px;line-height:1.2;">Official Store UPI QR</div>
-          <div style="font-size:10px;color:#64748b;margin-top:2px;">Click to scan in full size</div>
+          <div style="font-size:11.5px;font-weight:500;color:#111111;margin-top:8px;line-height:1.2;">Official Store UPI QR</div>
+          <div style="font-size:10px;color:#737373;margin-top:2px;">Click to scan in full size</div>
         </div>
 
         <!-- Instructions & UPI VPA -->
         <div style="flex:1;min-width:240px;">
-          <div style="margin-bottom:12px;">
-            <label style="display:block;font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;">Store UPI ID (VPA)</label>
-            <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
-              <code style="background:#f1f5f9;padding:8px 12px;border-radius:0px;font-size:14px;font-weight:600;color:#000000;flex:1;">${upiId}</code>
-              <button type="button" id="lane4-copy-upi-btn" style="background:#000000;color:#fff;border:none;padding:8px 14px;border-radius:0px;font-size:12px;font-weight:600;cursor:pointer;">COPY</button>
+          <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:11px;font-weight: 500;color:#555555;text-transform:uppercase;letter-spacing:0.8px;">Store UPI ID (VPA)</label>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+              <code style="background:#fafafa;border:1px solid #e5e5e5;padding:9px 12px;border-radius:0px;font-size:13.5px;font-weight:500;color:#111111;flex:1;">${upiId}</code>
+              <button type="button" id="lane4-copy-upi-btn" style="background:#000000;color:#ffffff;border:1px solid #000000;padding:9px 16px;border-radius:0px;font-size:11px;font-weight:500;letter-spacing:0.8px;text-transform:uppercase;cursor:pointer;">COPY</button>
             </div>
-            <div style="font-size:12px;color:#475569;margin-top:4px;">Account Name: <strong>${upiName}</strong></div>
+            <div style="font-size:12px;color:#666666;margin-top:5px;">Account Name: <strong style="color:#111111;font-weight:500;">${upiName}</strong></div>
           </div>
-          <div style="font-size:12.5px;color:#222222;line-height:1.5;background:#ffffff;padding:12px;border-radius:0px;border-left:3px solid #0f172a;">
+          <div style="font-size:12.5px;color:#444444;line-height:1.55;background:#fafafa;padding:12px 14px;border-radius:0px;border:1px solid #eeeeee;border-left:2px solid #000000;">
             ${instructions}
           </div>
         </div>
       </div>
 
-      <hr style="border:none;border-top:1px solid #f1f5f9;margin:20px 0;" />
+      <hr style="border:none;border-top:1px solid #eeeeee;margin:20px 0;" />
 
       <!-- Payment Proof Form Inputs -->
       <div style="margin-bottom:16px;">
-        <label style="display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;color:#000000;">
-          12-Digit UPI Transaction / UTR Reference ID <span style="color:#ef4444;">*</span>
+        <label style="display:block;font-size:11px;font-weight: 500;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;color:#333333;">
+          12-Digit UPI Transaction / UTR Reference ID <span style="color:#b91c1c;">*</span>
         </label>
-        <input type="text" id="lane4-utr-input" placeholder="e.g. 432109876543" maxlength="12" pattern="[0-9]{12}" inputmode="numeric" required style="width:100%;padding:12px 14px;border:1.5px solid #000000;border-radius:0px;font-size:15px;font-weight:600;letter-spacing:0.4px;box-sizing:border-box;" />
-        <div style="font-size:12px;color:#64748b;margin-top:4px;">Found in your GPay / PhonePe / Paytm payment receipt as UTR or UPI Ref No.</div>
+        <input type="text" id="lane4-utr-input" class="lane4-checkout-input" placeholder="e.g. 432109876543" maxlength="12" pattern="[0-9]{12}" inputmode="numeric" required style="letter-spacing:0.5px;font-weight:500;" />
+        <div style="font-size:12px;color:#737373;margin-top:5px;">Found in your GPay / PhonePe / Paytm payment receipt as UTR or UPI Ref No.</div>
       </div>
 
       <div>
-        <label style="display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;color:#000000;">
-          Upload Payment Screenshot Proof <span style="color:#ef4444;">*</span>
+        <label style="display:block;font-size:11px;font-weight: 500;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;color:#333333;">
+          Upload Payment Screenshot Proof <span style="color:#b91c1c;">*</span>
         </label>
-        <input type="file" id="lane4-screenshot-file" accept="image/jpeg,image/png,image/webp" required style="display:block;width:100%;padding:12px;border:1.5px dashed #94a3b8;border-radius:0px;background:#ffffff;cursor:pointer;font-size:13px;box-sizing:border-box;" />
+        <input type="file" id="lane4-screenshot-file" accept="image/jpeg,image/png,image/webp" required style="display:block;width:100%;padding:12px;border:1px solid #dcdcdc;border-radius:0px;background:#fafafa;cursor:pointer;font-size:13px;color:#111111;box-sizing:border-box;" />
         <div id="lane4-screenshot-preview" style="display:none;margin-top:10px;text-align:center;">
-          <img id="lane4-preview-img" src="" alt="Payment Proof Preview" style="max-height:160px;border:1px solid #cbd5e1;border-radius:0px;box-shadow:0 4px 8px rgba(0,0,0,0.08);" />
+          <img id="lane4-preview-img" src="" alt="Payment Proof Preview" style="max-height:160px;border:1px solid #dcdcdc;border-radius:0px;" />
         </div>
       </div>
     `;
@@ -580,14 +585,14 @@
     const qrCard = document.getElementById('lane4-checkout-qr-card');
     if (qrCard) {
       qrCard.onmouseenter = () => {
-        qrCard.style.transform = 'translateY(-2px) scale(1.02)';
-        qrCard.style.boxShadow = '0 10px 24px -4px rgba(15,23,42,0.15)';
-        qrCard.style.borderColor = '#0f172a';
+        qrCard.style.transform = 'translateY(-2px)';
+        qrCard.style.boxShadow = '0 10px 24px -4px rgba(0,0,0,0.12)';
+        qrCard.style.borderColor = '#000000';
       };
       qrCard.onmouseleave = () => {
-        qrCard.style.transform = 'translateY(0) scale(1)';
-        qrCard.style.boxShadow = '0 4px 12px rgba(15,23,42,0.06)';
-        qrCard.style.borderColor = '#cbd5e1';
+        qrCard.style.transform = 'translateY(0)';
+        qrCard.style.boxShadow = 'none';
+        qrCard.style.borderColor = '#000000';
       };
       qrCard.onclick = () => openEnlargedQrModal();
     }
@@ -597,11 +602,13 @@
     if (copyBtn) {
       copyBtn.onclick = () => {
         navigator.clipboard.writeText(upiId);
-        copyBtn.textContent = 'COPIED!';
+        copyBtn.textContent = 'COPIED';
         copyBtn.style.background = '#16a34a';
+        copyBtn.style.borderColor = '#16a34a';
         setTimeout(() => {
           copyBtn.textContent = 'COPY';
-          copyBtn.style.background = '#0f172a';
+          copyBtn.style.background = '#000000';
+          copyBtn.style.borderColor = '#000000';
         }, 1500);
       };
     }
@@ -653,7 +660,7 @@
             <div style="display:flex;align-items:center;gap:12px;">
               <img src="6424266ea05809dff501d86e/lane4-logo.png" alt="LANE4" style="height:24px;width:auto;" />
               <div style="display:flex;flex-direction:column;border-left:1px solid #e5e5e5;padding-left:12px;line-height:1.2;">
-                <span style="font-size:10px;font-weight:600;letter-spacing:0.8px;color:#222;text-transform:uppercase;">INSTANT SETTLEMENT</span>
+                <span style="font-size:10px;font-weight: 500;letter-spacing:0.8px;color:#222;text-transform:uppercase;">INSTANT SETTLEMENT</span>
                 <span style="font-size:9px;font-weight:400;letter-spacing:0.5px;color:#888;text-transform:uppercase;">SCAN &amp; PAY VIA UPI</span>
               </div>
             </div>
@@ -664,8 +671,8 @@
           <div style="padding:24px 24px 20px;text-align:center;">
             ${currentAmount ? `
               <div style="background:#fafafa;border:1px solid #eeeeee;border-radius:0px;padding:8px 18px;display:inline-block;margin-bottom:16px;">
-                <span style="font-size:10.5px;font-weight:600;color:#777777;letter-spacing:0.8px;text-transform:uppercase;margin-right:6px;">PAYABLE:</span>
-                <span style="font-size:18px;font-weight:600;color:#111111;letter-spacing:0.2px;">${currentAmount}</span>
+                <span style="font-size:10.5px;font-weight: 500;color:#777777;letter-spacing:0.8px;text-transform:uppercase;margin-right:6px;">PAYABLE:</span>
+                <span style="font-size:18px;font-weight: 500;color:#111111;letter-spacing:0.2px;">${currentAmount}</span>
               </div>
             ` : ''}
             <div style="background:#ffffff;border:1px solid #000000;border-radius:0px;padding:16px;display:inline-block;box-shadow:0 8px 24px -4px rgba(0,0,0,0.08);margin-bottom:16px;">
@@ -676,7 +683,7 @@
             </div>
             <div style="background:#fafafa;border:1px solid #eeeeee;border-radius:0px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;">
               <div style="min-width:0;">
-                <div style="font-size:9.5px;font-weight:600;color:#888888;letter-spacing:0.7px;text-transform:uppercase;">Store UPI ID (VPA)</div>
+                <div style="font-size:9.5px;font-weight: 500;color:#888888;letter-spacing:0.7px;text-transform:uppercase;">Store UPI ID (VPA)</div>
                 <div style="font-size:13px;font-weight:500;color:#111111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;">${upiId}</div>
               </div>
               <button type="button" id="lane4-modal-copy-btn" style="background:#000000;color:#ffffff;border:1px solid #000000;padding:6px 14px;border-radius:0px;font-size:11px;font-weight:500;letter-spacing:0.8px;text-transform:uppercase;cursor:pointer;white-space:nowrap;flex-shrink:0;">COPY</button>
@@ -714,7 +721,7 @@
   function clearFieldError(inputEl) {
     if (!inputEl) return;
     inputEl.classList.remove('lane4-input-has-error');
-    inputEl.style.borderColor = '#cbd5e1';
+    inputEl.style.borderColor = '#dcdcdc';
     inputEl.style.backgroundColor = '';
     const parent = inputEl.parentElement;
     if (parent) {
@@ -728,7 +735,7 @@
     document.querySelectorAll('#lane4-checkout-form-alert').forEach(e => e.remove());
     document.querySelectorAll('.lane4-input-has-error').forEach(el => {
       el.classList.remove('lane4-input-has-error');
-      el.style.borderColor = '#cbd5e1';
+      el.style.borderColor = '#dcdcdc';
       el.style.backgroundColor = '';
     });
   }
@@ -736,8 +743,8 @@
   function setFieldError(inputEl, message) {
     if (!inputEl) return;
     inputEl.classList.add('lane4-input-has-error');
-    inputEl.style.borderColor = '#ef4444';
-    inputEl.style.backgroundColor = '#fff5f5';
+    inputEl.style.borderColor = '#b91c1c';
+    inputEl.style.backgroundColor = '#fef2f2';
 
     const parent = inputEl.parentElement;
     if (parent) {
@@ -745,7 +752,7 @@
       if (!errEl) {
         errEl = document.createElement('div');
         errEl.className = 'lane4-field-inline-error';
-        errEl.style.cssText = 'color:#dc2626;font-size:12px;font-weight:600;margin-top:4px;line-height:1.4;';
+        errEl.style.cssText = 'color:#b91c1c;font-size:11.5px;font-weight:500;margin-top:5px;line-height:1.35;';
         parent.appendChild(errEl);
       }
       errEl.innerHTML = `<span>${message}</span>`;
@@ -821,12 +828,28 @@
 
     const phoneEl = document.getElementById('lane4-checkout-phone');
     if (phoneEl) {
-      phoneEl.setAttribute('maxlength', '10');
-      phoneEl.setAttribute('inputmode', 'numeric');
+      phoneEl.setAttribute('maxlength', '16');
+      phoneEl.setAttribute('inputmode', 'tel');
+      if (phoneEl.value) phoneEl.value = normalizeIndianPhoneInput(phoneEl.value);
       phoneEl.addEventListener('input', (e) => {
-        const cleaned = e.target.value.replace(/\D/g, '').slice(0, 10);
-        if (e.target.value !== cleaned) e.target.value = cleaned;
+        const raw = e.target.value;
+        const hasLetters = /[a-zA-Z]/.test(raw);
+        if (hasLetters) {
+          e.target.value = raw.replace(/[^0-9+\-\s()]/g, '');
+        }
+        const rawDigits = e.target.value.replace(/\D/g, '');
+        if (rawDigits.length > 10) {
+          e.target.value = normalizeIndianPhoneInput(e.target.value);
+        }
         clearFieldError(phoneEl);
+      });
+      phoneEl.addEventListener('paste', () => {
+        setTimeout(() => {
+          phoneEl.value = normalizeIndianPhoneInput(phoneEl.value);
+        }, 0);
+      });
+      phoneEl.addEventListener('blur', () => {
+        if (phoneEl.value) phoneEl.value = normalizeIndianPhoneInput(phoneEl.value);
       });
     }
   }
@@ -881,7 +904,9 @@
         city = document.querySelector('input[name="address_city"]')?.value.trim() || '';
       }
       const postalCode = pinEl?.value.trim() || '';
-      const phone = phoneEl?.value.trim() || '';
+      const rawPhone = phoneEl?.value.trim() || '';
+      const phone = normalizeIndianPhoneInput(rawPhone);
+      if (phoneEl && phone) phoneEl.value = phone;
       const utr = utrEl?.value.trim() || '';
       const screenshot = fileInput?.files ? fileInput.files[0] : null;
 
@@ -894,8 +919,8 @@
       if (!name || name.length < 2) {
         errors.push({ el: nameEl, name: 'Full Name', msg: 'Please enter your full delivery name.' });
       }
-      if (!phone || (window.LANE4_VALIDATION ? !window.LANE4_VALIDATION.isValidIndianPhone(phone) : phone.length !== 10)) {
-        errors.push({ el: phoneEl, name: 'Mobile Phone', msg: 'Please enter a valid 10-digit Indian mobile number.' });
+      if (!rawPhone || /[a-zA-Z]/.test(rawPhone) || !/^[6-9]\d{9}$/.test(phone) || rawPhone.replace(/\D/g, '').length < 10) {
+        errors.push({ el: phoneEl, name: 'Mobile Phone', msg: 'Please enter a valid 10-digit Indian mobile number (e.g. 9876543210).' });
       }
       if (!line1) {
         errors.push({ el: line1El, name: 'Street Address', msg: 'Please enter your complete street address.' });
@@ -968,7 +993,9 @@
           body: JSON.stringify(orderPayload)
         });
 
-        const createdOrder = orderRes.data;
+        const createdOrder = Object.assign({}, orderRes.data || {}, {
+          shippingAddress: (orderRes.data && orderRes.data.shippingAddress) || orderPayload.shippingAddress
+        });
 
         // Immediately clear cart upon order placement
         try {
@@ -1102,7 +1129,7 @@
           ${it.size || it.color ? `<span style="color:#777777;font-size:12px;"> (${[it.size, it.color].filter(Boolean).join(', ')})</span>` : ''}
           <span style="color:#777777;"> &times; ${it.quantity}</span>
         </div>
-        <div style="font-weight:600;color:#111111;">${it.totalPriceFormatted || window.LANE4.formatINR(it.pricePaise * it.quantity)}</div>
+        <div style="font-weight: 500;color:#111111;">${it.totalPriceFormatted || window.LANE4.formatINR(it.pricePaise * it.quantity)}</div>
       </div>
     `).join('');
 
@@ -1117,7 +1144,7 @@
         
         <h2 style="font-size:20px;font-weight:500;color:#111111;margin:0 0 8px 0;letter-spacing:0.8px;text-transform:uppercase;">ORDER PLACED &amp; PAYMENT SUBMITTED</h2>
         
-        <div style="display:inline-flex;align-items:center;gap:6px;background:#fefce8;color:#854d0e;padding:4px 12px;border-radius:0px;font-weight:600;font-size:10.5px;letter-spacing:0.6px;text-transform:uppercase;margin-bottom:20px;border:1px solid #fef08a;">
+        <div style="display:inline-flex;align-items:center;gap:6px;background:#fefce8;color:#854d0e;padding:4px 12px;border-radius:0px;font-weight: 500;font-size:10.5px;letter-spacing:0.6px;text-transform:uppercase;margin-bottom:20px;border:1px solid #fef08a;">
           <span style="width:6px;height:6px;border-radius:50%;background:#ca8a04;display:inline-block;"></span>
           Status: Verification Pending
         </div>
@@ -1134,19 +1161,19 @@
           </div>
           
           <div style="margin-bottom:12px;">
-            <div style="font-size:11.5px;font-weight:600;text-transform:uppercase;color:#333333;letter-spacing:0.7px;margin-bottom:4px;">Items in this Order</div>
+            <div style="font-size:11.5px;font-weight: 500;text-transform:uppercase;color:#333333;letter-spacing:0.7px;margin-bottom:4px;">Items in this Order</div>
             ${itemsPurchasedHtml}
           </div>
 
           <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:12px;margin-top:14px;padding-top:12px;border-top:1px solid #eeeeee;">
             <div>
-              <span style="color:#777777;font-size:11.5px;display:block;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:3px;">Shipping To</span>
+              <span style="color:#777777;font-size:11.5px;display:block;font-weight: 500;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:3px;">Shipping To</span>
               <strong style="font-weight:500;color:#111111;">${order.shippingAddress ? `${order.shippingAddress.addressee}, ${order.shippingAddress.addressLine1}${order.shippingAddress.addressLine2 ? ', ' + order.shippingAddress.addressLine2 : ''}, ${order.shippingAddress.city}, ${order.shippingAddress.state} - ${order.shippingAddress.postalCode}` : ''}</strong>
             </div>
             <div>
-              <span style="color:#777777;font-size:11.5px;display:block;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:3px;">Payment Info</span>
+              <span style="color:#777777;font-size:11.5px;display:block;font-weight: 500;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:3px;">Payment Info</span>
               <span style="color:#333333;">Method: <strong>Manual UPI Instant Transfer</strong></span><br/>
-              ${utrNumber ? `<span style="color:#333333;">12-Digit Ref (UTR): <code style="background:#f5f5f5;border:1px solid #e5e5e5;padding:2px 6px;border-radius:0px;font-weight:600;color:#111111;">${utrNumber}</code></span>` : ''}
+              ${utrNumber ? `<span style="color:#333333;">12-Digit Ref (UTR): <code style="background:#f5f5f5;border:1px solid #e5e5e5;padding:2px 6px;border-radius:0px;font-weight: 500;color:#111111;">${utrNumber}</code></span>` : ''}
             </div>
           </div>
         </div>

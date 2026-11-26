@@ -3,13 +3,26 @@ const { getDb, getAuth } = require('../config/firebaseAdmin');
 const { sendMail, wrapBrandedTemplate } = require('../config/email');
 const { logger } = require('../utils/logger');
 
+function normalizeIndianPhoneBackend(phone) {
+  if (!phone) return '';
+  let digits = String(phone).replace(/\D/g, '');
+  if (digits.length > 10 && digits.startsWith('91')) digits = digits.slice(2);
+  else if (digits.length > 10 && digits.startsWith('0')) digits = digits.slice(1);
+  return digits.slice(0, 10);
+}
+
 class AuthService {
   async registerCustomer({ email, password, displayName, phone = '' }) {
     const auth = getAuth();
     const db = getDb();
     if (!auth || !db) throw new Error('Authentication service unavailable');
 
-    const cleanEmail = email.toLowerCase().trim();
+    const cleanEmail = (email || '').toLowerCase().trim();
+    if (!cleanEmail || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(cleanEmail)) {
+      const err = new Error('Please provide a valid email address.');
+      err.statusCode = 400;
+      throw err;
+    }
 
     // Prevent administrator accounts from being registered as customer storefront accounts
     const bootstrapAdmin = 'admin@lane4swim.in';
@@ -54,7 +67,7 @@ class AuthService {
       uid: userRecord.uid,
       email: cleanEmail,
       displayName: displayName.trim(),
-      phoneNumber: phone.trim(),
+      phoneNumber: normalizeIndianPhoneBackend(phone),
       passwordHash,
       emailVerified: false,
       role: 'customer',
@@ -116,7 +129,7 @@ class AuthService {
     };
 
     if (data.displayName !== undefined) updates.displayName = data.displayName.trim();
-    if (data.phoneNumber !== undefined) updates.phoneNumber = data.phoneNumber.trim();
+    if (data.phoneNumber !== undefined) updates.phoneNumber = normalizeIndianPhoneBackend(data.phoneNumber);
 
     await docRef.set(updates, { merge: true });
     const updated = await docRef.get();
@@ -135,7 +148,7 @@ class AuthService {
     const newAddress = {
       addressId: addressRef.id,
       addressee: (addressData.addressee || '').trim(),
-      phone: (addressData.phone || '').trim(),
+      phone: normalizeIndianPhoneBackend(addressData.phone || ''),
       addressLine1: (addressData.addressLine1 || '').trim(),
       addressLine2: addressData.addressLine2 ? addressData.addressLine2.trim() : '',
       city: (addressData.city || '').trim(),

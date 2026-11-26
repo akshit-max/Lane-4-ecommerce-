@@ -76,17 +76,53 @@ class ReviewService {
       throw new Error('Rating must be an integer between 1 and 5.');
     }
 
+    let productName = '';
+    let resolvedProductId = productId;
+    let resolvedSlug = productId;
+    try {
+      let prodDoc = await db.collection('products').doc(productId).get();
+      if (!prodDoc.exists) {
+        const bySlug = await db.collection('products').where('slug', '==', productId).limit(1).get();
+        if (!bySlug.empty) prodDoc = bySlug.docs[0];
+      }
+      if (prodDoc && prodDoc.exists) {
+        const pd = prodDoc.data();
+        productName = pd.name || '';
+        resolvedProductId = prodDoc.id;
+        resolvedSlug = pd.slug || prodDoc.id;
+      }
+    } catch (_) {}
+
+    let isVerifiedPurchase = false;
+    if (customerId) {
+      try {
+        const ordSnap = await db.collection('orders').where('customerId', '==', customerId).get();
+        isVerifiedPurchase = ordSnap.docs.some(d => {
+          const ord = d.data();
+          const isPaidOrDelivered = ['verified', 'paid'].includes(ord.paymentStatus) || ord.status === 'delivered';
+          if (!isPaidOrDelivered) return false;
+          return (ord.items || []).some(it =>
+            it.productId === resolvedProductId ||
+            it.productId === productId ||
+            it.slug === resolvedSlug ||
+            it.slug === productId
+          );
+        });
+      } catch (_) {}
+    }
+
     const docRef = db.collection('reviews').doc();
     const newReview = {
       reviewId: docRef.id,
       productId,
+      productName,
       customerId,
       authorName: (authorName || 'Verified Swimmer').trim(),
       rating: numRating,
       title: (title || '').trim(),
       comment: comment.trim(),
       status: 'pending', // Requires admin moderation
-      isVerifiedPurchase: Boolean(customerId),
+      isVerifiedPurchase,
       createdAt: new Date(),
       updatedAt: new Date()
     };
