@@ -30,12 +30,18 @@ const HSN_TAX_MAP = {
   // Caps
   'surge-racing-cap': { hsn: '6506', gstRate: 18, description: 'Silicone Racing Cap' },
   'lycra-training-cap': { hsn: '6506', gstRate: 18, description: 'Lycra Training Cap' },
+  'swimming-cap': { hsn: '6506', gstRate: 18, description: 'Competition Swimming Cap' },
+  'racing-caps': { hsn: '6506', gstRate: 18, description: 'Swim Headgear' },
   'caps': { hsn: '6506', gstRate: 18, description: 'Swim Headgear' },
 
   // Training Gear
   'swim-training-fins': { hsn: '9506', gstRate: 18, description: 'Silicone Training Fins' },
   'pro-kickboard-hydro-flow': { hsn: '9506', gstRate: 18, description: 'Hydro Flow Kickboard' },
-  'training-gear': { hsn: '9506', gstRate: 18, description: 'Swim Training Equipment' }
+  'pro-kickboard-nagpur-edition': { hsn: '9506', gstRate: 18, description: 'Pro Kickboard Nagpur Edition' },
+  'training-gear': { hsn: '9506', gstRate: 18, description: 'Swim Training Equipment' },
+  'fins-and-flippers': { hsn: '9506', gstRate: 18, description: 'Fins & Flippers' },
+  'hand-bands': { hsn: '9506', gstRate: 18, description: 'Swim Resistance Bands' },
+  'accessories': { hsn: '9506', gstRate: 18, description: 'Swimming Accessories' }
 };
 
 const DEFAULT_TAX_FALLBACK = {

@@ -1209,54 +1209,62 @@ var formatDateString = window.formatDateString || formatDateTime;
     const buyerAddr1 = [inv.buyer.addressLine1, inv.buyer.addressLine2].filter(Boolean).join(', ');
     const buyerCityStatePin = [inv.buyer.city, inv.buyer.state].filter(Boolean).join(', ') + (inv.buyer.postalCode ? ` - ${inv.buyer.postalCode}` : '');
     const seal = (inv.integrity && inv.integrity.fingerprint) ? inv.integrity.fingerprint : (inv.sha256Fingerprint || 'VERIFIED');
+    const payStatusLabel = String(inv.paymentStatus || 'paid').replace(/_/g, ' ').toUpperCase();
+    const payMethodLabel = String(inv.paymentMethod || 'UPI_QR').replace(/_/g, ' ').toUpperCase();
 
     return `
-      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;color:#111827;line-height:1.45;background:#ffffff;${forPrint ? 'padding:0;max-width:100%;' : ''}">
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;color:#111111;line-height:1.45;background:#ffffff;${forPrint ? 'padding:0;max-width:100%;' : ''}">
         ${isProvisional ? `
-          <div style="background:#fffbeb;border:1px solid #f59e0b;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#92400e;">
+          <div style="background:#fffbeb;border:1.5px solid #d97706;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#92400e;">
             <strong>PROVISIONAL ESTIMATE / DRAFT &mdash; NOT A CERTIFIED TAX INVOICE:</strong> Store GSTIN registration is pending confirmation.
           </div>
         ` : ''}
 
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #111827;padding-bottom:14px;margin-bottom:16px;gap:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #000000;padding-bottom:14px;margin-bottom:16px;gap:16px;">
           <div>
-            <div style="font-size:19px;font-weight:700;letter-spacing:0.2px;text-transform:uppercase;color:#111827;">${escapeHtml(inv.seller.legalName || 'The Lane4 Performance Store')}</div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:#64748b;margin-bottom:3px;">Authorized Swimwear &amp; Gear Retail</div>
+            <div style="font-size:18px;font-weight:700;letter-spacing:0.3px;text-transform:uppercase;color:#000000;">${escapeHtml(inv.seller.legalName || 'The Lane4 Performance Store')}</div>
             <div style="font-size:12px;color:#475569;margin-top:3px;">${escapeHtml(sellerAddr)}</div>
-            <div style="font-size:12px;color:#475569;margin-top:2px;">Email: ${escapeHtml(inv.seller.contactEmail || 'Lane4performancestore@gmail.com')} &bull; Phone: ${escapeHtml(inv.seller.contactPhone || '+91 79725 41297')}</div>
-            <div style="font-size:12px;color:#111827;margin-top:4px;">
-              <strong>GSTIN:</strong> ${inv.seller.gstin && inv.seller.isCertifiedGstin ? `<span style="font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-weight:600;">${escapeHtml(inv.seller.gstin)}</span>` : `<span style="color:#b45309;font-weight:600;">Unregistered / Pending</span>`}
+            <div style="font-size:11.5px;color:#475569;margin-top:2px;">${escapeHtml(inv.seller.contactEmail || 'Lane4performancestore@gmail.com')} &bull; ${escapeHtml(inv.seller.contactPhone || '+91 79725 41297')}</div>
+            <div style="font-size:12px;color:#000000;margin-top:5px;">
+              <strong>GSTIN:</strong> ${inv.seller.gstin && inv.seller.isCertifiedGstin ? `<span style="font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-weight:600;background:#f1f5f9;padding:2px 6px;border:1px solid #cbd5e1;">${escapeHtml(inv.seller.gstin)}</span>` : `<span style="color:#b45309;font-weight:600;">Unregistered / Pending</span>`}
               &nbsp;&bull;&nbsp; <strong>State:</strong> ${escapeHtml(inv.seller.state || 'Maharashtra')} (${escapeHtml(inv.seller.stateCode || '27')})
             </div>
           </div>
           <div style="text-align:right;flex-shrink:0;">
-            <div style="font-size:12px;font-weight:700;color:${isProvisional ? '#b45309' : '#0369a1'};text-transform:uppercase;letter-spacing:1.2px;">${isProvisional ? 'Provisional Invoice' : 'Tax Invoice'}</div>
-            <div style="font-size:16px;font-weight:700;color:#111827;margin-top:3px;font-variant-numeric:tabular-nums;">${escapeHtml(inv.invoiceNumber)}</div>
-            <div style="font-size:12px;color:#475569;margin-top:2px;">Invoice Date: <strong>${formatDateTime(inv.invoiceDate, true)}</strong></div>
-            <div style="font-size:12px;color:#475569;">Order Ref: <strong>#${escapeHtml(inv.orderNumber)}</strong></div>
+            <div style="display:inline-block;padding:4px 10px;border:1.5px solid ${isProvisional ? '#b45309' : '#000000'};background:${isProvisional ? '#fffbeb' : '#000000'};color:${isProvisional ? '#92400e' : '#ffffff'};font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;">${isProvisional ? 'Provisional Invoice' : 'Tax Invoice'}</div>
+            <div style="font-size:15.5px;font-weight:700;color:#000000;margin-top:6px;font-variant-numeric:tabular-nums;">${escapeHtml(inv.invoiceNumber)}</div>
+            <div style="font-size:11.5px;color:#475569;margin-top:2px;">Invoice Date: <strong style="color:#111111;">${formatDateTime(inv.invoiceDate, true)}</strong></div>
+            <div style="font-size:11.5px;color:#475569;">Order Ref: <strong style="color:#111111;">#${escapeHtml(inv.orderNumber)}</strong></div>
           </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:1.3fr 1fr;border:1px solid #cbd5e1;background:#f8fafc;margin-bottom:16px;font-size:12px;">
+        <div style="display:grid;grid-template-columns:1.35fr 1fr;border:1px solid #cbd5e1;background:#f8fafc;margin-bottom:16px;font-size:12px;">
           <div style="padding:12px 14px;border-right:1px solid #cbd5e1;">
-            <div style="font-size:10.5px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px;">Billed &amp; Shipped To</div>
-            <div style="font-weight:700;color:#0f172a;font-size:13px;margin-bottom:2px;">${escapeHtml(inv.buyer.name || 'Customer')}</div>
+            <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:5px;">Billed &amp; Shipped To</div>
+            <div style="font-weight:700;color:#000000;font-size:13px;margin-bottom:2px;">${escapeHtml(inv.buyer.name || 'Customer')}</div>
             <div style="color:#334155;">${escapeHtml(buyerAddr1)}</div>
             <div style="color:#334155;">${escapeHtml(buyerCityStatePin)}</div>
-            <div style="color:#475569;margin-top:3px;">Phone: ${escapeHtml(inv.buyer.phone || '&mdash;')} &bull; Email: ${escapeHtml(inv.buyer.email || '&mdash;')}</div>
+            <div style="color:#475569;margin-top:4px;font-size:11.5px;">Phone: ${escapeHtml(inv.buyer.phone || '&mdash;')} &bull; Email: ${escapeHtml(inv.buyer.email || '&mdash;')}</div>
           </div>
-          <div style="padding:12px 14px;">
-            <div style="font-size:10.5px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px;">Supply &amp; Payment Details</div>
-            <div><strong>Place of Supply:</strong> ${escapeHtml(inv.placeOfSupply.state)} (${escapeHtml(inv.placeOfSupply.stateCode)})</div>
-            <div style="color:#0369a1;font-weight:600;margin-top:2px;">${escapeHtml(inv.placeOfSupply.taxType)}</div>
-            <div style="margin-top:4px;"><strong>Payment Method:</strong> ${escapeHtml(inv.paymentMethod || 'UPI QR')}</div>
-            <div style="color:#15803d;font-weight:600;margin-top:2px;">Status: ${(inv.paymentStatus || 'paid').toUpperCase()}</div>
+          <div style="padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between;">
+            <div>
+              <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:5px;">Place of Supply &amp; Tax Regime</div>
+              <div style="font-weight:700;color:#000000;">${escapeHtml(inv.placeOfSupply.state)} (${escapeHtml(inv.placeOfSupply.stateCode)})</div>
+              <div style="font-size:11.5px;color:#111111;font-weight:600;margin-top:2px;">${escapeHtml(inv.placeOfSupply.taxType)}</div>
+            </div>
+            <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #cbd5e1;font-size:11.5px;">
+              <span style="color:#475569;">Payment:</span>
+              <strong style="color:${payStatusLabel === 'VERIFIED' || payStatusLabel === 'PAID' ? '#15803d' : '#b45309'};">${escapeHtml(payStatusLabel)}</strong>
+              <span style="color:#64748b;">(${escapeHtml(payMethodLabel)})</span>
+            </div>
           </div>
         </div>
 
         <div style="overflow-x:auto;margin-bottom:16px;">
-          <table style="width:100%;border-collapse:collapse;border:1px solid #cbd5e1;">
+          <table style="width:100%;border-collapse:collapse;border:1px solid #111111;">
             <thead>
-              <tr style="background:#111827;color:#ffffff;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;">
+              <tr style="background:#000000;color:#ffffff;font-size:10.5px;text-transform:uppercase;letter-spacing:0.6px;">
                 <th style="padding:9px 7px;text-align:center;width:32px;">#</th>
                 <th style="padding:9px 7px;text-align:left;">Item Description</th>
                 <th style="padding:9px 7px;text-align:center;">HSN/SAC</th>
@@ -1279,16 +1287,18 @@ var formatDateString = window.formatDateString || formatDateTime;
           </table>
         </div>
 
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
-          <div style="flex:1;min-width:220px;border:1px solid #e2e8f0;background:#f8fafc;padding:10px 14px;font-size:12px;">
-            <div style="font-size:10.5px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">Amount Chargeable (in words)</div>
-            <div style="font-weight:600;color:#0f172a;">${escapeHtml(amountWords)}</div>
-            ${Number(inv.discountPaise || 0) > 0 ? `<div style="font-size:11.5px;color:#475569;margin-top:6px;">Pre-tax Discount Applied: <strong>&#8377;${escapeHtml(inv.discountFormatted || '0.00')}</strong></div>` : ''}
+        <div style="display:flex;justify-content:space-between;align-items:stretch;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+          <div style="flex:1;min-width:220px;border:1px solid #cbd5e1;background:#f8fafc;padding:12px 14px;font-size:12px;display:flex;flex-direction:column;justify-content:space-between;">
+            <div>
+              <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:4px;">Amount Chargeable (in words)</div>
+              <div style="font-weight:700;color:#000000;font-size:12.5px;">${escapeHtml(amountWords)}</div>
+            </div>
+            ${Number(inv.discountPaise || 0) > 0 ? `<div style="font-size:11.5px;color:#475569;margin-top:8px;padding-top:6px;border-top:1px dashed #cbd5e1;">Pre-tax Discount Applied: <strong style="color:#000000;">&#8377;${escapeHtml(inv.discountFormatted || '0.00')}</strong></div>` : '<div style="font-size:11px;color:#64748b;margin-top:8px;">All item &amp; shipping prices are inclusive of applicable GST.</div>'}
           </div>
-          <div style="width:290px;border:1px solid #cbd5e1;background:#ffffff;padding:10px 14px;font-size:12.5px;font-variant-numeric:tabular-nums;">
+          <div style="width:290px;border:1px solid #111111;background:#ffffff;padding:12px 14px;font-size:12.5px;font-variant-numeric:tabular-nums;">
             <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
               <span style="color:#475569;">Total Taxable Value:</span>
-              <span style="font-weight:600;">&#8377;${escapeHtml(summary.totalTaxableFormatted || '0.00')}</span>
+              <span style="font-weight:600;color:#111111;">&#8377;${escapeHtml(summary.totalTaxableFormatted || '0.00')}</span>
             </div>
             ${!isInterState ? `
               <div style="display:flex;justify-content:space-between;margin-bottom:4px;color:#475569;">
@@ -1305,26 +1315,26 @@ var formatDateString = window.formatDateString || formatDateTime;
                 <span>&#8377;${escapeHtml(summary.totalIgstFormatted || '0.00')}</span>
               </div>
             `}
-            <div style="display:flex;justify-content:space-between;margin-bottom:7px;color:#0369a1;font-weight:600;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;color:#111111;font-weight:600;">
               <span>Total GST Tax:</span>
               <span>&#8377;${escapeHtml(summary.totalTaxFormatted || '0.00')}</span>
             </div>
-            <div style="border-top:2px solid #111827;padding-top:7px;display:flex;justify-content:space-between;font-size:14.5px;font-weight:700;color:#111827;">
+            <div style="border-top:2px solid #000000;padding-top:8px;display:flex;justify-content:space-between;font-size:15px;font-weight:700;color:#000000;">
               <span>Grand Total:</span>
               <span>&#8377;${escapeHtml(summary.grandTotalFormatted || '0.00')}</span>
             </div>
           </div>
         </div>
 
-        <div style="display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid #e2e8f0;padding-top:12px;gap:16px;flex-wrap:wrap;font-size:11px;color:#64748b;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid #cbd5e1;padding-top:12px;gap:16px;flex-wrap:wrap;font-size:11px;color:#64748b;">
           <div style="flex:1;min-width:240px;">
-            <div><strong>Declaration:</strong> We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.</div>
-            <div style="margin-top:4px;"><strong>Digital Integrity Seal:</strong> <span style="font-family:ui-monospace,SFMono-Regular,Consolas,monospace;">${escapeHtml(String(seal).slice(0, 32))}...</span></div>
+            <div><strong style="color:#334155;">Declaration:</strong> We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.</div>
+            <div style="margin-top:4px;"><strong style="color:#334155;">Digital Integrity Seal:</strong> <span style="font-family:ui-monospace,SFMono-Regular,Consolas,monospace;">${escapeHtml(String(seal).slice(0, 32))}...</span></div>
             <div style="margin-top:2px;">${isProvisional ? 'Provisional operational estimate pending GST certification.' : 'Computer-generated Tax Invoice issued in compliance with CGST Act, 2017. Requires no physical signature.'}</div>
           </div>
-          <div style="text-align:right;min-width:170px;color:#111827;">
-            <div style="font-weight:700;">For ${escapeHtml(inv.seller.legalName || 'The Lane4 Performance Store')}</div>
-            <div style="margin-top:22px;border-top:1px solid #cbd5e1;padding-top:3px;font-size:10.5px;color:#475569;">Authorised Signatory</div>
+          <div style="text-align:right;min-width:185px;color:#000000;">
+            <div style="font-weight:700;font-size:11.5px;">For ${escapeHtml(inv.seller.legalName || 'The Lane4 Performance Store')}</div>
+            <div style="margin-top:26px;border-top:1px solid #111111;padding-top:4px;font-size:10.5px;color:#475569;">Authorised Signatory</div>
           </div>
         </div>
       </div>
@@ -1335,14 +1345,20 @@ var formatDateString = window.formatDateString || formatDateTime;
     const modalHtml = `
       <div id="lane4-printable-invoice">
         ${buildInvoiceDocumentHtml(inv, false)}
-        <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:14px;margin-top:14px;border-top:1px solid #e2e8f0;">
-          <button type="button" class="btn btn-outline" style="font-size:12px;padding:8px 14px;cursor:pointer;" onclick="hideModal()">
-            Close
+        <div class="lane4-invoice-actions" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding-top:14px;margin-top:16px;border-top:1px solid #e2e8f0;flex-wrap:wrap;">
+          <button type="button" class="btn btn-outline" style="font-size:12px;padding:8px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;border-radius:0px;" onclick="window.downloadInvoiceJson('${inv.invoiceNumber}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>Download JSON</span>
           </button>
-          <button type="button" class="btn btn-primary" style="background:#111111;color:#fff;font-size:12px;padding:8px 18px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" onclick="window.printInvoice()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-            <span>Print / Save PDF</span>
-          </button>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <button type="button" class="btn btn-outline" style="font-size:12px;padding:8px 14px;cursor:pointer;border-radius:0px;" onclick="hideModal()">
+              Close
+            </button>
+            <button type="button" class="btn btn-primary" style="background:#000000;color:#ffffff;font-size:12px;padding:8px 18px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;border-radius:0px;border:1px solid #000000;" onclick="window.printInvoice()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              <span>Print / Save PDF</span>
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -1373,12 +1389,13 @@ var formatDateString = window.formatDateString || formatDateTime;
   <meta charset="utf-8" />
   <title>Tax Invoice ${escapeHtml(inv.invoiceNumber)}</title>
   <style>
-    @page { size: A4 portrait; margin: 12mm; }
+    @page { size: A4 portrait; margin: 14mm; }
     * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    body { margin: 0; padding: 0; background: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #111827; }
+    body { margin: 0; padding: 0; background: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #111111; }
+    .print-sheet { border: 1.5px solid #000000; padding: 20px 22px; }
   </style>
 </head>
-<body>${buildInvoiceDocumentHtml(inv, true)}</body>
+<body><div class="print-sheet">${buildInvoiceDocumentHtml(inv, true)}</div></body>
 </html>`);
     doc.close();
 
