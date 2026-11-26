@@ -49,15 +49,15 @@ class AdminDashboardService {
     let pendingRefundsCount = 0;
 
     for (const ord of allOrders) {
-      // Issue 7: Realized revenue strictly excludes cancelled and refunded orders
-      if (ord.paymentStatus === 'verified' && ord.status !== 'cancelled' && ord.status !== 'refunded') {
+      // Issue 7: Realized revenue strictly excludes cancelled, returned, and refunded orders
+      if (ord.paymentStatus === 'verified' && !['cancelled', 'returned', 'refunded'].includes(ord.status)) {
         totalRevenuePaise += (ord.pricing ? ord.pricing.finalPayablePaise : 0);
       }
       if (ord.status === 'cancelled') {
         cancelledOrdersCount++;
-        if (ord.refundStatus === 'pending_refund') {
-          pendingRefundsCount++;
-        }
+      }
+      if ((ord.status === 'cancelled' || ord.status === 'returned') && ord.refundStatus === 'pending_refund') {
+        pendingRefundsCount++;
       }
       if (ord.paymentStatus === 'verification_pending') {
         pendingPaymentsCount++;

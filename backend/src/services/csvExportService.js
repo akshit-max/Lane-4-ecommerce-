@@ -415,7 +415,7 @@ class CsvExportService {
         for (const oDoc of ordSnap.docs) {
           const o = oDoc.data() || {};
           const st = (o.status || o.orderStatus || '').toLowerCase();
-          if (st === 'cancelled') continue;
+          if (['cancelled', 'returned', 'refunded'].includes(st)) continue;
           const spendPaise = Number(o.pricing?.finalPayablePaise ?? o.pricing?.totalPaise ?? 0) || 0;
           if (o.customerId) {
             const cur = orderStatsByUid.get(o.customerId) || { count: 0, spendPaise: 0 };

@@ -788,7 +788,9 @@ class OrderService {
     if (newStatus === 'returned' && currentStatus !== 'returned' && !orderData.returnStockRestored && !orderData.stockRestored) {
       orderUpdates.returnedAt = now;
       orderUpdates.returnedBy = adminUser.email || adminUser.uid;
-      orderUpdates.financialStatus = 'returned_inspection_pending';
+      if (!orderUpdates.financialStatus) {
+        orderUpdates.financialStatus = 'returned_inspection_pending';
+      }
       orderUpdates.returnStockRestored = true;
       orderUpdates.returnStockRestoredAt = now;
 

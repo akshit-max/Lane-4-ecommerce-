@@ -2820,8 +2820,8 @@ var formatDateString = window.formatDateString || formatDateTime;
     showModal('Record & Process Customer Refund', `
       <div style="display:flex;flex-direction:column;gap:16px;">
         <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:0px;padding:14px;color:#991b1b;font-size:13px;line-height:1.4;">
-          <strong>Process Refund for Cancelled Order #${orderNum}</strong><br />
-          Original Amount: <strong>${amountStr}</strong>. Confirm you have initiated the refund via your UPI/bank dashboard and record the reference transaction ID below.
+          <strong>Process Refund for ${o && o.status === 'returned' ? 'Returned' : 'Cancelled'} Order #${escapeHtml(orderNum)}</strong><br />
+          Original Amount: <strong>${escapeHtml(amountStr)}</strong>. Confirm you have initiated the refund via your UPI/bank dashboard and record the reference transaction ID below.
         </div>
         <div>
           <label class="form-label" style="display:block;font-size:12px;font-weight:700;margin-bottom:6px;">Bank / UPI Refund Reference ID *</label>
@@ -5125,14 +5125,15 @@ var formatDateString = window.formatDateString || formatDateTime;
                           <td><span class="badge ${ret.status === 'approved' ? 'badge-active' : (ret.status === 'refunded' ? 'badge-delivered' : (ret.status === 'rejected' ? 'badge-cancelled' : 'badge-pending'))}">${escapeHtml(ret.status || 'requested')}</span></td>
                           <td>
                             <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-                              ${ret.status === 'requested' ? `
+                              ${['requested', 'authorized', 'received'].includes(ret.status) ? `
                                 <button type="button" class="btn btn-success" style="padding:4px 8px;font-size:11px;" onclick="updateReturnStatus('${returnDocId}', 'approved')">Approve</button>
                                 <button type="button" class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#dc2626;" onclick="updateReturnStatus('${returnDocId}', 'rejected')">Reject</button>
                               ` : ''}
-                              ${ret.status === 'approved' ? `
+                              ${['approved', 'accepted'].includes(ret.status) ? `
                                 <button type="button" class="btn btn-primary" style="background:#dc2626;color:#fff;padding:5px 10px;font-size:11px;font-weight:700;border:none;border-radius:0px;cursor:pointer;" onclick="updateReturnStatus('${returnDocId}', 'refunded')">Issue Refund</button>
                               ` : ''}
-                              ${ret.status === 'refunded' ? '<span style="font-size:11.5px;color:#16a34a;font-weight:700;display:inline-flex;align-items:center;gap:3px;">✓ Refund Issued</span>' : ''}
+                              ${ret.status === 'refunded' ? '<span style="font-size:11.5px;color:#16a34a;font-weight:700;display:inline-flex;align-items:center;gap:3px;">&#10003; Refund Issued</span>' : ''}
+                              ${ret.status === 'rejected' ? '<span style="font-size:11.5px;color:#dc2626;font-weight:600;">Rejected</span>' : ''}
                             </div>
                           </td>
                         </tr>
