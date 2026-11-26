@@ -1115,105 +1115,161 @@ var formatDateString = window.formatDateString || formatDateTime;
     }
   };
 
-  function renderInvoiceModal(inv) {
+  function numberToIndianWords(num) {
+    const n = Math.round(Number(num) || 0);
+    if (n === 0) return 'Zero';
+    const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
+      'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+    function twoDigits(v) {
+      if (v < 20) return ones[v];
+      return tens[Math.floor(v / 10)] + (v % 10 ? ' ' + ones[v % 10] : '');
+    }
+    function threeDigits(v) {
+      const h = Math.floor(v / 100);
+      const r = v % 100;
+      return (h ? ones[h] + ' Hundred' + (r ? ' ' : '') : '') + (r ? twoDigits(r) : '');
+    }
+    let out = '';
+    const crore = Math.floor(n / 10000000);
+    const lakh = Math.floor((n % 10000000) / 100000);
+    const thousand = Math.floor((n % 100000) / 1000);
+    const rest = n % 1000;
+    if (crore) out += twoDigits(crore) + ' Crore ';
+    if (lakh) out += twoDigits(lakh) + ' Lakh ';
+    if (thousand) out += twoDigits(thousand) + ' Thousand ';
+    if (rest) out += threeDigits(rest);
+    return out.trim();
+  }
+
+  function buildInvoiceDocumentHtml(inv, forPrint = false) {
     const isInterState = inv.placeOfSupply && inv.placeOfSupply.taxType && inv.placeOfSupply.taxType.includes('INTER_STATE');
     const isProvisional = !inv.seller.isCertifiedGstin || inv.isProvisionalDraft || !inv.seller.gstin;
-    const itemsHtml = (inv.items || []).map((it, idx) => `
-      <tr style="border-bottom:1px solid #e2e8f0;font-size:12px;">
-        <td style="padding:8px 6px;text-align:center;">${idx + 1}</td>
-        <td style="padding:8px 6px;">
-          <strong>${escapeHtml(it.description || it.name || 'Item')}</strong>
-          ${it.variantName ? `<div style="font-size:10.5px;color:#64748b;">${escapeHtml(it.variantName)}</div>` : ''}
-        </td>
-        <td style="padding:8px 6px;text-align:center;"><code>${escapeHtml(it.hsnCode || '—')}</code></td>
-        <td style="padding:8px 6px;text-align:center;">${it.quantity}</td>
-        <td style="padding:8px 6px;text-align:right;">₹${it.taxableAmountFormatted}</td>
-        ${!isInterState ? `
-          <td style="padding:8px 6px;text-align:right;">₹${it.cgstAmountFormatted} <span style="font-size:10px;color:#64748b;">(${it.cgstRate || ((it.gstRate||18)/2)}%)</span></td>
-          <td style="padding:8px 6px;text-align:right;">₹${it.sgstAmountFormatted} <span style="font-size:10px;color:#64748b;">(${it.sgstRate || ((it.gstRate||18)/2)}%)</span></td>
-        ` : `
-          <td style="padding:8px 6px;text-align:right;" colspan="2">₹${it.igstAmountFormatted} <span style="font-size:10px;color:#64748b;">(${it.igstRate || it.gstRate || 18}%)</span></td>
-        `}
-        <td style="padding:8px 6px;text-align:right;font-weight:700;">₹${it.lineTotalFormatted}</td>
-      </tr>
-    `).join('');
+    const summary = inv.summary || {};
+    const grandNum = Number(summary.grandTotalPaise != null ? summary.grandTotalPaise / 100 : summary.grandTotalFormatted || 0);
+    const amountWords = `INR ${numberToIndianWords(grandNum)} Only`;
 
-    const shippingRow = inv.shipping && inv.shipping.chargesPaise > 0 ? `
+    const itemsHtml = (inv.items || []).map((it, idx) => {
+      const hsnVal = it.hsn || it.hsnCode || '9506';
+      const variantText = it.variantLabel || it.variantName || '';
+      const unitRate = it.unitPriceFormatted || ((it.unitPricePaise || 0) / 100).toFixed(2);
+      const lineTaxable = it.taxableAmountFormatted || ((it.taxableAmountPaise || 0) / 100).toFixed(2);
+      const lineTotal = it.effectiveLineTotalFormatted || it.lineTotalFormatted || it.totalFormatted || '0.00';
+      const cgstVal = it.cgstAmountFormatted || it.cgstFormatted || '0.00';
+      const sgstVal = it.sgstAmountFormatted || it.sgstFormatted || '0.00';
+      const igstVal = it.igstAmountFormatted || it.igstFormatted || '0.00';
+      return `
+        <tr style="border-bottom:1px solid #e2e8f0;font-size:12px;">
+          <td style="padding:9px 7px;text-align:center;color:#475569;">${idx + 1}</td>
+          <td style="padding:9px 7px;">
+            <div style="font-weight:600;color:#0f172a;">${escapeHtml(it.name || it.description || 'Item')}</div>
+            ${variantText ? `<div style="font-size:11px;color:#64748b;margin-top:2px;">${escapeHtml(variantText)}</div>` : ''}
+          </td>
+          <td style="padding:9px 7px;text-align:center;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:11.5px;color:#334155;">${escapeHtml(hsnVal)}</td>
+          <td style="padding:9px 7px;text-align:center;font-variant-numeric:tabular-nums;">${it.quantity || 1}</td>
+          <td style="padding:9px 7px;text-align:right;font-variant-numeric:tabular-nums;color:#334155;">&#8377;${unitRate}</td>
+          <td style="padding:9px 7px;text-align:right;font-variant-numeric:tabular-nums;">&#8377;${lineTaxable}</td>
+          ${!isInterState ? `
+            <td style="padding:9px 7px;text-align:right;font-variant-numeric:tabular-nums;">&#8377;${cgstVal} <span style="font-size:10px;color:#64748b;">(${it.cgstRate || ((it.gstRate || 18) / 2)}%)</span></td>
+            <td style="padding:9px 7px;text-align:right;font-variant-numeric:tabular-nums;">&#8377;${sgstVal} <span style="font-size:10px;color:#64748b;">(${it.sgstRate || ((it.gstRate || 18) / 2)}%)</span></td>
+          ` : `
+            <td style="padding:9px 7px;text-align:right;font-variant-numeric:tabular-nums;" colspan="2">&#8377;${igstVal} <span style="font-size:10px;color:#64748b;">(${it.igstRate || it.gstRate || 18}%)</span></td>
+          `}
+          <td style="padding:9px 7px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:#0f172a;">&#8377;${lineTotal}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const ship = inv.shipping || {};
+    const shipChargesPaise = Number(ship.chargesPaise || 0);
+    const shippingRow = shipChargesPaise > 0 ? `
       <tr style="border-bottom:1px solid #e2e8f0;font-size:12px;background:#f8fafc;">
-        <td style="padding:8px 6px;text-align:center;">#</td>
-        <td style="padding:8px 6px;"><strong>PAN India Express Delivery</strong></td>
-        <td style="padding:8px 6px;text-align:center;"><code>${inv.shipping.sacCode || '9968'}</code></td>
-        <td style="padding:8px 6px;text-align:center;">1</td>
-        <td style="padding:8px 6px;text-align:right;">₹${inv.shipping.taxableFormatted}</td>
+        <td style="padding:9px 7px;text-align:center;color:#475569;">&mdash;</td>
+        <td style="padding:9px 7px;">
+          <div style="font-weight:600;color:#0f172a;">PAN India Courier Shipping</div>
+          <div style="font-size:11px;color:#64748b;">Service Accounting Code (SAC ${escapeHtml(ship.sacCode || '9968')})</div>
+        </td>
+        <td style="padding:9px 7px;text-align:center;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:11.5px;color:#334155;">${escapeHtml(ship.sacCode || '9968')}</td>
+        <td style="padding:9px 7px;text-align:center;">1</td>
+        <td style="padding:9px 7px;text-align:right;font-variant-numeric:tabular-nums;">&#8377;${ship.chargesFormatted || (shipChargesPaise / 100).toFixed(2)}</td>
+        <td style="padding:9px 7px;text-align:right;font-variant-numeric:tabular-nums;">&#8377;${ship.taxableFormatted || ((ship.taxablePaise || 0) / 100).toFixed(2)}</td>
         ${!isInterState ? `
-          <td style="padding:8px 6px;text-align:right;">₹${(inv.shipping.cgstPaise / 100).toFixed(2)}</td>
-          <td style="padding:8px 6px;text-align:right;">₹${(inv.shipping.sgstPaise / 100).toFixed(2)}</td>
+          <td style="padding:9px 7px;text-align:right;font-variant-numeric:tabular-nums;">&#8377;${((ship.cgstPaise || 0) / 100).toFixed(2)} <span style="font-size:10px;color:#64748b;">(9%)</span></td>
+          <td style="padding:9px 7px;text-align:right;font-variant-numeric:tabular-nums;">&#8377;${((ship.sgstPaise || 0) / 100).toFixed(2)} <span style="font-size:10px;color:#64748b;">(9%)</span></td>
         ` : `
-          <td style="padding:8px 6px;text-align:right;" colspan="2">₹${(inv.shipping.igstPaise / 100).toFixed(2)}</td>
+          <td style="padding:9px 7px;text-align:right;font-variant-numeric:tabular-nums;" colspan="2">&#8377;${((ship.igstPaise || 0) / 100).toFixed(2)} <span style="font-size:10px;color:#64748b;">(18%)</span></td>
         `}
-        <td style="padding:8px 6px;text-align:right;font-weight:700;">₹${inv.shipping.chargesFormatted}</td>
+        <td style="padding:9px 7px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;">&#8377;${ship.chargesFormatted || (shipChargesPaise / 100).toFixed(2)}</td>
       </tr>
     ` : '';
 
-    const modalHtml = `
-      <div id="lane4-printable-invoice" style="font-family:'General Sans',sans-serif;color:#111111;line-height:1.4;">
+    const sellerAddr = typeof inv.seller.address === 'string'
+      ? inv.seller.address
+      : ((inv.seller.address && inv.seller.address.street) || 'Nagpur, Maharashtra, India');
+    const buyerAddr1 = [inv.buyer.addressLine1, inv.buyer.addressLine2].filter(Boolean).join(', ');
+    const buyerCityStatePin = [inv.buyer.city, inv.buyer.state].filter(Boolean).join(', ') + (inv.buyer.postalCode ? ` - ${inv.buyer.postalCode}` : '');
+    const seal = (inv.integrity && inv.integrity.fingerprint) ? inv.integrity.fingerprint : (inv.sha256Fingerprint || 'VERIFIED');
+
+    return `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;color:#111827;line-height:1.45;background:#ffffff;${forPrint ? 'padding:0;max-width:100%;' : ''}">
         ${isProvisional ? `
-          <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:0px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.5" style="flex-shrink:0;margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <div>
-              <div style="font-size:12px;font-weight:800;color:#92400e;">PROVISIONAL ESTIMATE / DRAFT — NOT A CERTIFIED TAX INVOICE</div>
-              <div style="font-size:11px;color:#b45309;margin-top:2px;line-height:1.4;">Store GSTIN registration is pending client confirmation. This document is an uncertified operational estimate and must not be used as official tax documentation.</div>
-            </div>
+          <div style="background:#fffbeb;border:1px solid #f59e0b;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#92400e;">
+            <strong>PROVISIONAL ESTIMATE / DRAFT &mdash; NOT A CERTIFIED TAX INVOICE:</strong> Store GSTIN registration is pending confirmation.
           </div>
         ` : ''}
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #111111;padding-bottom:12px;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #111827;padding-bottom:14px;margin-bottom:16px;gap:16px;">
           <div>
-            <div style="font-size:18px;font-weight:900;letter-spacing:-0.5px;text-transform:uppercase;">${escapeHtml(inv.seller.legalName || 'The Lane4 Performance Store')}</div>
-            <div style="font-size:11.5px;color:#475569;">${escapeHtml(typeof inv.seller.address === 'string' ? inv.seller.address : ((inv.seller.address && inv.seller.address.street) || 'Nagpur, Maharashtra, India'))}</div>
-            <div style="font-size:11.5px;color:#111111;margin-top:2px;">
-              <strong>GSTIN:</strong> ${inv.seller.gstin && inv.seller.isCertifiedGstin ? `<code>${escapeHtml(inv.seller.gstin)}</code>` : `<span style="color:#b45309;font-weight:700;">Unregistered / Pending Client GSTIN</span>`} &bull; <strong>State Code:</strong> ${escapeHtml(inv.seller.stateCode || '27')}
+            <div style="font-size:19px;font-weight:700;letter-spacing:0.2px;text-transform:uppercase;color:#111827;">${escapeHtml(inv.seller.legalName || 'The Lane4 Performance Store')}</div>
+            <div style="font-size:12px;color:#475569;margin-top:3px;">${escapeHtml(sellerAddr)}</div>
+            <div style="font-size:12px;color:#475569;margin-top:2px;">Email: ${escapeHtml(inv.seller.contactEmail || 'Lane4performancestore@gmail.com')} &bull; Phone: ${escapeHtml(inv.seller.contactPhone || '+91 79725 41297')}</div>
+            <div style="font-size:12px;color:#111827;margin-top:4px;">
+              <strong>GSTIN:</strong> ${inv.seller.gstin && inv.seller.isCertifiedGstin ? `<span style="font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-weight:600;">${escapeHtml(inv.seller.gstin)}</span>` : `<span style="color:#b45309;font-weight:600;">Unregistered / Pending</span>`}
+              &nbsp;&bull;&nbsp; <strong>State:</strong> ${escapeHtml(inv.seller.state || 'Maharashtra')} (${escapeHtml(inv.seller.stateCode || '27')})
             </div>
           </div>
-          <div style="text-align:right;">
-            <div style="font-size:13px;font-weight:800;color:${isProvisional ? '#d97706' : '#0284c7'};text-transform:uppercase;letter-spacing:1px;">${isProvisional ? 'Provisional Draft Invoice' : 'Tax Invoice'}</div>
-            <div style="font-size:15px;font-weight:900;color:#111111;margin-top:2px;">${escapeHtml(inv.invoiceNumber)}</div>
-            <div style="font-size:11.5px;color:#64748b;">Date: ${formatDateTime(inv.invoiceDate, true)}</div>
-            <div style="font-size:11.5px;color:#64748b;">Order Ref: #${escapeHtml(inv.orderNumber)}</div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:12px;font-weight:700;color:${isProvisional ? '#b45309' : '#0369a1'};text-transform:uppercase;letter-spacing:1.2px;">${isProvisional ? 'Provisional Invoice' : 'Tax Invoice'}</div>
+            <div style="font-size:16px;font-weight:700;color:#111827;margin-top:3px;font-variant-numeric:tabular-nums;">${escapeHtml(inv.invoiceNumber)}</div>
+            <div style="font-size:12px;color:#475569;margin-top:2px;">Invoice Date: <strong>${formatDateTime(inv.invoiceDate, true)}</strong></div>
+            <div style="font-size:12px;color:#475569;">Order Ref: <strong>#${escapeHtml(inv.orderNumber)}</strong></div>
           </div>
         </div>
 
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:0px;padding:10px 14px;margin-bottom:14px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:12px;">
-          <div>
-            <div style="font-size:10.5px;font-weight:800;color:#64748b;text-transform:uppercase;margin-bottom:2px;">Billed &amp; Shipped To:</div>
-            <div style="font-weight:800;color:#111111;font-size:13px;">${escapeHtml(inv.buyer.name)}</div>
-            <div>${escapeHtml(inv.buyer.addressLine1 || '')} ${escapeHtml(inv.buyer.addressLine2 || '')}</div>
-            <div>${escapeHtml(inv.buyer.city || '')}, ${escapeHtml(inv.buyer.state || '')} — PIN ${escapeHtml(inv.buyer.postalCode || '')}</div>
-            <div>Phone: ${escapeHtml(inv.buyer.phone || '—')} &bull; Email: ${escapeHtml(inv.buyer.email || '—')}</div>
+        <div style="display:grid;grid-template-columns:1.3fr 1fr;border:1px solid #cbd5e1;background:#f8fafc;margin-bottom:16px;font-size:12px;">
+          <div style="padding:12px 14px;border-right:1px solid #cbd5e1;">
+            <div style="font-size:10.5px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px;">Billed &amp; Shipped To</div>
+            <div style="font-weight:700;color:#0f172a;font-size:13px;margin-bottom:2px;">${escapeHtml(inv.buyer.name || 'Customer')}</div>
+            <div style="color:#334155;">${escapeHtml(buyerAddr1)}</div>
+            <div style="color:#334155;">${escapeHtml(buyerCityStatePin)}</div>
+            <div style="color:#475569;margin-top:3px;">Phone: ${escapeHtml(inv.buyer.phone || '&mdash;')} &bull; Email: ${escapeHtml(inv.buyer.email || '&mdash;')}</div>
           </div>
-          <div style="text-align:right;">
-            <div style="font-size:10.5px;font-weight:800;color:#64748b;text-transform:uppercase;margin-bottom:2px;">Place of Supply:</div>
-            <div style="font-weight:700;">${escapeHtml(inv.placeOfSupply.state)} (${escapeHtml(inv.placeOfSupply.stateCode)})</div>
-            <div style="font-size:11px;color:#0284c7;font-weight:700;">${escapeHtml(inv.placeOfSupply.taxType)}</div>
-            <div style="font-size:11px;color:#16a34a;margin-top:4px;">Payment: ${(inv.paymentStatus || 'paid').toUpperCase()} (${escapeHtml(inv.paymentMethod || 'UPI')})</div>
+          <div style="padding:12px 14px;">
+            <div style="font-size:10.5px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px;">Supply &amp; Payment Details</div>
+            <div><strong>Place of Supply:</strong> ${escapeHtml(inv.placeOfSupply.state)} (${escapeHtml(inv.placeOfSupply.stateCode)})</div>
+            <div style="color:#0369a1;font-weight:600;margin-top:2px;">${escapeHtml(inv.placeOfSupply.taxType)}</div>
+            <div style="margin-top:4px;"><strong>Payment Method:</strong> ${escapeHtml(inv.paymentMethod || 'UPI QR')}</div>
+            <div style="color:#15803d;font-weight:600;margin-top:2px;">Status: ${(inv.paymentStatus || 'paid').toUpperCase()}</div>
           </div>
         </div>
 
-        <div style="overflow-x:auto;margin-bottom:14px;">
-          <table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;">
+        <div style="overflow-x:auto;margin-bottom:16px;">
+          <table style="width:100%;border-collapse:collapse;border:1px solid #cbd5e1;">
             <thead>
-              <tr style="background:#111111;color:#ffffff;font-size:11px;text-transform:uppercase;">
-                <th style="padding:8px 6px;text-align:center;">#</th>
-                <th style="padding:8px 6px;text-align:left;">Item Description</th>
-                <th style="padding:8px 6px;text-align:center;">HSN</th>
-                <th style="padding:8px 6px;text-align:center;">Qty</th>
-                <th style="padding:8px 6px;text-align:right;">Taxable Val</th>
+              <tr style="background:#111827;color:#ffffff;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;">
+                <th style="padding:9px 7px;text-align:center;width:32px;">#</th>
+                <th style="padding:9px 7px;text-align:left;">Item Description</th>
+                <th style="padding:9px 7px;text-align:center;">HSN/SAC</th>
+                <th style="padding:9px 7px;text-align:center;">Qty</th>
+                <th style="padding:9px 7px;text-align:right;">Rate</th>
+                <th style="padding:9px 7px;text-align:right;">Taxable Val</th>
                 ${!isInterState ? `
-                  <th style="padding:8px 6px;text-align:right;">CGST</th>
-                  <th style="padding:8px 6px;text-align:right;">SGST</th>
+                  <th style="padding:9px 7px;text-align:right;">CGST</th>
+                  <th style="padding:9px 7px;text-align:right;">SGST</th>
                 ` : `
-                  <th style="padding:8px 6px;text-align:right;" colspan="2">IGST</th>
+                  <th style="padding:9px 7px;text-align:right;" colspan="2">IGST</th>
                 `}
-                <th style="padding:8px 6px;text-align:right;">Total (₹)</th>
+                <th style="padding:9px 7px;text-align:right;">Amount (&#8377;)</th>
               </tr>
             </thead>
             <tbody>
@@ -1223,54 +1279,69 @@ var formatDateString = window.formatDateString || formatDateTime;
           </table>
         </div>
 
-        <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
-          <div style="width:280px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:0px;padding:10px 14px;font-size:12px;">
-            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-              <span>Total Taxable Amount:</span>
-              <span style="font-weight:700;">₹${inv.summary.totalTaxableFormatted}</span>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+          <div style="flex:1;min-width:220px;border:1px solid #e2e8f0;background:#f8fafc;padding:10px 14px;font-size:12px;">
+            <div style="font-size:10.5px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">Amount Chargeable (in words)</div>
+            <div style="font-weight:600;color:#0f172a;">${escapeHtml(amountWords)}</div>
+            ${Number(inv.discountPaise || 0) > 0 ? `<div style="font-size:11.5px;color:#475569;margin-top:6px;">Pre-tax Discount Applied: <strong>&#8377;${escapeHtml(inv.discountFormatted || '0.00')}</strong></div>` : ''}
+          </div>
+          <div style="width:290px;border:1px solid #cbd5e1;background:#ffffff;padding:10px 14px;font-size:12.5px;font-variant-numeric:tabular-nums;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+              <span style="color:#475569;">Total Taxable Value:</span>
+              <span style="font-weight:600;">&#8377;${escapeHtml(summary.totalTaxableFormatted || '0.00')}</span>
             </div>
             ${!isInterState ? `
               <div style="display:flex;justify-content:space-between;margin-bottom:4px;color:#475569;">
                 <span>Total CGST:</span>
-                <span>₹${inv.summary.totalCgstFormatted}</span>
+                <span>&#8377;${escapeHtml(summary.totalCgstFormatted || '0.00')}</span>
               </div>
-              <div style="display:flex;justify-content:space-between;margin-bottom:4px;color:#475569;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:5px;color:#475569;">
                 <span>Total SGST:</span>
-                <span>₹${inv.summary.totalSgstFormatted}</span>
+                <span>&#8377;${escapeHtml(summary.totalSgstFormatted || '0.00')}</span>
               </div>
             ` : `
-              <div style="display:flex;justify-content:space-between;margin-bottom:4px;color:#475569;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:5px;color:#475569;">
                 <span>Total IGST:</span>
-                <span>₹${inv.summary.totalIgstFormatted}</span>
+                <span>&#8377;${escapeHtml(summary.totalIgstFormatted || '0.00')}</span>
               </div>
             `}
-            <div style="display:flex;justify-content:space-between;margin-bottom:6px;color:#0284c7;font-weight:700;">
-              <span>Total Tax:</span>
-              <span>₹${inv.summary.totalTaxFormatted}</span>
+            <div style="display:flex;justify-content:space-between;margin-bottom:7px;color:#0369a1;font-weight:600;">
+              <span>Total GST Tax:</span>
+              <span>&#8377;${escapeHtml(summary.totalTaxFormatted || '0.00')}</span>
             </div>
-            <div style="border-top:1.5px solid #111111;padding-top:6px;display:flex;justify-content:space-between;font-size:14px;font-weight:900;color:#111111;">
+            <div style="border-top:2px solid #111827;padding-top:7px;display:flex;justify-content:space-between;font-size:14.5px;font-weight:700;color:#111827;">
               <span>Grand Total:</span>
-              <span>₹${inv.summary.grandTotalFormatted}</span>
+              <span>&#8377;${escapeHtml(summary.grandTotalFormatted || '0.00')}</span>
             </div>
           </div>
         </div>
 
-        <div style="background:#f1f5f9;border-left:3px solid ${isProvisional ? '#d97706' : '#0284c7'};padding:8px 12px;font-size:11px;color:#64748b;margin-bottom:14px;">
-          <div><strong>Digital Integrity Seal:</strong> <code>${(inv.integrity && inv.integrity.fingerprint) ? inv.integrity.fingerprint.slice(0, 32) + '...' : (inv.sha256Fingerprint ? inv.sha256Fingerprint.slice(0, 32) + '...' : 'AUTHENTIC_VERIFIED')}</code></div>
-          ${!isProvisional ? `
-            <div>Computer-generated tax invoice issued in compliance with the Central Goods and Services Tax (CGST) Act, 2017.</div>
-          ` : `
-            <div style="color:#b45309;font-weight:600;margin-top:2px;">Provisional operational estimate. Commercial tax invoice issuance requires certified GST registration.</div>
-          `}
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid #e2e8f0;padding-top:12px;gap:16px;flex-wrap:wrap;font-size:11px;color:#64748b;">
+          <div style="flex:1;min-width:240px;">
+            <div><strong>Declaration:</strong> We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.</div>
+            <div style="margin-top:4px;"><strong>Digital Integrity Seal:</strong> <span style="font-family:ui-monospace,SFMono-Regular,Consolas,monospace;">${escapeHtml(String(seal).slice(0, 32))}...</span></div>
+            <div style="margin-top:2px;">${isProvisional ? 'Provisional operational estimate pending GST certification.' : 'Computer-generated Tax Invoice issued in compliance with CGST Act, 2017. Requires no physical signature.'}</div>
+          </div>
+          <div style="text-align:right;min-width:170px;color:#111827;">
+            <div style="font-weight:700;">For ${escapeHtml(inv.seller.legalName || 'The Lane4 Performance Store')}</div>
+            <div style="margin-top:22px;border-top:1px solid #cbd5e1;padding-top:3px;font-size:10.5px;color:#475569;">Authorised Signatory</div>
+          </div>
         </div>
+      </div>
+    `;
+  }
 
-        <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:10px;border-top:1px solid #e2e8f0;">
-          <button type="button" class="btn btn-outline" style="font-size:12px;padding:7px 14px;cursor:pointer;" onclick="window.downloadInvoiceJson('${inv.invoiceNumber}')">
-            📥 Download JSON
+  function renderInvoiceModal(inv) {
+    const modalHtml = `
+      <div id="lane4-printable-invoice">
+        ${buildInvoiceDocumentHtml(inv, false)}
+        <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:14px;margin-top:14px;border-top:1px solid #e2e8f0;">
+          <button type="button" class="btn btn-outline" style="font-size:12px;padding:8px 14px;cursor:pointer;" onclick="hideModal()">
+            Close
           </button>
-          <button type="button" class="btn btn-primary" style="background:#111111;color:#fff;font-size:12px;padding:7px 16px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" onclick="window.printInvoice()">
+          <button type="button" class="btn btn-primary" style="background:#111111;color:#fff;font-size:12px;padding:8px 18px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" onclick="window.printInvoice()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-            <span>Print Invoice</span>
+            <span>Print / Save PDF</span>
           </button>
         </div>
       </div>
@@ -1281,7 +1352,41 @@ var formatDateString = window.formatDateString || formatDateTime;
   }
 
   window.printInvoice = function() {
-    window.print();
+    const inv = window.currentInvoiceData;
+    if (!inv) {
+      window.print();
+      return;
+    }
+    const existing = document.getElementById('lane4-print-iframe');
+    if (existing) existing.remove();
+
+    const iframe = document.createElement('iframe');
+    iframe.id = 'lane4-print-iframe';
+    iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Tax Invoice ${escapeHtml(inv.invoiceNumber)}</title>
+  <style>
+    @page { size: A4 portrait; margin: 12mm; }
+    * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    body { margin: 0; padding: 0; background: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #111827; }
+  </style>
+</head>
+<body>${buildInvoiceDocumentHtml(inv, true)}</body>
+</html>`);
+    doc.close();
+
+    setTimeout(() => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      setTimeout(() => { try { iframe.remove(); } catch (_) {} }, 1500);
+    }, 150);
   };
 
   window.downloadInvoiceJson = function(invoiceNumber) {

@@ -156,12 +156,27 @@ class GstInvoiceService {
     };
   }
 
+  _resolveLineItemUnitAndTotalPaise(item) {
+    const qty = parseInt(item.quantity, 10) || 1;
+    let unitPricePaise = parseInt(
+      item.unitPricePaise ?? item.pricePaise ?? (typeof item.price === 'number' ? Math.round(item.price * 100) : 0),
+      10
+    ) || 0;
+    let lineTotalPaise = parseInt(item.totalPricePaise ?? item.lineTotalPaise ?? 0, 10) || 0;
+    if (!unitPricePaise && lineTotalPaise > 0) {
+      unitPricePaise = Math.round(lineTotalPaise / qty);
+    }
+    if (!lineTotalPaise && unitPricePaise > 0) {
+      lineTotalPaise = unitPricePaise * qty;
+    }
+    return { qty, unitPricePaise, lineTotalPaise };
+  }
+
   /**
    * Calculate exact line-item tax breakdown with proportional coupon discount allocation
    */
   calculateLineItemTax(item, effectiveLineTotalPaise, originalLineTotalPaise, allocatedDiscountPaise, isIntraState) {
-    const qty = parseInt(item.quantity, 10) || 1;
-    const unitPricePaise = parseInt(item.pricePaise || item.price * 100, 10) || 0;
+    const { qty, unitPricePaise } = this._resolveLineItemUnitAndTotalPaise(item);
 
     const taxConfig = this.resolveItemTaxConfig(item);
     const gstRate = taxConfig.gstRate;
@@ -188,18 +203,28 @@ class GstInvoiceService {
       igstAmountPaise = totalTaxAmountPaise;
     }
 
+    const derivedVariant = [
+      item.size ? `Size: ${item.size}` : '',
+      item.color ? String(item.color) : ''
+    ].filter(Boolean).join(' · ');
+    const variantLabel = item.variantLabel || item.variantName || derivedVariant;
+
     return {
       sku: item.sku || '',
       name: item.name || item.title || 'Product',
-      variantLabel: item.variantLabel || '',
+      description: item.name || item.title || 'Product',
+      variantLabel,
+      variantName: variantLabel,
       hsn: taxConfig.hsn,
+      hsnCode: taxConfig.hsn,
       quantity: qty,
       unitPricePaise,
       unitPriceFormatted: (unitPricePaise / 100).toFixed(2),
       originalLineTotalPaise,
       originalLineTotalFormatted: (originalLineTotalPaise / 100).toFixed(2),
-      lineTotalPaise: originalLineTotalPaise,
-      lineTotalFormatted: (originalLineTotalPaise / 100).toFixed(2),
+      lineTotalPaise: effectiveLineTotalPaise,
+      lineTotalFormatted: (effectiveLineTotalPaise / 100).toFixed(2),
+      totalFormatted: (effectiveLineTotalPaise / 100).toFixed(2),
       allocatedDiscountPaise,
       allocatedDiscountFormatted: (allocatedDiscountPaise / 100).toFixed(2),
       effectiveLineTotalPaise,
@@ -210,12 +235,15 @@ class GstInvoiceService {
       cgstRate,
       cgstAmountPaise,
       cgstAmountFormatted: (cgstAmountPaise / 100).toFixed(2),
+      cgstFormatted: (cgstAmountPaise / 100).toFixed(2),
       sgstRate,
       sgstAmountPaise,
       sgstAmountFormatted: (sgstAmountPaise / 100).toFixed(2),
+      sgstFormatted: (sgstAmountPaise / 100).toFixed(2),
       igstRate,
       igstAmountPaise,
       igstAmountFormatted: (igstAmountPaise / 100).toFixed(2),
+      igstFormatted: (igstAmountPaise / 100).toFixed(2),
       totalTaxAmountPaise,
       totalTaxAmountFormatted: (totalTaxAmountPaise / 100).toFixed(2)
     };
@@ -251,13 +279,20 @@ class GstInvoiceService {
     // 2. Authorization & Ownership verification
     this._verifyInvoiceAccess(orderData, actualOrderId, callerUser, orderAccessToken);
 
-    // 3. Return existing immutable invoice if already issued (with integrity check)
+    // 3. Return existing immutable invoice if already issued (with integrity check & broken-zero auto-repair)
     const invoiceDocRef = db.collection('invoices').doc(`inv_${actualOrderId}`);
     const existingInvoiceSnap = await invoiceDocRef.get();
+    let repairExistingInvoice = null;
     if (existingInvoiceSnap.exists) {
       const existingInvoice = existingInvoiceSnap.data();
       verifyInvoiceIntegrity(existingInvoice);
-      return existingInvoice;
+      const isZeroBroken =
+        (existingInvoice.summary?.grandTotalPaise || 0) > 0 &&
+        (existingInvoice.summary?.totalTaxablePaise || 0) === 0;
+      if (!isZeroBroken) {
+        return existingInvoice;
+      }
+      repairExistingInvoice = existingInvoice;
     }
 
     // 4. Fetch store profile settings for seller identity
@@ -290,12 +325,14 @@ class GstInvoiceService {
     // 5. Pre-supply coupon discount proportional allocation
     const discountPaise = (orderData.pricing && orderData.pricing.couponDiscountPaise) || 0;
     const rawItems = orderData.items || [];
-    const itemsSubtotalPaise = (orderData.pricing && orderData.pricing.itemsSubtotalPaise) ||
-      rawItems.reduce((sum, it) => sum + (parseInt(it.pricePaise || it.price * 100, 10) || 0) * (parseInt(it.quantity, 10) || 1), 0);
+    const computedRawSubtotal = rawItems.reduce((sum, it) => sum + this._resolveLineItemUnitAndTotalPaise(it).lineTotalPaise, 0);
+    const itemsSubtotalPaise =
+      (orderData.pricing && (orderData.pricing.itemsSubtotalPaise || orderData.pricing.subtotalPaise || orderData.pricing.itemsTotalPaise)) ||
+      computedRawSubtotal;
 
     let allocatedDiscountAcc = 0;
     const itemDiscounts = rawItems.map((it, idx) => {
-      const lineTotal = (parseInt(it.pricePaise || it.price * 100, 10) || 0) * (parseInt(it.quantity, 10) || 1);
+      const lineTotal = this._resolveLineItemUnitAndTotalPaise(it).lineTotalPaise;
       if (idx === rawItems.length - 1) {
         return Math.max(0, discountPaise - allocatedDiscountAcc);
       }
@@ -306,7 +343,7 @@ class GstInvoiceService {
 
     // 6. Calculate item-level GST breakdowns on discounted effective values
     const items = rawItems.map((it, idx) => {
-      const origLineTotal = (parseInt(it.pricePaise || it.price * 100, 10) || 0) * (parseInt(it.quantity, 10) || 1);
+      const origLineTotal = this._resolveLineItemUnitAndTotalPaise(it).lineTotalPaise;
       const allocatedDisc = itemDiscounts[idx] || 0;
       const effectiveLineTotal = Math.max(0, origLineTotal - allocatedDisc);
       return this.calculateLineItemTax(it, effectiveLineTotal, origLineTotal, allocatedDisc, supply.isIntraState);
@@ -345,23 +382,29 @@ class GstInvoiceService {
     await db.runTransaction(async (transaction) => {
       // Re-read existing invoice inside transaction to prevent concurrency collision
       const checkInvoiceSnap = await transaction.get(invoiceDocRef);
-      if (checkInvoiceSnap.exists) {
+      if (checkInvoiceSnap.exists && !repairExistingInvoice) {
         finalInvoice = checkInvoiceSnap.data();
         return;
       }
 
-      // Read fiscal year sequential counter
+      // Preserve existing invoiceNumber & date if repairing a previously broken zero-total record
+      let nextSequence = null;
+      let invoiceNumber;
       const counterRef = db.collection('counters').doc(`invoices_FY${fy}`);
-      const counterSnap = await transaction.get(counterRef);
-      const nextSequence = (counterSnap.exists ? (counterSnap.data().currentSequence || 0) : 0) + 1;
-      const invoiceNumber = `L4-INV-${fy}-${String(nextSequence).padStart(4, '0')}`;
+      if (repairExistingInvoice && repairExistingInvoice.invoiceNumber) {
+        invoiceNumber = repairExistingInvoice.invoiceNumber;
+      } else {
+        const counterSnap = await transaction.get(counterRef);
+        nextSequence = (counterSnap.exists ? (counterSnap.data().currentSequence || 0) : 0) + 1;
+        invoiceNumber = `L4-INV-${fy}-${String(nextSequence).padStart(4, '0')}`;
+      }
 
       // Assemble complete GST Tax Invoice payload
       finalInvoice = {
         invoiceId: `inv_${actualOrderId}`,
         invoiceNumber,
-        fiscalYear: `FY${fy}`,
-        invoiceDate: now,
+        fiscalYear: (repairExistingInvoice && repairExistingInvoice.fiscalYear) || `FY${fy}`,
+        invoiceDate: (repairExistingInvoice && repairExistingInvoice.invoiceDate) || now,
         orderId: actualOrderId,
         orderNumber: orderData.orderNumber || actualOrderId,
         orderCreatedAt: orderData.createdAt,
@@ -413,12 +456,18 @@ class GstInvoiceService {
           sacCode: '9968',
           chargesPaise: shippingPaise,
           chargesFormatted: (shippingPaise / 100).toFixed(2),
+          totalFormatted: (shippingPaise / 100).toFixed(2),
           taxablePaise: shippingTaxablePaise,
           taxableFormatted: (shippingTaxablePaise / 100).toFixed(2),
+          taxableAmountPaise: shippingTaxablePaise,
+          taxableAmountFormatted: (shippingTaxablePaise / 100).toFixed(2),
           gstRate: shippingPaise > 0 ? 18 : 0,
           cgstPaise: shippingCgstPaise,
+          cgstFormatted: (shippingCgstPaise / 100).toFixed(2),
           sgstPaise: shippingSgstPaise,
+          sgstFormatted: (shippingSgstPaise / 100).toFixed(2),
           igstPaise: shippingIgstPaise,
+          igstFormatted: (shippingIgstPaise / 100).toFixed(2),
           totalTaxPaise: shippingGstPaise
         },
 
@@ -452,7 +501,9 @@ class GstInvoiceService {
       finalInvoice.sha256Fingerprint = computeInvoiceFingerprint(finalInvoice);
 
       // 9. Atomic writes inside transaction
-      transaction.set(counterRef, { currentSequence: nextSequence, updatedAt: now }, { merge: true });
+      if (nextSequence !== null) {
+        transaction.set(counterRef, { currentSequence: nextSequence, updatedAt: now }, { merge: true });
+      }
       transaction.set(invoiceDocRef, finalInvoice);
       transaction.update(orderRef, {
         invoiceIssued: true,

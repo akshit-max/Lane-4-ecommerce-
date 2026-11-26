@@ -804,13 +804,9 @@ window.INDIAN_STATES = [
               <span>Back to Order</span>
             </button>
             <div style="display:flex;gap:8px;align-items:center;">
-              <button type="button" id="lane4-invoice-json-btn" style="background:#ffffff;border:1.5px solid #000000;padding:8px 14px;border-radius:0px;font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;cursor:pointer;color:#000000;display:inline-flex;align-items:center;gap:4px;">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                <span>Download JSON</span>
-              </button>
-              <button type="button" id="lane4-invoice-print-btn" style="background:#000000;color:#ffffff;border:1.5px solid #000000;padding:8px 16px;border-radius:0px;font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+              <button type="button" id="lane4-invoice-print-btn" style="background:#000000;color:#ffffff;border:1.5px solid #000000;padding:8px 16px;border-radius:0px;font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                <span>Print Invoice</span>
+                <span>Print / Save PDF</span>
               </button>
             </div>
           </div>
@@ -847,21 +843,25 @@ window.INDIAN_STATES = [
     }
     const invoicePrintBtn = document.getElementById('lane4-invoice-print-btn');
     if (invoicePrintBtn) {
-      invoicePrintBtn.onclick = () => window.print();
-    }
-    const invoiceJsonBtn = document.getElementById('lane4-invoice-json-btn');
-    if (invoiceJsonBtn) {
-      invoiceJsonBtn.onclick = () => {
-        if (!window.currentCustomerInvoice) return;
-        const blob = new Blob([JSON.stringify(window.currentCustomerInvoice, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${window.currentCustomerInvoice.invoiceNumber || 'gst_invoice'}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+      invoicePrintBtn.onclick = () => {
+        const inv = window.currentCustomerInvoice;
+        if (!inv) { window.print(); return; }
+        const contentEl = document.getElementById('lane4-invoice-content');
+        const old = document.getElementById('lane4-customer-print-iframe');
+        if (old) old.remove();
+        const iframe = document.createElement('iframe');
+        iframe.id = 'lane4-customer-print-iframe';
+        iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
+        document.body.appendChild(iframe);
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Tax Invoice ${escapeHtml(inv.invoiceNumber || '')}</title><style>@page{size:A4 portrait;margin:12mm;}*{box-sizing:border-box;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}body{margin:0;padding:0;background:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;color:#111827;}</style></head><body>${contentEl ? contentEl.innerHTML : ''}</body></html>`);
+        doc.close();
+        setTimeout(() => {
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+          setTimeout(() => { try { iframe.remove(); } catch (_) {} }, 1500);
+        }, 150);
       };
     }
 
@@ -2656,48 +2656,59 @@ window.INDIAN_STATES = [
 
     const isInterState = inv.placeOfSupply && inv.placeOfSupply.taxType && inv.placeOfSupply.taxType.includes('INTER_STATE');
     const isProvisional = !inv.seller.isCertifiedGstin || inv.isProvisionalDraft || !inv.seller.gstin;
-    const itemsHtml = (inv.items || []).map((it, idx) => `
+    const itemsHtml = (inv.items || []).map((it, idx) => {
+      const hsnVal = it.hsn || it.hsnCode || '9506';
+      const variantText = it.variantLabel || it.variantName || '';
+      const lineTaxable = it.taxableAmountFormatted || '0.00';
+      const cgstVal = it.cgstAmountFormatted || it.cgstFormatted || '0.00';
+      const sgstVal = it.sgstAmountFormatted || it.sgstFormatted || '0.00';
+      const igstVal = it.igstAmountFormatted || it.igstFormatted || '0.00';
+      const lineTotal = it.effectiveLineTotalFormatted || it.lineTotalFormatted || it.totalFormatted || '0.00';
+      return `
       <tr style="border-bottom:1px solid #e2e8f0;font-size:11.5px;">
-        <td style="padding:6px 4px;text-align:center;">${idx + 1}</td>
-        <td style="padding:6px 4px;">
+        <td style="padding:7px 5px;text-align:center;">${idx + 1}</td>
+        <td style="padding:7px 5px;">
           <strong>${escapeHtml(it.description || it.name || 'Item')}</strong>
-          ${it.variantName ? `<div style="font-size:10px;color:#64748b;">${escapeHtml(it.variantName)}</div>` : ''}
+          ${variantText ? `<div style="font-size:10px;color:#64748b;">${escapeHtml(variantText)}</div>` : ''}
         </td>
-        <td style="padding:6px 4px;text-align:center;"><code>${escapeHtml(it.hsnCode || '—')}</code></td>
-        <td style="padding:6px 4px;text-align:center;">${it.quantity}</td>
-        <td style="padding:6px 4px;text-align:right;">₹${it.taxableAmountFormatted}</td>
+        <td style="padding:7px 5px;text-align:center;"><code>${escapeHtml(hsnVal)}</code></td>
+        <td style="padding:7px 5px;text-align:center;">${it.quantity || 1}</td>
+        <td style="padding:7px 5px;text-align:right;font-variant-numeric:tabular-nums;">₹${lineTaxable}</td>
         ${!isInterState ? `
-          <td style="padding:6px 4px;text-align:right;">₹${it.cgstFormatted || '0.00'}</td>
-          <td style="padding:6px 4px;text-align:right;">₹${it.sgstFormatted || '0.00'}</td>
+          <td style="padding:7px 5px;text-align:right;font-variant-numeric:tabular-nums;">₹${cgstVal}</td>
+          <td style="padding:7px 5px;text-align:right;font-variant-numeric:tabular-nums;">₹${sgstVal}</td>
         ` : `
-          <td style="padding:6px 4px;text-align:right;" colspan="2">₹${it.igstFormatted || '0.00'}</td>
+          <td style="padding:7px 5px;text-align:right;font-variant-numeric:tabular-nums;" colspan="2">₹${igstVal}</td>
         `}
-        <td style="padding:6px 4px;text-align:right;font-weight:700;">₹${it.totalFormatted}</td>
+        <td style="padding:7px 5px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;">₹${lineTotal}</td>
       </tr>
-    `).join('');
+    `;
+    }).join('');
 
-    const shippingRow = inv.shipping && (inv.shipping.taxableAmountPaise > 0 || inv.shipping.grossAmountPaise > 0) ? `
+    const ship = inv.shipping || {};
+    const shipGross = Number(ship.chargesPaise || ship.grossAmountPaise || ship.taxableAmountPaise || 0);
+    const shippingRow = shipGross > 0 ? `
       <tr style="border-bottom:1px solid #e2e8f0;font-size:11.5px;background:#f8fafc;">
-        <td style="padding:6px 4px;text-align:center;">—</td>
-        <td style="padding:6px 4px;">
+        <td style="padding:7px 5px;text-align:center;">—</td>
+        <td style="padding:7px 5px;">
           <strong>Express Doorstep Delivery</strong>
-          <div style="font-size:10px;color:#64748b;">SAC ${escapeHtml(inv.shipping.sacCode || '9968')}</div>
+          <div style="font-size:10px;color:#64748b;">SAC ${escapeHtml(ship.sacCode || '9968')}</div>
         </td>
-        <td style="padding:6px 4px;text-align:center;"><code>${escapeHtml(inv.shipping.sacCode || '9968')}</code></td>
-        <td style="padding:6px 4px;text-align:center;">1</td>
-        <td style="padding:6px 4px;text-align:right;">₹${inv.shipping.taxableAmountFormatted}</td>
+        <td style="padding:7px 5px;text-align:center;"><code>${escapeHtml(ship.sacCode || '9968')}</code></td>
+        <td style="padding:7px 5px;text-align:center;">1</td>
+        <td style="padding:7px 5px;text-align:right;font-variant-numeric:tabular-nums;">₹${ship.taxableFormatted || ship.taxableAmountFormatted || '0.00'}</td>
         ${!isInterState ? `
-          <td style="padding:6px 4px;text-align:right;">₹${inv.shipping.cgstFormatted || '0.00'}</td>
-          <td style="padding:6px 4px;text-align:right;">₹${inv.shipping.sgstFormatted || '0.00'}</td>
+          <td style="padding:7px 5px;text-align:right;font-variant-numeric:tabular-nums;">₹${ship.cgstFormatted || ((ship.cgstPaise || 0) / 100).toFixed(2)}</td>
+          <td style="padding:7px 5px;text-align:right;font-variant-numeric:tabular-nums;">₹${ship.sgstFormatted || ((ship.sgstPaise || 0) / 100).toFixed(2)}</td>
         ` : `
-          <td style="padding:6px 4px;text-align:right;" colspan="2">₹${inv.shipping.igstFormatted || '0.00'}</td>
+          <td style="padding:7px 5px;text-align:right;font-variant-numeric:tabular-nums;" colspan="2">₹${ship.igstFormatted || ((ship.igstPaise || 0) / 100).toFixed(2)}</td>
         `}
-        <td style="padding:6px 4px;text-align:right;font-weight:700;">₹${inv.shipping.totalFormatted}</td>
+        <td style="padding:7px 5px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;">₹${ship.chargesFormatted || ship.totalFormatted || (shipGross / 100).toFixed(2)}</td>
       </tr>
     ` : '';
 
     invoiceContent.innerHTML = `
-      <div style="background:#ffffff;border:1.5px solid #000000;border-radius:0px;padding:16px;color:#000000;font-family:inherit;font-size:12px;">
+      <div style="background:#ffffff;border:1.5px solid #000000;border-radius:0px;padding:18px;color:#000000;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:12px;">
         ${isProvisional ? `
           <div style="background:#fffbeb;border:1.5px solid #000000;border-radius:0px;padding:8px 12px;margin-bottom:12px;display:flex;align-items:flex-start;gap:8px;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.5" style="flex-shrink:0;margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
