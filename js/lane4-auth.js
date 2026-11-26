@@ -102,7 +102,7 @@ window.INDIAN_STATES = [
         display: none;
         align-items: center;
         justify-content: center;
-        font-family: 'Generalsans', 'General Sans', sans-serif !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
@@ -116,15 +116,19 @@ window.INDIAN_STATES = [
       #lane4-auth-modal-wrapper a,
       #lane4-auth-modal-wrapper span,
       #lane4-auth-modal-wrapper div {
-        font-family: 'Generalsans', 'General Sans', sans-serif !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         box-sizing: border-box;
       }
+      #lane4-auth-modal-wrapper code,
+      #lane4-auth-modal-wrapper code * {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace !important;
+      }
       #lane4-auth-backdrop {
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.42);
+        background: rgba(15, 23, 42, 0.5);
         backdrop-filter: blur(6px);
         -webkit-backdrop-filter: blur(6px);
         z-index: 1;
@@ -137,12 +141,63 @@ window.INDIAN_STATES = [
         max-height: 90vh;
         overflow-y: auto;
         background: #ffffff;
-        border: 1px solid rgba(0, 0, 0, 0.08);
+        border: 1px solid #e2e8f0;
         border-radius: 0px;
         padding: 34px 34px 32px;
-        box-shadow: 0 24px 50px -10px rgba(0, 0, 0, 0.16), 0 1px 3px rgba(0, 0, 0, 0.04);
-        color: #111111;
+        box-shadow: 0 24px 50px -10px rgba(0, 0, 0, 0.22), 0 1px 3px rgba(0, 0, 0, 0.06);
+        color: #0f172a;
+        transition: max-width 0.18s ease;
         animation: lane4AuthScaleIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      #lane4-auth-card.lane4-auth-card--wide {
+        max-width: 740px;
+        padding: 28px 32px 30px;
+      }
+      #lane4-auth-card.lane4-auth-card--invoice {
+        max-width: 840px;
+        padding: 26px 32px 30px;
+      }
+      .lane4-details-two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+      .lane4-stepper-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+      }
+      .lane4-order-actions-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px solid #f1f5f9;
+      }
+      .lane4-order-card:hover {
+        border-color: #0f172a !important;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+      }
+      @media (max-width: 680px) {
+        #lane4-auth-card,
+        #lane4-auth-card.lane4-auth-card--wide,
+        #lane4-auth-card.lane4-auth-card--invoice {
+          width: 95%;
+          padding: 20px 18px 22px;
+        }
+        .lane4-details-two-col {
+          grid-template-columns: 1fr !important;
+        }
+        .lane4-stepper-grid {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .lane4-order-actions-row {
+          flex-direction: column;
+          align-items: stretch;
+        }
       }
       @keyframes lane4AuthScaleIn {
         from { opacity: 0; transform: scale(0.97) translateY(6px); }
@@ -404,26 +459,22 @@ window.INDIAN_STATES = [
         border-color: #dcdcdc;
       }
       .lane4-order-card {
-        border: 1px solid #ebebeb;
+        border: 1px solid #e2e8f0;
         border-radius: 0px;
-        padding: 16px;
+        padding: 16px 18px;
         margin-bottom: 12px;
         background: #ffffff;
         cursor: pointer;
         transition: border-color 0.18s ease, box-shadow 0.18s ease;
       }
-      .lane4-order-card:hover {
-        border-color: #111111;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
-      }
       .lane4-order-card:focus {
-        outline: 1px solid #000000;
+        outline: 1px solid #0f172a;
         outline-offset: 1px;
       }
       .lane4-acc-subtabs {
         display: flex;
-        border-bottom: 1px solid #eeeeee;
-        margin-bottom: 20px;
+        border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 18px;
         gap: 24px;
         padding: 0;
       }
@@ -433,33 +484,33 @@ window.INDIAN_STATES = [
         border-bottom: 2px solid transparent !important;
         padding: 6px 0 10px !important;
         font-size: 13px !important;
-        font-weight: 400 !important;
+        font-weight: 500 !important;
         letter-spacing: 0.3px !important;
-        color: #888888 !important;
+        color: #64748b !important;
         cursor: pointer;
         transition: color 0.15s ease, border-color 0.15s ease;
         margin-bottom: -1px;
         text-align: left;
       }
       .lane4-acc-subtab-btn:hover:not(.active) {
-        color: #111111 !important;
+        color: #0f172a !important;
       }
       .lane4-acc-subtab-btn.active {
-        color: #000000 !important;
-        font-weight: 500 !important;
-        border-bottom: 2px solid #000000 !important;
+        color: #0f172a !important;
+        font-weight: 600 !important;
+        border-bottom: 2px solid #0f172a !important;
       }
       .lane4-account-avatar {
-        width: 38px;
-        height: 38px;
+        width: 42px;
+        height: 42px;
         border-radius: 50%;
-        background: #111111;
+        background: #0f172a;
         color: #ffffff;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: 500;
-        font-size: 14px;
+        font-weight: 600;
+        font-size: 15px;
         flex-shrink: 0;
       }
     `;
@@ -656,7 +707,7 @@ window.INDIAN_STATES = [
 
           <!-- Tab Content: Orders -->
           <div id="lane4-acc-tab-orders" style="display:block;">
-            <div id="lane4-account-orders" style="font-size:13px;color:#555555;max-height:280px;overflow-y:auto;">Loading orders...</div>
+            <div id="lane4-account-orders" style="font-size:13px;color:#475569;max-height:460px;overflow-y:auto;padding-right:4px;">Loading orders...</div>
           </div>
 
           <!-- Tab Content: Profile -->
@@ -737,14 +788,14 @@ window.INDIAN_STATES = [
 
         <!-- DEDICATED ORDER DETAILS PANEL -->
         <div id="lane4-order-details-panel" style="display:none;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #f0f0f0;">
-            <button type="button" id="lane4-order-back-btn" style="background:#ffffff;border:1px solid #dcdcdc;padding:8px 14px;border-radius:0px;font-size:12px;font-weight:500;letter-spacing:0.3px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:#111111;transition:all 0.15s;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #e2e8f0;">
+            <button type="button" id="lane4-order-back-btn" style="background:#ffffff;border:1px solid #cbd5e1;padding:7px 14px;border-radius:0px;font-size:11.5px;font-weight:600;letter-spacing:0.4px;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:#0f172a;transition:all 0.15s;">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
               <span>Back to Orders</span>
             </button>
-            <span style="font-size:12px;font-weight:500;color:#111111;letter-spacing:0.3px;">Order Details</span>
+            <span style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.8px;text-transform:uppercase;">Order Summary</span>
           </div>
-          <div id="lane4-order-details-content" style="max-height:65vh;overflow-y:auto;padding-right:2px;"></div>
+          <div id="lane4-order-details-content"></div>
         </div>
 
         <!-- RETURN REQUEST PANEL -->
@@ -810,7 +861,7 @@ window.INDIAN_STATES = [
               </button>
             </div>
           </div>
-          <div id="lane4-invoice-content" style="max-height:65vh;overflow-y:auto;padding-right:2px;"></div>
+          <div id="lane4-invoice-content"></div>
         </div>
       </div>
     `;
@@ -824,6 +875,7 @@ window.INDIAN_STATES = [
       activeViewingOrderData = null;
       document.getElementById('lane4-order-details-panel').style.display = 'none';
       document.getElementById('lane4-account-panel').style.display = 'block';
+      setAuthModalSize('wide');
       loadCustomerOrders();
     };
 
@@ -833,6 +885,7 @@ window.INDIAN_STATES = [
         const invPanel = document.getElementById('lane4-invoice-panel');
         if (invPanel) invPanel.style.display = 'none';
         const detailsPanel = document.getElementById('lane4-order-details-panel');
+        setAuthModalSize('wide');
         if (detailsPanel && activeViewingOrderData) {
           detailsPanel.style.display = 'block';
         } else {
@@ -1331,6 +1384,14 @@ window.INDIAN_STATES = [
     if (alert) alert.style.display = 'none';
   }
 
+  function setAuthModalSize(mode) {
+    const card = document.getElementById('lane4-auth-card');
+    if (!card) return;
+    card.classList.remove('lane4-auth-card--wide', 'lane4-auth-card--invoice');
+    if (mode === 'wide') card.classList.add('lane4-auth-card--wide');
+    else if (mode === 'invoice') card.classList.add('lane4-auth-card--invoice');
+  }
+
   function openAuthModal(view = 'login') {
     if (!document.getElementById('lane4-auth-modal-wrapper')) {
       createAuthModalDOM();
@@ -1369,6 +1430,7 @@ window.INDIAN_STATES = [
     forgotForm.style.display = 'none';
 
     if (user && view === 'account') {
+      setAuthModalSize('wide');
       tabs.style.display = 'none';
       loginForm.style.display = 'none';
       regForm.style.display = 'none';
@@ -1400,6 +1462,7 @@ window.INDIAN_STATES = [
 
       loadCustomerOrders();
     } else {
+      setAuthModalSize('compact');
       currentAuthTab = view;
       tabs.style.display = 'flex';
       accPanel.style.display = 'none';
@@ -1601,9 +1664,10 @@ window.INDIAN_STATES = [
     if (isBackgroundRefresh) {
       prevScrollTop = content.scrollTop;
     } else {
+      setAuthModalSize('wide');
       if (accPanel) accPanel.style.display = 'none';
       detailsPanel.style.display = 'block';
-      const modalBody = document.querySelector('#lane4-auth-modal-wrapper > div:nth-child(2)');
+      const modalBody = document.getElementById('lane4-auth-card');
       if (modalBody) modalBody.scrollTop = 0;
       content.scrollTop = 0;
     }
@@ -1617,7 +1681,7 @@ window.INDIAN_STATES = [
     const payment = ord.payment || {};
     const fulfillment = ord.fulfillment || {};
 
-    const itemsHtml = items.map(it => {
+    const itemsHtml = items.map((it, idx) => {
       let rawImg = it.imageUrl || it.image || '6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg';
       let imgUrl = rawImg;
       if (window.LANE4 && window.LANE4.resolveAssetUrl) imgUrl = window.LANE4.resolveAssetUrl(rawImg);
@@ -1646,16 +1710,16 @@ window.INDIAN_STATES = [
           : (window.LANE4 && itemSubtotalPaise ? window.LANE4.formatINR(itemSubtotalPaise) : `₹${((itemSubtotalPaise || 0)/100).toFixed(2)}`));
 
       return `
-        <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #e5e5e5;">
-          <img src="${imgUrl}" alt="${escapeHtml(it.name || 'Product')}" style="width:50px;height:50px;border-radius:0px;object-fit:cover;border:1.5px solid #000000;flex-shrink:0;" onerror="this.onerror=null;this.src='6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg';" />
+        <div style="display:flex;align-items:center;gap:14px;padding:12px 0;${idx < items.length - 1 ? 'border-bottom:1px solid #f1f5f9;' : ''}">
+          <img src="${imgUrl}" alt="${escapeHtml(it.name || 'Product')}" style="width:56px;height:56px;border-radius:0px;object-fit:cover;border:1px solid #e2e8f0;flex-shrink:0;background:#f8fafc;" onerror="this.onerror=null;this.src='6424266ea05809dff501d86e/lane4-6dbhNuWa5oI-640x640.jpg';" />
           <div style="flex:1;min-width:0;">
-            <div style="font-size:13.5px;font-weight:600;color:#000000;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(it.name || 'Lane4 Item')}</div>
-            ${variantDesc ? `<div style="font-size:11.5px;color:#555555;margin-top:2px;">${escapeHtml(variantDesc)}</div>` : ''}
-            <div style="font-size:12px;color:#333333;margin-top:4px;">
-              <span>Qty: <strong>${qty}</strong> &times; ${unitPriceFormatted}</span>
+            <div style="font-size:13.5px;font-weight:600;color:#0f172a;line-height:1.35;">${escapeHtml(it.name || 'Lane4 Item')}</div>
+            ${variantDesc ? `<div style="font-size:11.5px;color:#64748b;margin-top:2px;">${escapeHtml(variantDesc)}</div>` : ''}
+            <div style="font-size:12px;color:#475569;margin-top:4px;font-variant-numeric:tabular-nums;">
+              Qty: <strong style="color:#0f172a;">${qty}</strong> &times; ${unitPriceFormatted}
             </div>
           </div>
-          <div style="font-size:13.5px;font-weight:600;color:#000000;text-align:right;white-space:nowrap;">
+          <div style="font-size:14px;font-weight:700;color:#0f172a;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;">
             ${itemSubtotalFormatted}
           </div>
         </div>
@@ -1669,174 +1733,169 @@ window.INDIAN_STATES = [
     const shippingText = shippingPaise > 0 ? (pricing.shippingFormatted || (window.LANE4 ? window.LANE4.formatINR(shippingPaise) : '₹99.00')) : 'FREE';
     const payableText = pricing.finalPayableFormatted || (window.LANE4 && pricing.finalPayablePaise ? window.LANE4.formatINR(pricing.finalPayablePaise) : '—');
     const paymentMethodLabel = payment.method === 'cod' ? 'Cash on Delivery' : 'UPI QR Code / Online Payment';
+    const formattedPhone = shipping.phone
+      ? (() => {
+          const digits = normalizeAuthPhone(shipping.phone);
+          return digits.length === 10 ? `+91 ${digits.slice(0, 5)} ${digits.slice(5)}` : escapeHtml(shipping.phone);
+        })()
+      : '';
+    const totalItemQty = items.reduce((sum, it) => sum + (it.quantity || 1), 0);
 
     content.innerHTML = `
-      <!-- Order Header Card -->
-      <div style="background:#ffffff;border:1.5px solid #000000;border-radius:0px;padding:16px;margin-bottom:14px;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+      <!-- Order Header Summary Card -->
+      <div style="background:#f8fafc;border:1px solid #0f172a;border-top:3px solid #0f172a;border-radius:0px;padding:16px 18px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
           <div>
-            <div style="font-size:10.5px;font-weight:600;color:#666666;text-transform:uppercase;letter-spacing: 0.3px;">Order Reference</div>
-            <div style="font-size:18px;font-weight:600;color:#000000;">#${escapeHtml(orderNum)}</div>
+            <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.9px;">Order Reference</div>
+            <div style="font-size:19px;font-weight:700;color:#0f172a;margin-top:2px;letter-spacing:-0.2px;">#${escapeHtml(orderNum)}</div>
+            <div style="font-size:12px;color:#475569;margin-top:4px;">Placed on ${formatOrderTimestamp(ord.createdAt)}</div>
           </div>
           <div style="text-align:right;">
-            <div style="font-size:10.5px;font-weight:600;color:#666666;text-transform:uppercase;letter-spacing: 0.3px;">Total Paid</div>
-            <div style="font-size:18px;font-weight:600;color:#000000;">${payableText}</div>
+            <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.9px;">Total Paid</div>
+            <div style="font-size:19px;font-weight:700;color:#0f172a;margin-top:2px;font-variant-numeric:tabular-nums;">${payableText}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;margin-top:8px;">
+              <span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:0px;border:1px solid #0f172a;background:#ffffff;color:#0f172a;text-transform:uppercase;letter-spacing:0.6px;">
+                ${getOrderStatusBadge(ord.status)}
+              </span>
+              <span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:0px;border:1px solid transparent;background:${stepper.paymentBadgeBg};color:${stepper.paymentBadgeColor};text-transform:uppercase;letter-spacing:0.6px;">
+                ${stepper.paymentBadgeText}
+              </span>
+            </div>
           </div>
-        </div>
-        <div style="font-size:11.5px;color:#555555;margin-bottom:10px;">
-          Placed on ${formatOrderTimestamp(ord.createdAt)}
-        </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:0px;border:1px solid #000000;background:#ffffff;color:#000000;text-transform:uppercase;letter-spacing:0.8px;">
-            ${getOrderStatusBadge(ord.status)}
-          </span>
-          <span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:0px;border:1px solid #000000;background:${stepper.paymentBadgeBg};color:${stepper.paymentBadgeColor};text-transform:uppercase;letter-spacing:0.8px;">
-            ${stepper.paymentBadgeText}
-          </span>
         </div>
       </div>
 
       <!-- Fulfillment Progress Stepper -->
-      <div style="background:#ffffff;border:1.5px solid #000000;border-radius:0px;padding:14px;margin-bottom:14px;">
-        <div style="font-size:10.5px;font-weight:600;color:#000000;text-transform:uppercase;letter-spacing: 0.3px;margin-bottom:10px;">Order &amp; Fulfillment Progress</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:600;text-align:center;">
-          <div style="color:#16a34a;">
-            <div>✓ 1. Placed</div>
-          </div>
-          <div style="color:${stepper.arrow1Color};">&rarr;</div>
-          <div style="color:${stepper.step2Color};">
-            <div>${stepper.step2Text}</div>
-          </div>
-          <div style="color:${stepper.arrow2Color};">&rarr;</div>
-          <div>
-            ${stepper.step3Html}
-          </div>
-          <div style="color:${stepper.arrow3Color};">&rarr;</div>
-          <div>
-            ${stepper.step4Html}
-          </div>
+      <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:0px;padding:14px 16px;margin-bottom:14px;">
+        <div style="font-size:10.5px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Order &amp; Fulfillment Progress</div>
+        <div class="lane4-stepper-grid">
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:8px 10px;font-size:11px;font-weight:600;color:#16a34a;text-align:center;">&#10003; 1. Placed</div>
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:8px 10px;font-size:11px;font-weight:600;color:${stepper.step2Color};text-align:center;">${stepper.step2Text}</div>
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:8px 10px;font-size:11px;font-weight:600;text-align:center;">${stepper.step3Html}</div>
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:8px 10px;font-size:11px;font-weight:600;text-align:center;">${stepper.step4Html}</div>
         </div>
+        ${fulfillment && fulfillment.trackingNumber ? `
+          <div style="margin-top:10px;padding:8px 10px;background:#f8fafc;border-left:3px solid #0f172a;font-size:12px;color:#334155;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;">
+            <span><strong>Courier:</strong> ${escapeHtml(fulfillment.courierName || 'DTDC')}</span>
+            <span><strong>Tracking AWB:</strong> <code style="background:#ffffff;border:1px solid #cbd5e1;padding:1px 6px;font-weight:600;color:#0f172a;">${escapeHtml(fulfillment.trackingNumber)}</code></span>
+          </div>
+        ` : ''}
       </div>
 
       <!-- Products Purchased -->
-      <div style="background:#ffffff;border:1.5px solid #000000;border-radius:0px;padding:16px;margin-bottom:14px;">
-        <div style="font-size:10.5px;font-weight:600;color:#000000;text-transform:uppercase;letter-spacing: 0.3px;margin-bottom:6px;">
-          Products Purchased (${items.reduce((sum, it) => sum + (it.quantity || 1), 0)} items)
+      <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:0px;padding:15px 18px;margin-bottom:14px;">
+        <div style="font-size:10.5px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.8px;padding-bottom:8px;border-bottom:1px solid #e2e8f0;">
+          Products Purchased (${totalItemQty} ${totalItemQty === 1 ? 'Item' : 'Items'})
         </div>
-        <div>${itemsHtml || '<div style="font-size:12px;color:#666666;">No product items recorded for this order.</div>'}</div>
+        <div>${itemsHtml || '<div style="font-size:12px;color:#64748b;padding-top:10px;">No product items recorded for this order.</div>'}</div>
       </div>
 
-      <!-- Billing Breakdown -->
-      <div style="background:#ffffff;border:1.5px solid #000000;border-radius:0px;padding:16px;margin-bottom:14px;">
-        <div style="font-size:10.5px;font-weight:600;color:#000000;text-transform:uppercase;letter-spacing: 0.3px;margin-bottom:12px;">Billing &amp; Payment Breakdown</div>
-        
-        <div style="display:flex;justify-content:space-between;font-size:13px;color:#333333;margin-bottom:8px;">
-          <span>Item total</span>
-          <span style="font-weight:700;">${subtotalText}</span>
-        </div>
-
-        ${discountPaise > 0 ? `
-          <div style="display:flex;justify-content:space-between;font-size:13px;color:#16a34a;margin-bottom:8px;">
-            <span>Coupon ${ord.coupon && ord.coupon.code ? `<span style="font-weight:600;background:#ffffff;border:1px solid #16a34a;padding:1px 6px;border-radius:0px;font-size:11px;">${ord.coupon.code}</span>` : ''}</span>
-            <span style="font-weight:600;">-${discountText}</span>
+      <!-- Billing + Delivery & Payment 2-Column Grid -->
+      <div class="lane4-details-two-col">
+        <!-- Billing Breakdown -->
+        <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:0px;padding:15px 18px;display:flex;flex-direction:column;justify-content:space-between;">
+          <div>
+            <div style="font-size:10.5px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #e2e8f0;">Billing Breakdown</div>
+            <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#334155;margin-bottom:8px;font-variant-numeric:tabular-nums;">
+              <span>Item total</span>
+              <span style="font-weight:600;color:#0f172a;">${subtotalText}</span>
+            </div>
+            ${discountPaise > 0 ? `
+              <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#15803d;margin-bottom:8px;font-variant-numeric:tabular-nums;">
+                <span>Coupon ${ord.coupon && ord.coupon.code ? `<span style="font-weight:600;background:#dcfce7;padding:1px 6px;font-size:10.5px;">${escapeHtml(ord.coupon.code)}</span>` : ''}</span>
+                <span style="font-weight:600;">-${discountText}</span>
+              </div>
+            ` : ''}
+            <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#334155;margin-bottom:12px;font-variant-numeric:tabular-nums;">
+              <span>Delivery fee</span>
+              <span style="font-weight:600;color:${shippingPaise === 0 ? '#15803d' : '#0f172a'};">${shippingText}</span>
+            </div>
           </div>
-        ` : ''}
-
-        <div style="display:flex;justify-content:space-between;font-size:13px;color:#333333;margin-bottom:10px;">
-          <span>Delivery fee</span>
-          <span style="font-weight:700;color:${shippingPaise === 0 ? '#16a34a' : '#333333'};">${shippingText}</span>
-        </div>
-
-        <div style="border-top:1.5px solid #000000;padding-top:10px;display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:13.5px;font-weight:600;color:#000000;text-transform:uppercase;letter-spacing:0.8px;">To pay</span>
-          <span style="font-size:17px;font-weight:600;color:#000000;">${payableText}</span>
-        </div>
-
-        <div style="margin-top:12px;padding-top:10px;border-top:1px dashed #cccccc;text-align:center;font-size:11px;color:#666666;display:flex;align-items:center;justify-content:center;gap:6px;">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          <span>Payments are secure and encrypted</span>
-        </div>
-      </div>
-
-      <!-- Shipping Destination Details -->
-      <div style="background:#ffffff;border:1.5px solid #000000;border-radius:0px;padding:16px;margin-bottom:14px;">
-        <div style="font-size:10.5px;font-weight:600;color:#000000;text-transform:uppercase;letter-spacing: 0.3px;margin-bottom:6px;">Delivery Destination</div>
-        <div style="font-size:13.5px;font-weight:600;color:#000000;">${escapeHtml(shipping.addressee || ord.customerName || 'Swimmer')}</div>
-        <div style="font-size:12px;color:#444444;line-height:1.45;margin-top:3px;">
-          ${escapeHtml(shipping.addressLine1 || '')}${shipping.addressLine2 ? `, ${escapeHtml(shipping.addressLine2)}` : ''}<br />
-          ${shipping.city ? `${escapeHtml(shipping.city)}, ` : ''}${shipping.state ? `${escapeHtml(shipping.state)} ` : ''}${shipping.postalCode ? `PIN ${escapeHtml(shipping.postalCode)}` : ''}
-        </div>
-        ${shipping.phone ? `<div style="font-size:12px;color:#555555;margin-top:6px;">Contact Phone: <strong>${escapeHtml(shipping.phone)}</strong></div>` : ''}
-      </div>
-
-      <!-- Payment Method -->
-      <div style="background:#ffffff;border:1.5px solid #000000;border-radius:0px;padding:16px;">
-        <div style="font-size:10.5px;font-weight:600;color:#000000;text-transform:uppercase;letter-spacing: 0.3px;margin-bottom:6px;">Payment Information</div>
-        <div style="font-size:13px;font-weight:600;color:#000000;">${escapeHtml(paymentMethodLabel)}</div>
-        ${payment.upiReferenceNumber ? `
-          <div style="font-size:12px;color:#444444;margin-top:4px;">
-            Transaction UTR / Ref: <code style="background:#f5f5f5;border:1px solid #000000;padding:2px 6px;border-radius:0px;font-weight:600;">${escapeHtml(payment.upiReferenceNumber)}</code>
+          <div>
+            <div style="border-top:1.5px solid #0f172a;padding-top:10px;display:flex;justify-content:space-between;align-items:center;font-variant-numeric:tabular-nums;">
+              <span style="font-size:12px;font-weight:700;color:#0f172a;text-transform:uppercase;letter-spacing:0.8px;">Total Paid</span>
+              <span style="font-size:16px;font-weight:700;color:#0f172a;">${payableText}</span>
+            </div>
+            <div style="margin-top:10px;padding-top:8px;border-top:1px dashed #e2e8f0;font-size:11px;color:#64748b;display:flex;align-items:center;gap:6px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <span>Payments are secure and encrypted</span>
+            </div>
           </div>
-        ` : ''}
+        </div>
+
+        <!-- Delivery Destination + Payment Information -->
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:0px;padding:15px 18px;flex:1;">
+            <div style="font-size:10.5px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e2e8f0;">Delivery Destination</div>
+            <div style="font-size:13.5px;font-weight:700;color:#0f172a;">${escapeHtml(shipping.addressee || ord.customerName || 'Swimmer')}</div>
+            <div style="font-size:12px;color:#475569;line-height:1.5;margin-top:4px;">
+              ${escapeHtml(shipping.addressLine1 || '')}${shipping.addressLine2 ? `, ${escapeHtml(shipping.addressLine2)}` : ''}<br />
+              ${shipping.city ? `${escapeHtml(shipping.city)}, ` : ''}${shipping.state ? `${escapeHtml(shipping.state)} ` : ''}${shipping.postalCode ? `PIN ${escapeHtml(shipping.postalCode)}` : ''}
+            </div>
+            ${formattedPhone ? `<div style="font-size:12px;color:#475569;margin-top:6px;">Phone: <strong style="color:#0f172a;">${formattedPhone}</strong></div>` : ''}
+          </div>
+
+          <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:0px;padding:15px 18px;">
+            <div style="font-size:10.5px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e2e8f0;">Payment Information</div>
+            <div style="font-size:12.5px;font-weight:600;color:#0f172a;">${escapeHtml(paymentMethodLabel)}</div>
+            ${payment.upiReferenceNumber ? `
+              <div style="font-size:12px;color:#475569;margin-top:6px;">
+                UTR / Ref: <code style="background:#f8fafc;border:1px solid #cbd5e1;padding:2px 6px;border-radius:0px;font-weight:600;color:#0f172a;">${escapeHtml(payment.upiReferenceNumber)}</code>
+              </div>
+            ` : ''}
+          </div>
+        </div>
       </div>
 
       <!-- Payment Proof Upload (New Submission or Resubmission if Rejected) -->
       ${(ord.status === 'payment_rejected' || ord.paymentStatus === 'rejected' || stepper.isAwaitingProof) ? `
-        <div id="lane4-proof-upload-container" style="background:#ffffff;border:1.5px solid ${stepper.isPaymentRejected ? '#dc2626' : '#000000'};border-radius:0px;padding:16px;margin-top:14px;">
-          <div style="display:flex;align-items:center;gap:8px;color:${stepper.isPaymentRejected ? '#991b1b' : '#000000'};font-weight:600;font-size:13px;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.8px;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        <div id="lane4-proof-upload-container" style="background:#ffffff;border:1px solid ${stepper.isPaymentRejected ? '#dc2626' : '#0f172a'};border-left:4px solid ${stepper.isPaymentRejected ? '#dc2626' : '#0f172a'};border-radius:0px;padding:16px 18px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:8px;color:${stepper.isPaymentRejected ? '#991b1b' : '#0f172a'};font-weight:700;font-size:12.5px;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
             <span>${stepper.isPaymentRejected ? 'Payment Proof Action Required' : 'Upload Manual UPI Payment Proof'}</span>
           </div>
-          <div style="font-size:12px;color:#333333;line-height:1.5;margin-bottom:12px;">
+          <div style="font-size:12.5px;color:#334155;line-height:1.5;margin-bottom:12px;">
             ${stepper.isPaymentRejected
               ? `Your previous payment verification was not approved. Please ensure you have transferred <strong>${payableText}</strong> to UPI ID <code>lane4swim@upi</code>, then upload a new payment screenshot with your valid 12-digit UTR number.`
               : `Please transfer <strong>${payableText}</strong> to merchant UPI ID <code>lane4swim@upi</code>, then enter your 12-digit bank UTR reference and upload your payment screenshot below to confirm your order.`}
           </div>
           <form id="lane4-resubmit-payment-form">
             <div class="lane4-auth-form-group" style="margin-bottom:10px;">
-              <label class="lane4-auth-label" style="color:${stepper.isPaymentRejected ? '#991b1b' : '#000000'};">12-Digit UPI Reference (UTR) *</label>
+              <label class="lane4-auth-label" style="color:${stepper.isPaymentRejected ? '#991b1b' : '#0f172a'};">12-Digit UPI Reference (UTR) *</label>
               <input type="text" id="lane4-resubmit-utr" required maxlength="12" minlength="12" pattern="[0-9]{12}" class="lane4-auth-input" placeholder="e.g. 402812345678" style="background:#ffffff;" />
             </div>
             <div class="lane4-auth-form-group" style="margin-bottom:12px;">
-              <label class="lane4-auth-label" style="color:${stepper.isPaymentRejected ? '#991b1b' : '#000000'};">Upload Payment Screenshot *</label>
-              <input type="file" id="lane4-resubmit-screenshot" accept="image/*" required style="font-size:12px;width:100%;background:#ffffff;padding:8px;border:1.5px solid #000000;border-radius:0px;" />
+              <label class="lane4-auth-label" style="color:${stepper.isPaymentRejected ? '#991b1b' : '#0f172a'};">Upload Payment Screenshot *</label>
+              <input type="file" id="lane4-resubmit-screenshot" accept="image/*" required style="font-size:12px;width:100%;background:#ffffff;padding:8px;border:1px solid #cbd5e1;border-radius:0px;" />
             </div>
-            <button type="submit" id="lane4-resubmit-btn" class="lane4-auth-submit-btn" style="background:${stepper.isPaymentRejected ? '#dc2626' : '#000000'};color:#ffffff;margin-top:0;">
-              <span>${stepper.isPaymentRejected ? 'RESUBMIT PAYMENT PROOF' : 'SUBMIT PAYMENT PROOF'}</span>
+            <button type="submit" id="lane4-resubmit-btn" class="lane4-auth-submit-btn" style="background:${stepper.isPaymentRejected ? '#dc2626' : '#0f172a'};color:#ffffff;margin-top:0;">
+              <span>${stepper.isPaymentRejected ? 'Resubmit Payment Proof' : 'Submit Payment Proof'}</span>
             </button>
           </form>
         </div>
       ` : ''}
 
-      <!-- Customer Self-Cancellation Action -->
-      ${['pending_payment', 'payment_verification', 'payment_rejected', 'confirmed'].includes(ord.status) ? `
-        <div style="margin-top:14px;">
-          <button type="button" id="lane4-order-cancel-btn" style="width:100%;background:#ffffff;color:#dc2626;border:1.5px solid #dc2626;padding:12px;border-radius:0px;font-size:12px;font-weight:600;letter-spacing: 0.3px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-            <span>Cancel Order</span>
+      <!-- Order Action Buttons Row -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
+        ${(['confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered'].includes(ord.status) || ord.paymentStatus === 'verified') ? `
+          <button type="button" id="lane4-order-invoice-btn" style="flex:1;min-width:210px;background:#0f172a;color:#ffffff;border:1px solid #0f172a;padding:11px 16px;border-radius:0px;font-size:11.5px;font-weight:600;letter-spacing:0.6px;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            <span>View / Download Tax Invoice (GST)</span>
           </button>
-        </div>
-      ` : ''}
-
-      <!-- Return / Exchange Action (only after delivery) -->
-      ${ord.status === 'delivered' ? `
-        <div style="margin-top:10px;">
-          <button type="button" id="lane4-order-return-btn" style="width:100%;background:#ffffff;color:#000000;border:1.5px solid #000000;padding:12px;border-radius:0px;font-size:12px;font-weight:600;letter-spacing: 0.3px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s;">
+        ` : ''}
+        ${ord.status === 'delivered' ? `
+          <button type="button" id="lane4-order-return-btn" style="flex:1;min-width:190px;background:#ffffff;color:#0f172a;border:1px solid #0f172a;padding:11px 16px;border-radius:0px;font-size:11.5px;font-weight:600;letter-spacing:0.6px;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>
             <span>Request Return / Exchange</span>
           </button>
-        </div>
-      ` : ''}
-
-      <!-- GST Tax Invoice Action -->
-      ${(['confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered'].includes(ord.status) || ord.paymentStatus === 'verified') ? `
-        <div style="margin-top:10px;">
-          <button type="button" id="lane4-order-invoice-btn" style="width:100%;background:#000000;color:#ffffff;border:1.5px solid #000000;padding:12px;border-radius:0px;font-size:12px;font-weight:600;letter-spacing: 0.3px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-            <span>View / Download Tax Invoice (GST)</span>
+        ` : ''}
+        ${['pending_payment', 'payment_verification', 'payment_rejected', 'confirmed'].includes(ord.status) ? `
+          <button type="button" id="lane4-order-cancel-btn" style="flex:1;min-width:170px;background:#ffffff;color:#dc2626;border:1px solid #dc2626;padding:11px 16px;border-radius:0px;font-size:11.5px;font-weight:600;letter-spacing:0.6px;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+            <span>Cancel Order</span>
           </button>
-        </div>
-      ` : ''}
+        ` : ''}
+      </div>
     `;
 
     const returnBtn = document.getElementById('lane4-order-return-btn');
@@ -1951,6 +2010,7 @@ window.INDIAN_STATES = [
     const returnSuccess = document.getElementById('lane4-return-success');
     if (!returnPanel || !returnForm) return;
 
+    setAuthModalSize('wide');
     if (detailsPanel) detailsPanel.style.display = 'none';
     returnPanel.style.display = 'block';
     if (returnSuccess) returnSuccess.style.display = 'none';
@@ -2136,51 +2196,61 @@ window.INDIAN_STATES = [
       const stepper = getOrderStepperData(ord);
       const itemCount = (ord.items || []).reduce((sum, it) => sum + (it.quantity || 1), 0);
 
+      const canDownloadInvoice = ['confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered'].includes(ord.status) || ord.paymentStatus === 'verified';
+      const firstItem = (ord.items && ord.items[0]) ? ord.items[0] : null;
+      const itemsPreview = firstItem
+        ? `${escapeHtml(firstItem.name || 'Lane4 Gear')}${ord.items.length > 1 ? ` + ${ord.items.length - 1} more` : ''}`
+        : `${itemCount} ${itemCount === 1 ? 'item' : 'items'}`;
+
       const card = document.createElement('div');
       card.className = 'lane4-order-card';
       card.setAttribute('role', 'button');
       card.setAttribute('tabindex', '0');
       card.setAttribute('title', 'Click to view complete order items and billing breakdown');
       card.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;font-weight:500;font-size:14px;color:#111111;margin-bottom:4px;">
-          <span>#${orderRef}</span>
-          <span style="font-size:14px;font-weight:500;">${totalText}</span>
-        </div>
-        <div style="font-size:11.5px;color:#777777;margin-bottom:6px;">
-          ${itemCount} ${itemCount === 1 ? 'item' : 'items'} &bull; ${formatOrderTimestamp(ord.createdAt)}
-        </div>
-        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
-          <span style="font-size:10px;font-weight:500;padding:2px 7px;border-radius:0px;border:1px solid #e0e0e0;background:#fafafa;color:#222222;text-transform:uppercase;letter-spacing:0.5px;">
-            ${getOrderStatusBadge(ord.status)}
-          </span>
-          <span style="font-size:10px;font-weight:500;padding:2px 7px;border-radius:0px;border:1px solid #e0e0e0;background:${stepper.paymentBadgeBg};color:${stepper.paymentBadgeColor};text-transform:uppercase;letter-spacing:0.5px;">
-            ${stepper.paymentBadgeText}
-          </span>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <span style="font-weight:700;font-size:15px;color:#0f172a;letter-spacing:-0.1px;">#${escapeHtml(orderRef)}</span>
+              <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:0px;border:1px solid #cbd5e1;background:#f8fafc;color:#0f172a;text-transform:uppercase;letter-spacing:0.6px;">
+                ${getOrderStatusBadge(ord.status)}
+              </span>
+              <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:0px;background:${stepper.paymentBadgeBg};color:${stepper.paymentBadgeColor};text-transform:uppercase;letter-spacing:0.6px;">
+                ${stepper.paymentBadgeText}
+              </span>
+            </div>
+            <div style="font-size:12.5px;font-weight:500;color:#334155;margin-top:6px;">${itemsPreview}</div>
+            <div style="font-size:11.5px;color:#64748b;margin-top:2px;">
+              ${itemCount} ${itemCount === 1 ? 'item' : 'items'} &bull; ${formatOrderTimestamp(ord.createdAt)}
+            </div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:16px;font-weight:700;color:#0f172a;font-variant-numeric:tabular-nums;">${totalText}</div>
+          </div>
         </div>
         ${(stepper.isAwaitingProof || stepper.isPaymentRejected) ? `
-          <div style="margin-top:8px;">
-            <button type="button" class="lane4-upload-proof-action" onclick="event.stopPropagation(); window.showOrderDetailsWithProof('${ord.orderId || ord.id || orderRef}');" style="display:inline-flex;align-items:center;gap:5px;background:#000000;color:#ffffff;padding:6px 12px;border:1px solid #000000;border-radius:0px;font-size:10.5px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:0.8px;">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div style="margin-top:10px;">
+            <button type="button" class="lane4-upload-proof-action" onclick="event.stopPropagation(); window.showOrderDetailsWithProof('${ord.orderId || ord.id || orderRef}');" style="display:inline-flex;align-items:center;gap:6px;background:#0f172a;color:#ffffff;padding:7px 14px;border:1px solid #0f172a;border-radius:0px;font-size:10.5px;font-weight:600;cursor:pointer;text-transform:uppercase;letter-spacing:0.7px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               <span>Upload Payment Proof</span>
             </button>
           </div>
         ` : ''}
         ${ord.fulfillment && ord.fulfillment.trackingNumber ? `
-          <div style="margin-top:8px;padding-top:6px;border-top:1px dashed #e0e0e0;font-size:11.5px;color:#444444;">
-            <strong>Courier:</strong> ${ord.fulfillment.courierName || 'DTDC'} &bull; <strong>AWB:</strong> <code>${ord.fulfillment.trackingNumber}</code>
+          <div style="margin-top:10px;padding:7px 10px;background:#f8fafc;border-left:3px solid #0f172a;font-size:11.5px;color:#334155;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <span><strong>Courier:</strong> ${escapeHtml(ord.fulfillment.courierName || 'DTDC')}</span>
+            <span><strong>AWB:</strong> <code style="background:#ffffff;border:1px solid #cbd5e1;padding:1px 6px;color:#0f172a;font-weight:600;">${escapeHtml(ord.fulfillment.trackingNumber)}</code></span>
           </div>
         ` : ''}
-        ${(['confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered'].includes(ord.status) || ord.paymentStatus === 'verified') ? `
-          <div style="margin-top:8px;padding-top:6px;border-top:1px dashed #e0e0e0;display:flex;justify-content:flex-end;">
-            <button type="button" class="lane4-invoice-btn" style="background:none;border:none;color:#111111;font-size:11.5px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:4px;letter-spacing:0.3px;text-transform:uppercase;text-decoration:underline;" onclick="event.stopPropagation(); window.downloadCustomerInvoice('${ord.orderId || ord.id}', '${ord.orderAccessToken || ''}')">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-              <span>Download Tax Invoice (GST)</span>
+        <div class="lane4-order-actions-row">
+          ${canDownloadInvoice ? `
+            <button type="button" class="lane4-invoice-btn" style="flex:1;background:#ffffff;border:1px solid #0f172a;color:#0f172a;padding:9px 12px;border-radius:0px;font-size:11px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;letter-spacing:0.5px;text-transform:uppercase;transition:all 0.15s ease;" onclick="event.stopPropagation(); window.downloadCustomerInvoice('${ord.orderId || ord.id}', '${ord.orderAccessToken || ''}')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <span>Tax Invoice (GST)</span>
             </button>
-          </div>
-        ` : ''}
-        <div style="margin-top:10px;padding-top:8px;border-top:1px solid #f0f0f0;">
-          <button type="button" class="lane4-view-details-action" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;background:#ffffff;color:#111111;padding:9px 12px;border:1px solid #dcdcdc;border-radius:0px;font-size:11.5px;font-weight:500;cursor:pointer;letter-spacing:0.4px;text-transform:uppercase;transition:all 0.15s ease;">
-            <span>View Order, Products &amp; Billing Details</span>
+          ` : ''}
+          <button type="button" class="lane4-view-details-action" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#0f172a;color:#ffffff;padding:9px 14px;border:1px solid #0f172a;border-radius:0px;font-size:11px;font-weight:600;cursor:pointer;letter-spacing:0.5px;text-transform:uppercase;transition:all 0.15s ease;">
+            <span>View Order Details</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </button>
         </div>
@@ -2652,6 +2722,7 @@ window.INDIAN_STATES = [
     const tabs = document.getElementById('lane4-auth-tabs');
     if (tabs) tabs.style.display = 'none';
 
+    setAuthModalSize('invoice');
     invoicePanel.style.display = 'block';
 
     const isInterState = inv.placeOfSupply && inv.placeOfSupply.taxType && inv.placeOfSupply.taxType.includes('INTER_STATE');
