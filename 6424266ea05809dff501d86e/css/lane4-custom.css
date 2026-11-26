@@ -576,6 +576,238 @@ a.footer-link,
   animation: lane4ForceReveal 0.35s ease 0.15s forwards;
 }
 
+/* =========================================================
+   Legal & Policy Pages (Structured Monochrome Editorial Layout)
+   ========================================================= */
+.hero-terms {
+  gap: 24px !important;
+  padding-bottom: 32px;
+  border-bottom: 2px solid #000000;
+}
+
+.lane4-policy-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.lane4-policy-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border: 1px solid #000000;
+  background: #ffffff;
+  color: #111111;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.lane4-policy-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.lane4-policy-tab {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 8px 16px;
+  border: 1.5px solid #000000;
+  background: #ffffff;
+  color: #111111;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.lane4-policy-tab:hover {
+  background: #f1f5f9;
+}
+
+.lane4-policy-tab.is-active {
+  background: #000000;
+  color: #ffffff;
+}
+
+.lane4-policy-summary {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  border: 1.5px solid #000000;
+  background: #f8fafc;
+  margin-top: 28px;
+  margin-bottom: 12px;
+}
+
+.lane4-policy-summary-item {
+  padding: 18px 20px;
+  border-right: 1px solid #cbd5e1;
+}
+
+.lane4-policy-summary-item:last-child {
+  border-right: none;
+}
+
+.lane4-policy-summary-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.lane4-policy-summary-val {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111111;
+  line-height: 1.4;
+}
+
+.terms-wrapper {
+  padding-top: 40px !important;
+  padding-bottom: 80px !important;
+}
+
+.terms-row {
+  padding-top: 32px !important;
+  padding-bottom: 32px !important;
+  border-top: 1px solid #000000 !important;
+}
+
+.terms-row:last-of-type {
+  border-bottom: 1px solid #000000;
+}
+
+.lane4-policy-heading-col {
+  width: 34%;
+  flex-shrink: 0;
+}
+
+.lane4-policy-sec-num {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.terms-paragraph {
+  flex-direction: column !important;
+  gap: 12px !important;
+  width: 62% !important;
+}
+
+.lane4-policy-copy {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #334155;
+  margin: 0;
+}
+
+.lane4-policy-list {
+  margin: 4px 0 0 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #334155;
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+
+.lane4-policy-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  margin-top: 8px;
+  border: 1px solid #000000;
+}
+
+.lane4-policy-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  background: #ffffff;
+}
+
+.lane4-policy-table th {
+  background: #000000;
+  color: #ffffff;
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.lane4-policy-table td {
+  padding: 10px 12px;
+  border-top: 1px solid #e2e8f0;
+  color: #1e293b;
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+.lane4-policy-contact {
+  width: 100%;
+  margin-top: 36px;
+  padding: 22px 24px;
+  border: 1.5px solid #000000;
+  background: #f8fafc;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.lane4-policy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 9px 18px;
+  border: 1.5px solid #000000;
+  background: #000000;
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.lane4-policy-btn.is-outline {
+  background: #ffffff;
+  color: #000000;
+}
+
+@media screen and (max-width: 767px) {
+  .lane4-policy-summary-item {
+    border-right: none;
+    border-bottom: 1px solid #cbd5e1;
+  }
+  .lane4-policy-summary-item:last-child {
+    border-bottom: none;
+  }
+  .lane4-policy-heading-col,
+  .terms-paragraph {
+    width: 100% !important;
+  }
+}
+
+
 
 
 
