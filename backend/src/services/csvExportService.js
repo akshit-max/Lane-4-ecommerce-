@@ -32,18 +32,53 @@ function toCsvRow(values) {
 }
 
 /**
- * Format timestamp into standard ISO string or readable date
+ * Format timestamp into standard readable ISO-like timestamp (YYYY-MM-DD HH:mm:ss UTC)
  */
 function formatCsvDate(ts) {
   if (!ts) return '';
   try {
-    if (typeof ts.toDate === 'function') return ts.toDate().toISOString();
-    if (ts instanceof Date) return ts.toISOString();
-    const d = new Date(ts);
-    return isNaN(d.getTime()) ? String(ts) : d.toISOString();
+    let d;
+    if (typeof ts.toDate === 'function') d = ts.toDate();
+    else if (typeof ts._seconds === 'number') d = new Date(ts._seconds * 1000);
+    else if (typeof ts.seconds === 'number') d = new Date(ts.seconds * 1000);
+    else if (ts instanceof Date) d = ts;
+    else d = new Date(ts);
+    if (!d || isNaN(d.getTime())) return String(ts);
+    return d.toISOString().replace('T', ' ').slice(0, 19);
   } catch (_) {
     return String(ts);
   }
+}
+
+/**
+ * Format monetary amount strictly as plain numeric INR decimal (e.g. "2499.00")
+ * so Excel/Sheets never suffers currency symbol mojibake and can sum columns natively.
+ */
+function formatPlainInr(paiseVal, fallbackFormatted) {
+  if (typeof paiseVal === 'number' && Number.isFinite(paiseVal)) {
+    return (paiseVal / 100).toFixed(2);
+  }
+  if (fallbackFormatted !== undefined && fallbackFormatted !== null && fallbackFormatted !== '') {
+    const cleaned = String(fallbackFormatted).replace(/[^0-9.-]/g, '');
+    if (cleaned && !isNaN(Number(cleaned))) {
+      return Number(cleaned).toFixed(2);
+    }
+  }
+  return '0.00';
+}
+
+/**
+ * Normalize Indian phone numbers to clean 10 digits for CSV consistency
+ */
+function normalizeCsvPhone(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return '';
+  if (/^[=@\t\r]/.test(s)) return s;
+  const digits = s.replace(/\D/g, '');
+  if (digits.length === 12 && digits.startsWith('91')) return digits.slice(2);
+  if (digits.length === 11 && digits.startsWith('0')) return digits.slice(1);
+  if (digits.length === 10) return digits;
+  return s;
 }
 
 const BATCH_SIZE = 250;
@@ -71,6 +106,18 @@ class CsvExportService {
       res.setHeader('Transfer-Encoding', 'chunked');
       if (res.flushHeaders) res.flushHeaders();
 
+      // Lookup UTRs from payments collection so UTR column is populated accurately
+      const utrByOrderId = new Map();
+      try {
+        const paySnap = await db.collection('payments').get();
+        for (const pDoc of paySnap.docs) {
+          const pData = pDoc.data() || {};
+          if (pData.orderId && pData.upiReferenceNumber) {
+            utrByOrderId.set(pData.orderId, pData.upiReferenceNumber);
+          }
+        }
+      } catch (_) {}
+
       // CSV Headers
       const headers = [
         'Order ID',
@@ -97,7 +144,7 @@ class CsvExportService {
       ];
 
       if (!clientDisconnected && !res.writableEnded && !res.destroyed) {
-        res.write(toCsvRow(headers));
+        res.write('\uFEFF' + toCsvRow(headers));
       }
 
       // Cursor-based bounded pagination
@@ -127,34 +174,49 @@ class CsvExportService {
           if (clientDisconnected || res.writableEnded || res.destroyed) break;
 
           const ord = doc.data();
+          const ordId = ord.orderId || doc.id || '';
           const pricing = ord.pricing || {};
           const ship = ord.shippingAddress || {};
-          const tracking = ord.tracking || {};
+          const tracking = ord.tracking || ord.fulfillment || {};
           const items = ord.items || [];
           const totalItemsCount = items.reduce((sum, it) => sum + (parseInt(it.quantity, 10) || 1), 0);
 
+          const computedItemsPaise = items.reduce((sum, it) => {
+            const qty = parseInt(it.quantity, 10) || 1;
+            const linePaise = it.totalPricePaise ?? it.lineTotalPaise ?? ((it.unitPricePaise ?? it.pricePaise ?? 0) * qty);
+            return sum + (Number(linePaise) || 0);
+          }, 0);
+
+          const itemsSubtotalPaise = pricing.subtotalPaise ?? pricing.itemsSubtotalPaise ?? pricing.itemsTotalPaise ?? computedItemsPaise;
+          const shippingPaise = pricing.shippingChargesPaise ?? pricing.shippingPaise ?? pricing.shippingFeePaise ?? 0;
+          const discountPaise = pricing.couponDiscountPaise ?? pricing.discountPaise ?? 0;
+          const finalPayablePaise = pricing.finalPayablePaise ?? pricing.totalPaise ?? (itemsSubtotalPaise + shippingPaise - discountPaise);
+
+          const rawPhone = ship.phone || ord.customerPhone || '';
+          const utrVal = ord.paymentDetails?.utr || ord.upiReferenceNumber || utrByOrderId.get(ordId) || '';
+
           const row = [
-            ord.orderId || doc.id || '',
+            ordId,
             ord.orderNumber || '',
             formatCsvDate(ord.createdAt),
             ord.customerEmail || '',
             ship.addressee || ord.customerName || '',
-            ship.phone || ord.customerPhone || '',
+            normalizeCsvPhone(rawPhone),
             ord.status || ord.orderStatus || '',
             ord.paymentStatus || '',
             ord.paymentMethod || 'UPI_QR',
-            pricing.itemsSubtotalFormatted || (pricing.itemsSubtotalPaise ? (pricing.itemsSubtotalPaise / 100).toFixed(2) : '0.00'),
-            pricing.shippingChargesFormatted || (pricing.shippingChargesPaise ? (pricing.shippingChargesPaise / 100).toFixed(2) : '0.00'),
-            pricing.couponDiscountFormatted || (pricing.couponDiscountPaise ? (pricing.couponDiscountPaise / 100).toFixed(2) : '0.00'),
-            pricing.finalPayableFormatted || (pricing.finalPayablePaise ? (pricing.finalPayablePaise / 100).toFixed(2) : '0.00'),
+            formatPlainInr(itemsSubtotalPaise, pricing.subtotalFormatted || pricing.itemsSubtotalFormatted),
+            formatPlainInr(shippingPaise, pricing.shippingChargesFormatted),
+            formatPlainInr(discountPaise, pricing.couponDiscountFormatted),
+            formatPlainInr(finalPayablePaise, pricing.finalPayableFormatted),
             totalItemsCount,
             ship.addressee || '',
             ship.city || '',
             ship.state || '',
             ship.postalCode || '',
-            tracking.carrier || '',
+            tracking.courierName || tracking.carrier || '',
             tracking.trackingNumber || '',
-            ord.paymentDetails?.utr || ord.upiReferenceNumber || ''
+            utrVal
           ];
 
           res.write(toCsvRow(row));
@@ -202,6 +264,21 @@ class CsvExportService {
       res.setHeader('Transfer-Encoding', 'chunked');
       if (res.flushHeaders) res.flushHeaders();
 
+      // Lookup variant prices from products collection so Price (INR) is populated accurately
+      const priceBySku = new Map();
+      try {
+        const prodSnap = await db.collection('products').get();
+        for (const pDoc of prodSnap.docs) {
+          const pData = pDoc.data() || {};
+          const fallbackPrice = pData.salePricePaise || pData.regularPricePaise || 0;
+          for (const v of (pData.variants || [])) {
+            if (v && v.sku) {
+              priceBySku.set(v.sku, v.salePricePaise || v.regularPricePaise || v.pricePaise || fallbackPrice);
+            }
+          }
+        }
+      } catch (_) {}
+
       // CSV Headers
       const headers = [
         'SKU',
@@ -218,7 +295,7 @@ class CsvExportService {
       ];
 
       if (!clientDisconnected && !res.writableEnded && !res.destroyed) {
-        res.write(toCsvRow(headers));
+        res.write('\uFEFF' + toCsvRow(headers));
       }
 
       let baseQuery = db.collection('inventory');
@@ -267,8 +344,11 @@ class CsvExportService {
             status = 'LOW_STOCK';
           }
 
+          const skuKey = item.sku || doc.id || '';
+          const effectivePricePaise = item.pricePaise ?? priceBySku.get(skuKey);
+
           const row = [
-            item.sku || doc.id || '',
+            skuKey,
             item.productId || '',
             item.productName || item.title || '',
             item.variantLabel || item.variant || item.size || 'Default',
@@ -277,7 +357,7 @@ class CsvExportService {
             physical,
             threshold,
             status,
-            item.priceFormatted || (item.pricePaise ? (item.pricePaise / 100).toFixed(2) : (item.price || '0.00')),
+            formatPlainInr(effectivePricePaise, item.priceFormatted || item.price),
             formatCsvDate(item.updatedAt || item.createdAt)
           ];
 
@@ -327,6 +407,32 @@ class CsvExportService {
       res.setHeader('Transfer-Encoding', 'chunked');
       if (res.flushHeaders) res.flushHeaders();
 
+      // Aggregate real order counts & spend per customer
+      const orderStatsByUid = new Map();
+      const orderStatsByEmail = new Map();
+      try {
+        const ordSnap = await db.collection('orders').get();
+        for (const oDoc of ordSnap.docs) {
+          const o = oDoc.data() || {};
+          const st = (o.status || o.orderStatus || '').toLowerCase();
+          if (st === 'cancelled') continue;
+          const spendPaise = Number(o.pricing?.finalPayablePaise ?? o.pricing?.totalPaise ?? 0) || 0;
+          if (o.customerId) {
+            const cur = orderStatsByUid.get(o.customerId) || { count: 0, spendPaise: 0 };
+            cur.count += 1;
+            cur.spendPaise += spendPaise;
+            orderStatsByUid.set(o.customerId, cur);
+          }
+          const em = (o.customerEmail || '').toLowerCase().trim();
+          if (em) {
+            const cur = orderStatsByEmail.get(em) || { count: 0, spendPaise: 0 };
+            cur.count += 1;
+            cur.spendPaise += spendPaise;
+            orderStatsByEmail.set(em, cur);
+          }
+        }
+      } catch (_) {}
+
       // CSV Headers — Sensitive credentials (passwords, tokens, secrets) EXCLUDED
       const headers = [
         'Customer ID',
@@ -342,7 +448,7 @@ class CsvExportService {
       ];
 
       if (!clientDisconnected && !res.writableEnded && !res.destroyed) {
-        res.write(toCsvRow(headers));
+        res.write('\uFEFF' + toCsvRow(headers));
       }
 
       let baseQuery = db.collection('users');
@@ -387,10 +493,12 @@ class CsvExportService {
 
           const customerId = u.uid || doc.id || '';
           const name = u.displayName || u.name || `${u.firstName || ''} ${u.lastName || ''}`.trim() || 'Customer';
-          const phone = u.phone || u.phoneNumber || '';
+          const phone = normalizeCsvPhone(u.phone || u.phoneNumber || '');
           const role = u.role || 'customer';
-          const ordersCount = u.ordersCount || u.totalOrders || 0;
-          const totalSpent = u.totalSpentFormatted || (u.totalSpentPaise ? (u.totalSpentPaise / 100).toFixed(2) : '0.00');
+          const agg = orderStatsByUid.get(customerId) || orderStatsByEmail.get(email);
+          const ordersCount = agg ? agg.count : (u.ordersCount || u.totalOrders || 0);
+          const spendPaise = agg ? agg.spendPaise : u.totalSpentPaise;
+          const totalSpent = formatPlainInr(spendPaise, u.totalSpentFormatted);
           const createdAt = formatCsvDate(u.createdAt);
           const lastLogin = formatCsvDate(u.lastLoginAt || u.lastActiveAt);
           const status = u.isActive === false ? 'INACTIVE' : 'ACTIVE';
