@@ -706,6 +706,14 @@
       .stats-grid { grid-template-columns: 1fr; }
     }
 
+    @media print {
+      @page { size: A4 portrait; margin: 12mm; }
+      body { background: #ffffff !important; }
+      #admin-sidebar, .top-bar, .admin-view, #admin-toast-container, .admin-modal-close, .lane4-invoice-actions { display: none !important; }
+      #admin-modal { position: static !important; inset: auto !important; background: transparent !important; backdrop-filter: none !important; display: block !important; padding: 0 !important; }
+      .admin-modal-content { max-width: 100% !important; width: 100% !important; max-height: none !important; overflow: visible !important; box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; }
+    }
+
     /* Top Horizontal Progress Line for Fast Seamless Tab Switching */
     .admin-top-progress {
       position: fixed;
@@ -956,14 +964,6 @@
     </div>
   </div>
 
-    @media print {
-      @page { size: A4 portrait; margin: 12mm; }
-      body { background: #ffffff !important; }
-      #admin-sidebar, .top-bar, .admin-view, #admin-toast-container, .admin-modal-close, .lane4-invoice-actions { display: none !important; }
-      #admin-modal { position: static !important; inset: auto !important; background: transparent !important; backdrop-filter: none !important; display: block !important; padding: 0 !important; }
-      .admin-modal-content { max-width: 100% !important; width: 100% !important; max-height: none !important; overflow: visible !important; box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; }
-    }
-  </style>
   <script src="../shared/frontend-api-config.js?v=6.0"></script>
   <script src="../js/lane4-api.js?v=6.0"></script>
   <script src="js/admin.js?v=8.6"></script>
