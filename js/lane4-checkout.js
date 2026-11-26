@@ -935,8 +935,8 @@
         errors.push({ el: pinEl, name: 'PIN / Postal Code', msg: 'Please provide a correct postal code.' });
       }
       const utrClean = (utr || '').replace(/\s+/g, '');
-      if (!utrClean || !/^\d{12}$/.test(utrClean)) {
-        errors.push({ el: utrEl, name: '12-Digit UTR Number', msg: 'Please enter a valid 12-digit numeric UPI Reference / UTR Number.' });
+      if (!utrClean || !/^\d{12}$/.test(utrClean) || /^0{12}$/.test(utrClean)) {
+        errors.push({ el: utrEl, name: '12-Digit UTR Number', msg: 'Please enter a valid 12-digit numeric UPI Reference / UTR Number (000000000000 is not valid).' });
       }
       if (!screenshot) {
         errors.push({ el: fileInput, name: 'Payment Screenshot', msg: 'Please upload your payment confirmation screenshot before placing order.' });

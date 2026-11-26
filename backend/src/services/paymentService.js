@@ -133,6 +133,14 @@ class PaymentService {
 
     await docRef.set(updates, { merge: true });
 
+    // Preserve/sync GSTIN if passed in settings payload so it is never lost
+    if (data.gstin !== undefined && String(data.gstin).trim()) {
+      try {
+        const storeSettingsService = require('./storeSettingsService');
+        await storeSettingsService.updateStoreSettings({ gstin: String(data.gstin).trim() }, adminUser);
+      } catch (_) {}
+    }
+
     // Audit log
     if (adminUser) {
       await db.collection('adminActivityLogs').add({
@@ -159,8 +167,8 @@ class PaymentService {
       throw err;
     }
     const cleanUtr = (upiReferenceNumber || '').trim();
-    if (!/^\d{12}$/.test(cleanUtr)) {
-      const err = new Error('Please enter a valid 12-digit numeric UPI Reference / UTR Number.');
+    if (!/^\d{12}$/.test(cleanUtr) || /^0{12}$/.test(cleanUtr)) {
+      const err = new Error('Please enter a valid 12-digit numeric UPI Reference / UTR Number (000000000000 is not accepted).');
       err.statusCode = 400;
       throw err;
     }
@@ -370,14 +378,65 @@ class PaymentService {
     return { paymentId: snap.docs[0].id, ...snap.docs[0].data() };
   }
 
+  _analyzeUtrFlags(payment, allPayments) {
+    const rawUtr = String(payment.upiReferenceNumber || '').trim();
+    const isInvalidLength = !rawUtr || !/^\d{12}$/.test(rawUtr);
+    const isDummyPattern = Boolean(
+      rawUtr && (/^(\d)\1{11}$/.test(rawUtr) || rawUtr === '123456789012' || rawUtr === '123456789123')
+    );
+
+    const dupPeers = rawUtr
+      ? allPayments.filter(
+          other =>
+            other.paymentId !== payment.paymentId &&
+            other.orderId !== payment.orderId &&
+            String(other.upiReferenceNumber || '').trim() === rawUtr
+        )
+      : [];
+
+    const warnings = [];
+    if (dupPeers.length > 0) {
+      const refs = dupPeers.map(x => `#${x.orderNumber || x.orderId} (${x.status || 'unknown'})`).join(', ');
+      warnings.push(`Duplicate UTR: already used on ${refs}`);
+    }
+    if (isInvalidLength) {
+      warnings.push(`Invalid UTR length (${rawUtr.length} digits — must be exactly 12 digits)`);
+    } else if (isDummyPattern) {
+      warnings.push(`Suspicious placeholder UTR (${rawUtr}) — verify against bank statement`);
+    }
+
+    return {
+      isInvalidLength,
+      isDummyPattern,
+      isDuplicate: dupPeers.length > 0,
+      duplicateOrders: dupPeers.map(x => ({
+        paymentId: x.paymentId,
+        orderId: x.orderId,
+        orderNumber: x.orderNumber || x.orderId,
+        status: x.status || 'unknown'
+      })),
+      warnings
+    };
+  }
+
   async getPaymentById(paymentId) {
     const db = getDb();
     const doc = await db.collection('payments').doc(paymentId).get();
     if (!doc.exists) return null;
     const data = doc.data();
+    let utrFlags = this._analyzeUtrFlags({ paymentId: doc.id, ...data }, [{ paymentId: doc.id, ...data }]);
+    try {
+      const rawUtr = String(data.upiReferenceNumber || '').trim();
+      if (rawUtr) {
+        const dupSnap = await db.collection('payments').where('upiReferenceNumber', '==', rawUtr).get();
+        const peers = dupSnap.docs.map(d => ({ paymentId: d.id, ...d.data() }));
+        utrFlags = this._analyzeUtrFlags({ paymentId: doc.id, ...data }, peers);
+      }
+    } catch (_) {}
     return {
       paymentId: doc.id,
       ...data,
+      utrFlags,
       createdAt: data.createdAt ? (data.createdAt.toDate ? data.createdAt.toDate().toISOString() : data.createdAt) : new Date().toISOString()
     };
   }
@@ -386,12 +445,8 @@ class PaymentService {
     const db = getDb();
     if (!db) return [];
 
-    let query = db.collection('payments');
-    if (filters.status) {
-      query = query.where('status', '==', filters.status);
-    }
-
-    const snap = await query.get();
+    // Fetch full payments set once so duplicate UTR detection works even when filtered by status
+    const allSnap = await db.collection('payments').get();
     const parseDate = (val) => {
       if (!val) return new Date().toISOString();
       if (typeof val === 'string') return val;
@@ -402,7 +457,7 @@ class PaymentService {
       return new Date(val).toISOString();
     };
 
-    let payments = snap.docs.map(d => {
+    const allPayments = allSnap.docs.map(d => {
       const data = d.data();
       return {
         paymentId: d.id,
@@ -411,6 +466,15 @@ class PaymentService {
         updatedAt: parseDate(data.updatedAt)
       };
     });
+
+    let payments = filters.status
+      ? allPayments.filter(p => p.status === filters.status)
+      : allPayments;
+
+    payments = payments.map(p => ({
+      ...p,
+      utrFlags: this._analyzeUtrFlags(p, allPayments)
+    }));
     payments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     return payments;
   }
@@ -443,7 +507,15 @@ class PaymentService {
       throw err;
     }
 
-    const cleanUtr = (paymentData.upiReferenceNumber || '').replace(/[^0-9]/g, '').trim();
+    const rawStoredUtr = String(paymentData.upiReferenceNumber || '').trim();
+    if (!/^\d{12}$/.test(rawStoredUtr) || /^0{12}$/.test(rawStoredUtr)) {
+      const err = new Error(`Cannot approve payment: UTR "${rawStoredUtr || 'empty'}" is not a valid 12-digit numeric UTR. Please reject this submission and ask the customer to submit a valid 12-digit UTR.`);
+      err.statusCode = 400;
+      err.code = 'INVALID_UTR';
+      throw err;
+    }
+
+    const cleanUtr = rawStoredUtr.replace(/[^0-9]/g, '').trim();
 
     // Atomic server-side duplicate UTR check and ledger locking across all orders
     if (cleanUtr) {

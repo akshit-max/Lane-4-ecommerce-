@@ -4,6 +4,7 @@
   "trailingSlash": false,
   "outputDirectory": ".",
   "rewrites": [
+    { "source": "/vercel.json", "destination": "/_blocked_404_" },
     { "source": "/health", "destination": "https://lane-4-ecommerce.onrender.com/health" },
     { "source": "/api/(.*)", "destination": "https://lane-4-ecommerce.onrender.com/api/$1" },
     { "source": "/api", "destination": "https://lane-4-ecommerce.onrender.com/api" },

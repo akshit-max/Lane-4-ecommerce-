@@ -1857,8 +1857,8 @@ window.INDIAN_STATES = [
         const fileInput = document.getElementById('lane4-resubmit-screenshot');
         const resubmitBtn = document.getElementById('lane4-resubmit-btn');
         const cleanUtr = (utrInput.value || '').trim();
-        if (!/^\d{12}$/.test(cleanUtr)) {
-          showAlert('Please enter a valid 12-digit numeric UPI Reference / UTR Number.', 'error');
+        if (!/^\d{12}$/.test(cleanUtr) || /^0{12}$/.test(cleanUtr)) {
+          showAlert('Please enter a valid 12-digit numeric UPI Reference / UTR Number (000000000000 is not valid).', 'error');
           return;
         }
         if (!fileInput.files || fileInput.files.length === 0) {

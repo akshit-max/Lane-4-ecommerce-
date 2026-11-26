@@ -389,6 +389,15 @@ class AdminController {
     }
   }
 
+  async getStoreSettings(req, res, next) {
+    try {
+      const settings = await storeSettingsService.getStoreSettings();
+      return sendSuccess(res, settings);
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async updateStoreSettings(req, res, next) {
     try {
       const settings = await storeSettingsService.updateStoreSettings(req.body, req.user);

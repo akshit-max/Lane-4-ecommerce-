@@ -172,6 +172,30 @@ if (config.env === 'production' && process.env.SERVE_FRONTEND !== 'true') {
 } else {
   // Static file serving for local development only with optimal caching for instant page loads
   const frontendRoot = path.resolve(__dirname, '../../');
+  // Block accidental exposure of backend source, tests, and config files when serving from repo root
+  app.use((req, res, next) => {
+    const reqPath = (req.path || '').toLowerCase();
+    const blockedPrefixes = ['/backend', '/tests', '/scripts', '/coverage', '/.git', '/.firebase', '/node_modules'];
+    const blockedExact = new Set([
+      '/vercel.json',
+      '/firestore.rules',
+      '/firestore.indexes.json',
+      '/firebase.json',
+      '/.firebaserc',
+      '/readme.md',
+      '/jest.config.js',
+      '/package.json',
+      '/package-lock.json'
+    ]);
+    if (
+      blockedPrefixes.some(p => reqPath === p || reqPath.startsWith(p + '/')) ||
+      blockedExact.has(reqPath) ||
+      /^\/\.env/i.test(reqPath)
+    ) {
+      return res.status(404).sendFile(path.join(frontendRoot, '404.html'));
+    }
+    return next();
+  });
   const staticOpts = {
     extensions: ['html', 'htm'],
     etag: true,

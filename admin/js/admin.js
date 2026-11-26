@@ -1104,7 +1104,12 @@ var formatDateString = window.formatDateString || formatDateTime;
       }
       renderInvoiceModal(res.data);
     } catch (err) {
-      showToast(`Invoice retrieval error: ${err.message}`, 'error');
+      const msg = String(err && err.message || '');
+      if (msg.includes('GSTIN') || msg.includes('certified')) {
+        showToast('Store GSTIN is not configured. Go to Settings -> Store Profile & Tax (GSTIN) to save your 15-character GSTIN.', 'error');
+      } else {
+        showToast(`Invoice retrieval error: ${msg}`, 'error');
+      }
     } finally {
       hideTopLoader();
     }
@@ -1876,6 +1881,7 @@ var formatDateString = window.formatDateString || formatDateTime;
         const s = (p.status || '').toLowerCase();
         return s === 'verification_pending' || s === 'submitted' || s === 'pending';
       }).length;
+      const flaggedCount = payments.filter(p => p.utrFlags && Array.isArray(p.utrFlags.warnings) && p.utrFlags.warnings.length > 0).length;
       updatePendingPaymentsBadge(pendingCount);
       lastPendingPaymentCount = pendingCount;
 
@@ -1891,6 +1897,11 @@ var formatDateString = window.formatDateString || formatDateTime;
               <span>Refresh Submissions</span>
             </button>
           </div>
+          ${flaggedCount > 0 ? `
+            <div style="background:#fef2f2;border-bottom:1.5px solid #fecaca;padding:10px 18px;font-size:12px;color:#991b1b;font-weight:700;display:flex;align-items:center;gap:8px;">
+              <span>&#9888; Security Warning: ${flaggedCount} payment record(s) have duplicate, dummy, or non-12-digit UTRs flagged below. Verify against bank statements before fulfilling.</span>
+            </div>
+          ` : ''}
           <div class="card-body" style="padding:0;">
             <div class="table-responsive">
               <table>
@@ -1909,11 +1920,20 @@ var formatDateString = window.formatDateString || formatDateTime;
                   ${payments.length === 0 ? '<tr><td colspan="7" style="text-align:center;padding:24px;color:#888;">No payment proofs submitted yet.</td></tr>' :
                     payments.map(p => {
                       const proofUrl = p.proofScreenshot && p.proofScreenshot.secureUrl ? resolveProofUrl(p.proofScreenshot.secureUrl) : '';
+                      const flags = p.utrFlags || {};
+                      const warnings = Array.isArray(flags.warnings) ? flags.warnings : [];
                       return `
                         <tr>
                           <td><strong>#${escapeHtml(p.orderNumber || p.orderId)}</strong></td>
                           <td><strong>${window.LANE4.formatINR(p.amountPaise)}</strong></td>
-                          <td><code style="background:#f1f5f9;padding:4px 8px;border-radius:0px;font-weight:700;letter-spacing:0.5px;">${escapeHtml(p.upiReferenceNumber)}</code></td>
+                          <td>
+                            <code style="background:#f1f5f9;padding:4px 8px;border-radius:0px;font-weight:700;letter-spacing:0.5px;">${escapeHtml(p.upiReferenceNumber)}</code>
+                            ${warnings.length > 0 ? `
+                              <div style="margin-top:5px;display:flex;flex-direction:column;gap:3px;">
+                                ${warnings.map(w => `<span style="display:inline-block;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;padding:2px 6px;font-size:10.5px;font-weight:700;line-height:1.3;">&#9888; ${escapeHtml(w)}</span>`).join('')}
+                              </div>
+                            ` : ''}
+                          </td>
                           <td style="vertical-align:middle;">
                             ${proofUrl ? `
                               <div style="display:inline-flex;align-items:center;gap:10px;">
@@ -2012,9 +2032,16 @@ var formatDateString = window.formatDateString || formatDateTime;
     if (!p) return;
 
     const proofUrl = p.proofScreenshot && p.proofScreenshot.secureUrl ? resolveProofUrl(p.proofScreenshot.secureUrl) : '';
+    const detailWarnings = (p.utrFlags && Array.isArray(p.utrFlags.warnings)) ? p.utrFlags.warnings : [];
 
     showModal(`Payment Proof & Verification — #${p.orderNumber || p.orderId}`, `
       <div style="display:flex;flex-direction:column;gap:18px;">
+        ${detailWarnings.length > 0 ? `
+          <div style="background:#fef2f2;border:1.5px solid #ef4444;padding:12px 14px;color:#991b1b;font-size:12.5px;font-weight:700;">
+            <div style="margin-bottom:4px;">&#9888; UTR Validation Alert</div>
+            ${detailWarnings.map(w => `<div style="font-weight:600;">&bull; ${escapeHtml(w)}</div>`).join('')}
+          </div>
+        ` : ''}
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:0px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
           <div>
             <div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Order Information</div>
@@ -5154,8 +5181,10 @@ var formatDateString = window.formatDateString || formatDateTime;
     try {
       const payRes = await window.lane4ApiRequest('/store/payment-settings').catch(() => window.lane4ApiRequest('/admin/store/payment-settings'));
       const shipRes = await window.lane4ApiRequest('/shipping/settings');
+      const storeRes = await window.lane4ApiRequest('/admin/store/settings').catch(() => null);
       const p = (payRes && payRes.data) || {};
       const s = (shipRes && shipRes.data) || {};
+      const st = (storeRes && storeRes.data) || {};
 
       const freeThresh = Math.round((s.freeShippingThresholdPaise || 99900) / 100);
       const stdRate = Math.round((s.standardRatePaise || 9900) / 100);
@@ -5368,6 +5397,65 @@ var formatDateString = window.formatDateString || formatDateTime;
               </form>
             </div>
           </div>
+
+          <!-- Store Profile & Tax (GSTIN) Settings Card -->
+          <div class="card" style="border:1px solid #cbd5e1;border-radius:0px;box-shadow:0 4px 16px -2px rgba(15,23,42,0.06);background:#ffffff;">
+            <div class="card-header" style="background:#ffffff;padding:18px 22px;border-bottom:1.5px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:36px;height:36px;border-radius:0px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:#111111;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                </div>
+                <div>
+                  <div class="card-title" style="font-size:16px;font-weight:900;color:#111111;">Store Profile &amp; Tax (GSTIN)</div>
+                  <div style="font-size:12px;color:#64748b;">Business identity &amp; commercial GST tax invoice configuration</div>
+                </div>
+              </div>
+              <span id="badge-gst-status" class="badge ${st.isCertifiedGstin ? 'badge-verified' : 'badge-pending'}" style="font-size:10px;font-weight:800;letter-spacing:0.5px;">${st.isCertifiedGstin ? 'GST CERTIFIED' : 'GSTIN NEEDED'}</span>
+            </div>
+
+            <div class="card-body" style="padding:22px;">
+              <div style="margin-bottom:16px;padding:12px 14px;border:1px solid ${st.isCertifiedGstin ? '#bbf7d0' : '#fde68a'};background:${st.isCertifiedGstin ? '#f0fdf4' : '#fffbeb'};font-size:12px;color:${st.isCertifiedGstin ? '#166534' : '#92400e'};">
+                <strong>GST Invoice Status:</strong>
+                <span id="tbl-gst-status-text">${st.isCertifiedGstin
+                  ? `Active (<code style="background:#ffffff;padding:2px 6px;border:1px solid #bbf7d0;">${escapeHtml(st.effectiveGstin || st.gstin)}</code>)`
+                  : 'No certified 15-character GSTIN saved yet. Set your GSTIN below (or SELLER_GSTIN in server env) to enable GST tax invoice generation.'}</span>
+              </div>
+
+              <form id="lane4-settings-store-form">
+                <div style="margin-bottom:14px;">
+                  <label style="display:block;font-size:11.5px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Store GSTIN (15 Characters)</label>
+                  <input type="text" id="set-store-gstin" maxlength="15" value="${escapeHtml(st.gstin || st.effectiveGstin || '')}" placeholder="e.g. 27AABCL1234M1Z5" style="width:100%;padding:11px 14px;border:1.5px solid #cbd5e1;border-radius:0px;background:#f8fafc;font-family:monospace;font-size:14px;text-transform:uppercase;color:#111111;box-sizing:border-box;" />
+                  <span style="font-size:11px;color:#64748b;display:block;margin-top:4px;">Required for official GST Tax Invoices in production. Saved safely so UPI/shipping updates never clear it.</span>
+                </div>
+
+                <div style="margin-bottom:14px;">
+                  <label style="display:block;font-size:11.5px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Legal Business Name</label>
+                  <input type="text" id="set-store-legal-name" value="${escapeHtml(st.legalName || st.storeName || 'The Lane4 Performance Store')}" style="width:100%;padding:11px 14px;border:1.5px solid #cbd5e1;border-radius:0px;background:#f8fafc;font-family:inherit;font-size:14px;color:#111111;box-sizing:border-box;" required />
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+                  <div>
+                    <label style="display:block;font-size:11.5px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Support Email</label>
+                    <input type="email" id="set-store-email" value="${escapeHtml(st.supportEmail || 'Lane4performancestore@gmail.com')}" style="width:100%;padding:11px 14px;border:1.5px solid #cbd5e1;border-radius:0px;background:#f8fafc;font-family:inherit;font-size:13px;color:#111111;box-sizing:border-box;" required />
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:11.5px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Support Phone</label>
+                    <input type="text" id="set-store-phone" value="${escapeHtml(st.supportPhone || '+91 79725 41297')}" style="width:100%;padding:11px 14px;border:1.5px solid #cbd5e1;border-radius:0px;background:#f8fafc;font-family:inherit;font-size:13px;color:#111111;box-sizing:border-box;" required />
+                  </div>
+                </div>
+
+                <div style="margin-bottom:18px;">
+                  <label style="display:block;font-size:11.5px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Registered Store Address</label>
+                  <input type="text" id="set-store-address" value="${escapeHtml(st.storeAddress || 'Nagpur, Maharashtra, India')}" style="width:100%;padding:11px 14px;border:1.5px solid #cbd5e1;border-radius:0px;background:#f8fafc;font-family:inherit;font-size:14px;color:#111111;box-sizing:border-box;" required />
+                </div>
+
+                <button type="submit" id="btn-save-store" class="btn" style="background:#111111;color:#ffffff;width:100%;justify-content:center;padding:12px;font-size:13.5px;font-weight:800;border-radius:0px;letter-spacing:0.3px;box-shadow:0 4px 12px rgba(15,23,42,0.15);cursor:pointer;transition:all 0.2s;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                  <span>Update Store Profile &amp; GSTIN</span>
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
       `;
 
@@ -5542,6 +5630,55 @@ var formatDateString = window.formatDateString || formatDateTime;
           }
         }
       };
+
+      // Store profile & GSTIN submit
+      const storeForm = document.getElementById('lane4-settings-store-form');
+      if (storeForm) {
+        storeForm.onsubmit = async (e) => {
+          e.preventDefault();
+          const gstinInput = document.getElementById('set-store-gstin');
+          const gstin = (gstinInput ? gstinInput.value : '').trim().toUpperCase();
+          const legalName = document.getElementById('set-store-legal-name').value.trim();
+          const supportEmail = document.getElementById('set-store-email').value.trim();
+          const supportPhone = document.getElementById('set-store-phone').value.trim();
+          const storeAddress = document.getElementById('set-store-address').value.trim();
+
+          if (gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(gstin)) {
+            showToast('Invalid GSTIN format. Must be 15 characters (e.g. 27AABCL1234M1Z5).', 'error');
+            if (gstinInput) gstinInput.focus();
+            return;
+          }
+
+          const btn = document.getElementById('btn-save-store');
+          if (btn) { btn.disabled = true; btn.innerText = 'Saving...'; }
+
+          try {
+            const payload = { legalName, supportEmail, supportPhone, storeAddress };
+            if (gstin) payload.gstin = gstin;
+
+            const saved = await window.lane4ApiRequest('/admin/store/settings', {
+              method: 'PATCH',
+              body: JSON.stringify(payload)
+            });
+
+            const savedData = (saved && saved.data) || {};
+            const badge = document.getElementById('badge-gst-status');
+            const statusText = document.getElementById('tbl-gst-status-text');
+            if (savedData.isCertifiedGstin) {
+              if (badge) { badge.className = 'badge badge-verified'; badge.textContent = 'GST CERTIFIED'; }
+              if (statusText) statusText.innerHTML = `Active (<code style="background:#ffffff;padding:2px 6px;border:1px solid #bbf7d0;">${escapeHtml(savedData.effectiveGstin || savedData.gstin)}</code>)`;
+            }
+            showToast('Store profile & GSTIN settings saved!');
+          } catch (err) {
+            showToast(err.message || 'Failed to update store profile', 'error');
+          } finally {
+            if (btn) {
+              btn.disabled = false;
+              btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg><span>Update Store Profile &amp; GSTIN</span>`;
+            }
+          }
+        };
+      }
 
     } catch (err) {
       container.innerHTML = `<p style="color:#ef4444;padding:20px;">Error loading settings: ${err.message}</p>`;

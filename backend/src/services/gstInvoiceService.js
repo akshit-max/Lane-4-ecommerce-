@@ -270,7 +270,7 @@ class GstInvoiceService {
     // Compliance Check: Block official invoice in production if seller GSTIN is missing/unverified
     const isProduction = process.env.NODE_ENV === 'production';
     const requireCertifiedGst = isProduction || process.env.REQUIRE_CERTIFIED_GST === 'true';
-    const effectiveGstin = (storeProfile.gstin || process.env.SELLER_GSTIN || '').trim();
+    const effectiveGstin = (storeProfile.gstin || process.env.SELLER_GSTIN || '').trim().toUpperCase();
     // Valid Indian GSTIN: 2-digit state code + 10-char PAN + 1 entity num + 'Z' + 1 checksum char
     const GSTIN_REGEX = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
     const isValidGstinFormat = GSTIN_REGEX.test(effectiveGstin);

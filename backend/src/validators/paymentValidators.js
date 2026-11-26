@@ -6,6 +6,12 @@ const submitProofValidator = [
     .trim()
     .matches(/^\d{12}$/)
     .withMessage('Please enter a valid 12-digit numeric UPI Reference / UTR Number.')
+    .custom((val) => {
+      if (/^0{12}$/.test(String(val).trim())) {
+        throw new Error('Please enter a valid 12-digit numeric UPI Reference / UTR Number (placeholder 000000000000 is not accepted).');
+      }
+      return true;
+    })
 ];
 
 const approvePaymentValidator = [

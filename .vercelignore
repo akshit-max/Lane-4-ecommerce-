@@ -1,0 +1,27 @@
+# Exclude backend source, tests, database rules, and project config files from static hosting
+backend/
+tests/
+scripts/
+coverage/
+uploads/
+node_modules/
+.git/
+.firebase/
+.vscode/
+.idea/
+firestore.rules
+firestore.indexes.json
+firebase.json
+.firebaserc
+jest.config.js
+package.json
+package-lock.json
+README.md
+*.md
+.env
+.env.*
+*.log
+*.bak
+*.tmp
+serviceAccountKey.json
+*.pem

@@ -70,6 +70,7 @@ router.post(
   adminController.uploadPaymentQrImage
 );
 router.patch('/store/shipping-settings', requirePermission('settings:write'), adminController.updateShippingSettings);
+router.get('/store/settings', requirePermission('settings:read', 'settings:write'), adminController.getStoreSettings);
 router.patch('/store/settings', requirePermission('settings:write'), adminController.updateStoreSettings);
 
 // Customers
