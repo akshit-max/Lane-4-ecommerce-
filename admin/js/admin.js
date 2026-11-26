@@ -2020,8 +2020,9 @@ var formatDateString = window.formatDateString || formatDateTime;
             </button>
           </div>
           ${flaggedCount > 0 ? `
-            <div style="background:#fef2f2;border-bottom:1.5px solid #fecaca;padding:10px 18px;font-size:12px;color:#991b1b;font-weight:700;display:flex;align-items:center;gap:8px;">
-              <span>&#9888; Security Warning: ${flaggedCount} payment record(s) have duplicate, dummy, or non-12-digit UTRs flagged below. Verify against bank statements before fulfilling.</span>
+            <div style="background:#fef2f2;border-bottom:1px solid #fecaca;border-left:4px solid #dc2626;padding:11px 18px;font-size:12.5px;color:#991b1b;font-weight:600;line-height:1.45;display:flex;align-items:center;gap:10px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span><strong>Security Warning:</strong> ${flaggedCount} payment record(s) have duplicate, dummy, or non-12-digit UTRs flagged below. Verify against bank statements before fulfilling.</span>
             </div>
           ` : ''}
           <div class="card-body" style="padding:0;">
@@ -2049,10 +2050,15 @@ var formatDateString = window.formatDateString || formatDateTime;
                           <td><strong>#${escapeHtml(p.orderNumber || p.orderId)}</strong></td>
                           <td><strong>${window.LANE4.formatINR(p.amountPaise)}</strong></td>
                           <td>
-                            <code style="background:#f1f5f9;padding:4px 8px;border-radius:0px;font-weight:700;letter-spacing:0.5px;">${escapeHtml(p.upiReferenceNumber)}</code>
+                            <code style="background:#f1f5f9;padding:4px 8px;border-radius:0px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;font-weight:600;letter-spacing:0.4px;color:#0f172a;border:1px solid #e2e8f0;display:inline-block;">${escapeHtml(p.upiReferenceNumber)}</code>
                             ${warnings.length > 0 ? `
-                              <div style="margin-top:5px;display:flex;flex-direction:column;gap:3px;">
-                                ${warnings.map(w => `<span style="display:inline-block;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;padding:2px 6px;font-size:10.5px;font-weight:700;line-height:1.3;">&#9888; ${escapeHtml(w)}</span>`).join('')}
+                              <div style="margin-top:6px;display:flex;flex-direction:column;gap:4px;">
+                                ${warnings.map(w => `
+                                  <span style="display:inline-flex;align-items:flex-start;gap:5px;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-left:3px solid #dc2626;padding:4px 8px;font-size:11px;font-weight:600;line-height:1.35;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <span>${escapeHtml(w)}</span>
+                                  </span>
+                                `).join('')}
                               </div>
                             ` : ''}
                           </td>
@@ -2159,9 +2165,12 @@ var formatDateString = window.formatDateString || formatDateTime;
     showModal(`Payment Proof & Verification — #${p.orderNumber || p.orderId}`, `
       <div style="display:flex;flex-direction:column;gap:18px;">
         ${detailWarnings.length > 0 ? `
-          <div style="background:#fef2f2;border:1.5px solid #ef4444;padding:12px 14px;color:#991b1b;font-size:12.5px;font-weight:700;">
-            <div style="margin-bottom:4px;">&#9888; UTR Validation Alert</div>
-            ${detailWarnings.map(w => `<div style="font-weight:600;">&bull; ${escapeHtml(w)}</div>`).join('')}
+          <div style="background:#fef2f2;border:1px solid #fecaca;border-left:4px solid #dc2626;padding:12px 14px;color:#991b1b;font-size:12.5px;line-height:1.45;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+            <div style="font-weight:700;margin-bottom:5px;display:flex;align-items:center;gap:6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span>UTR Validation Alert</span>
+            </div>
+            ${detailWarnings.map(w => `<div style="font-weight:500;">&bull; ${escapeHtml(w)}</div>`).join('')}
           </div>
         ` : ''}
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:0px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
