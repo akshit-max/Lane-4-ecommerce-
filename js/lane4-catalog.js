@@ -222,16 +222,16 @@
     const isInSubfolder = /\/(product|category|blog|authors|utility-pages|category-blog)\//i.test(window.location.pathname);
     const subCatMatch = window.location.pathname.match(/\/category\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)(?:\.html?)?/i);
     const catMatch = window.location.pathname.match(/\/category\/([a-zA-Z0-9_-]+)(?:\.html?)?/i);
+    const isCategoryPage = /\/category\//i.test(window.location.pathname);
     const searchParams = new URLSearchParams(window.location.search);
-    const queryCatSlug = searchParams.get('slug');
-    const querySubSlug = searchParams.get('sub');
+    const queryCatSlug = isCategoryPage ? searchParams.get('slug') : (searchParams.get('category') || null);
+    const querySubSlug = isCategoryPage ? searchParams.get('sub') : null;
     const docSlug = document.documentElement.getAttribute('data-wf-item-slug');
 
     const rawSingleCat = (catMatch && catMatch[1] !== 'detail' && catMatch[1] !== 'index') ? catMatch[1] : null;
-    const parentCatSlug = subCatMatch ? subCatMatch[1] : (rawSingleCat || queryCatSlug || (window.location.pathname.includes('/category/') && docSlug !== 'detail' ? docSlug : null));
+    const parentCatSlug = subCatMatch ? subCatMatch[1] : (rawSingleCat || queryCatSlug || (isCategoryPage && docSlug !== 'detail' ? docSlug : null));
     const subCatSlug = subCatMatch ? subCatMatch[2] : (querySubSlug || null);
     const currentCatSlug = subCatSlug || parentCatSlug;
-    const isCategoryPage = window.location.pathname.includes('/category/');
     let categoryNotFound = false;
 
     if (parentCatSlug || currentCatSlug) {
@@ -248,9 +248,11 @@
             }
           }
         }).catch((err) => {
-          const isGenericDetail = /\/category\/detail/i.test(window.location.pathname) ||
+          const isGenericDetail = isCategoryPage && (
+            /\/category\/detail/i.test(window.location.pathname) ||
             docSlug === 'detail' ||
-            (isCategoryPage && !STATIC_CATEGORY_SLUGS.has(String(parentCatSlug || '').toLowerCase()));
+            !STATIC_CATEGORY_SLUGS.has(String(parentCatSlug || '').toLowerCase())
+          );
           if (isGenericDetail && err && /not found|404/i.test(String(err.message || ''))) {
             categoryNotFound = true;
             document.title = '404 — Category Not Found | The Lane4 Performance Store';
@@ -474,7 +476,9 @@
     if (!dropdownList && !categoryBarList) return;
 
     const catPrefix = getCategoryPrefix();
-    const queryCatSlug = new URLSearchParams(window.location.search).get('slug');
+    const isCatPath = /\/category\//i.test(window.location.pathname);
+    const sp = new URLSearchParams(window.location.search);
+    const queryCatSlug = isCatPath ? sp.get('slug') : sp.get('category');
     const catMatch = window.location.pathname.match(/\/category\/([a-zA-Z0-9_-]+)(?:\.html?)?/i);
     const activeSlug = (catMatch && catMatch[1] !== 'detail' && catMatch[1] !== 'index') ? catMatch[1] : queryCatSlug;
 
