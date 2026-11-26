@@ -1,5 +1,6 @@
 const productService = require('../services/productService');
 const { sendSuccess } = require('../utils/response');
+const { ADMIN_ROLES } = require('../constants/roles');
 
 class ProductController {
   async listProducts(req, res, next) {
@@ -21,7 +22,8 @@ class ProductController {
 
   async getProductBySlug(req, res, next) {
     try {
-      const product = await productService.getProductBySlug(req.params.slug);
+      const allowUnpublished = req.query.preview === '1' && Boolean(req.user && ADMIN_ROLES.includes(req.user.role));
+      const product = await productService.getProductBySlug(req.params.slug, allowUnpublished);
       if (!product) {
         return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Product not found' } });
       }

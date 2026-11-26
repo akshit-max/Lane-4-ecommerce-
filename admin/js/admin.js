@@ -3276,7 +3276,7 @@ var formatDateString = window.formatDateString || formatDateTime;
                           </td>
                           <td>
                             <div style="display:flex;gap:6px;">
-                              <a href="../product/detail.html?slug=${encodeURIComponent(p.slug || '')}" target="_blank" class="btn btn-outline" style="padding:5px 9px;font-size:11px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;" title="Preview storefront page">
+                              <a href="/product/detail.html?slug=${encodeURIComponent(p.slug || '')}${p.isPublished ? '' : '&preview=1'}" target="_blank" class="btn btn-outline" style="padding:5px 9px;font-size:11px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;" title="${p.isPublished ? 'Preview storefront page' : 'Preview draft product (Admin only)'}">
                                 <span>View</span>
                                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                               </a>
@@ -4414,7 +4414,7 @@ var formatDateString = window.formatDateString || formatDateTime;
                         <td><span class="badge ${c.isPublished ? 'badge-active' : 'badge-pending'}">${c.isPublished ? 'Published' : 'Draft'}</span></td>
                         <td>
                           <div style="display:flex;gap:6px;">
-                            <a href="../shop.html?category=${encodeURIComponent(c.slug || '')}" target="_blank" class="btn btn-outline" style="padding:5px 9px;font-size:11px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;" title="View category in shop">
+                            <a href="/shop.html?category=${encodeURIComponent(c.slug || '')}" target="_blank" class="btn btn-outline" style="padding:5px 9px;font-size:11px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;" title="View category in shop">
                               <span>View</span>
                               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                             </a>

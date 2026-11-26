@@ -8,7 +8,7 @@ const { submitReviewValidator } = require('../validators');
 
 // Public endpoints
 router.get('/', productController.listProducts);
-router.get('/:slug', productController.getProductBySlug);
+router.get('/:slug', optionalAuthenticate, productController.getProductBySlug);
 router.get('/id/:id', productController.getProductById);
 
 // Product reviews sub-resources

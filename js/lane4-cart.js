@@ -827,8 +827,17 @@
     const path = window.location.pathname;
     const match = path.match(/\/product\/([a-zA-Z0-9-]+)(?:\.html)?/) || path.match(/([a-zA-Z0-9-]+)\.html$/);
     const slug = match ? match[1] : null;
-    const querySlug = new URLSearchParams(window.location.search).get('slug');
+    const queryParams = new URLSearchParams(window.location.search);
+    const querySlug = queryParams.get('slug');
+    const isAdminPreview = queryParams.get('preview') === '1';
+    const adminPreviewToken = isAdminPreview ? localStorage.getItem('lane4_admin_token') : null;
     const effectiveSlug = (slug && slug !== 'detail' && slug !== 'index' && slug !== 'shop') ? slug : (querySlug || docSlug);
+    const productEndpoint = (isAdminPreview && adminPreviewToken)
+      ? `/products/${encodeURIComponent(effectiveSlug || '')}?preview=1`
+      : `/products/${encodeURIComponent(effectiveSlug || '')}`;
+    const productRequestOpts = (isAdminPreview && adminPreviewToken)
+      ? { headers: { Authorization: `Bearer ${adminPreviewToken}` } }
+      : {};
 
     const handleAddToCart = async (e) => {
       if (e) {
@@ -860,7 +869,7 @@
       let product = loadedProduct;
       if (!product && effectiveSlug) {
         try {
-          const res = await window.lane4ApiRequest(`/products/${encodeURIComponent(effectiveSlug)}`);
+          const res = await window.lane4ApiRequest(productEndpoint, productRequestOpts);
           if (res && res.data) {
             loadedProduct = res.data;
             product = loadedProduct;
@@ -951,10 +960,21 @@
 
     productPromise = (async () => {
       try {
-        const res = await window.lane4ApiRequest(`/products/${encodeURIComponent(effectiveSlug)}`);
+        const res = await window.lane4ApiRequest(productEndpoint, productRequestOpts);
         const product = res.data;
         if (!product) return;
         loadedProduct = product;
+
+        if (product.isPublished === false && isAdminPreview && !document.getElementById('lane4-draft-preview-banner')) {
+          const heroWrap = document.querySelector('.product-hero');
+          if (heroWrap && heroWrap.parentElement) {
+            const draftBanner = document.createElement('div');
+            draftBanner.id = 'lane4-draft-preview-banner';
+            draftBanner.style.cssText = 'margin:12px 0 18px;padding:11px 16px;background:#fefce8;border:1px solid #fde047;border-left:4px solid #ca8a04;color:#854d0e;font-size:13px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;';
+            draftBanner.textContent = 'Admin Draft Preview — This product is currently saved as Draft and is hidden from public shoppers.';
+            heroWrap.parentElement.insertBefore(draftBanner, heroWrap);
+          }
+        }
 
         // Real-time product details hydration
         const nameEl = document.querySelector('.pd-heading .title-h4');
