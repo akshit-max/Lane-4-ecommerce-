@@ -279,15 +279,6 @@ All endpoints return standardized JSON structures: `{ success: true, data: ... }
 
 ---
 
-## 7. Automated Testing Suite
-
-The project includes 9 Jest test suites covering authentication, cart calculations, catalog queries, forms, payments, administrative controls, and an end-to-end customer journey:
-
-```bash
-cd "lane4/backend"
-npm test
-```
-
 ### Test Coverage Summary
 - `tests/e2e_journey.test.js` — Complete customer journey from registration to order placement and admin payment verification.
 - `tests/auth.test.js` — User registration, validation, login, and profile management.
